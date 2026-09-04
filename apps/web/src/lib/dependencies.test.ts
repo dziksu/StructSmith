@@ -2,8 +2,19 @@ import { expect, test } from "bun:test";
 import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { useTranslation } from "react-i18next";
+import { KIND_ICONS, ROLE_ICONS } from "../features/icons";
 import i18n from "../i18n";
 import { cn } from "./utils";
+
+test("all architecture icons render as SVG with the requested size and class", () => {
+  const icons = new Set([...Object.values(KIND_ICONS), ...Object.values(ROLE_ICONS)]);
+  for (const icon of icons) {
+    const markup = renderToStaticMarkup(createElement(icon, { size: 18, className: "test-icon" }));
+    expect(markup).toContain("<svg");
+    expect(markup).toContain('width="18"');
+    expect(markup).toContain("test-icon");
+  }
+});
 
 test("React translations render in English and Polish", async () => {
   const originalLanguage = i18n.language;
