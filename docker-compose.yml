@@ -1,0 +1,18 @@
+services:
+  structsmith:
+    build: .
+    image: ghcr.io/structsmith/structsmith:latest
+    ports:
+      - "8090:8080"
+    volumes:
+      - structsmith-data:/data
+    environment:
+      PORT: 8080
+      DATABASE_PATH: /data/architecture.db
+      AUTH_MODE: none
+      MCP_READ_ONLY: "false"
+      SEED_EXAMPLE: "true"
+    restart: unless-stopped
+
+volumes:
+  structsmith-data:

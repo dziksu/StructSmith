@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="128" height="128" role="img" aria-label="StructSmith">
+  <title>StructSmith</title>
+  <defs>
+    <linearGradient id="ss-accent" x1="74" y1="10" x2="118" y2="96" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#0FC6F8"/>
+      <stop offset=".62" stop-color="#22E4CD"/>
+      <stop offset="1" stop-color="#00BDFB"/>
+    </linearGradient>
+    <linearGradient id="ss-shell" x1="44" y1="10" x2="62" y2="124" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#FCFDFF"/>
+      <stop offset=".45" stop-color="#EDF1FA"/>
+      <stop offset="1" stop-color="#D2DDF2"/>
+    </linearGradient>
+  </defs>
+
+  <!-- The ring is one circle drawn twice: pathLength="360" makes the dash
+       values plain degrees, so the two arcs are positioned by angle. -->
+  <g fill="none" stroke-width="21" stroke-linecap="round">
+    <circle cx="64" cy="64" r="46" pathLength="360"
+            stroke="url(#ss-shell)" stroke-dasharray="178 182" stroke-dashoffset="-62"/>
+    <circle cx="64" cy="64" r="46" pathLength="360"
+            stroke="url(#ss-accent)" stroke-dasharray="83 277" stroke-dashoffset="68.5"/>
+  </g>
+
+  <circle cx="64" cy="64" r="16" fill="url(#ss-shell)"/>
+</svg>

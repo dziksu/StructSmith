@@ -1,0 +1,9 @@
+node_modules
+**/node_modules
+**/dist
+data
+.git
+.github
+*.log
+.env
+INSTRUCTION.md

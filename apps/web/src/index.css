@@ -1,0 +1,179 @@
+@import "tailwindcss";
+@import "@xyflow/react/dist/style.css";
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+:root {
+  --background: oklch(0.99 0 0);
+  --foreground: oklch(0.21 0.01 260);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.21 0.01 260);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.21 0.01 260);
+  --primary: oklch(0.45 0.16 265);
+  --primary-foreground: oklch(0.99 0 0);
+  --secondary: oklch(0.96 0.003 260);
+  --secondary-foreground: oklch(0.28 0.01 260);
+  --muted: oklch(0.965 0.003 260);
+  --muted-foreground: oklch(0.53 0.01 260);
+  --accent: oklch(0.955 0.006 260);
+  --accent-foreground: oklch(0.24 0.01 260);
+  --destructive: oklch(0.58 0.21 27);
+  --destructive-foreground: oklch(0.99 0 0);
+  --warning: oklch(0.72 0.15 70);
+  --success: oklch(0.62 0.13 155);
+  --border: oklch(0.91 0.004 260);
+  --input: oklch(0.91 0.004 260);
+  --ring: oklch(0.45 0.16 265);
+  --radius: 0.375rem;
+
+  --canvas: oklch(0.975 0.002 260);
+  --canvas-dot: oklch(0.86 0.004 260);
+  --node: oklch(1 0 0);
+  --node-border: oklch(0.88 0.006 260);
+  --node-external: oklch(0.96 0.004 260);
+  --boundary: oklch(0.55 0.02 260);
+}
+
+.dark {
+  --background: oklch(0.18 0.008 260);
+  --foreground: oklch(0.93 0.004 260);
+  --card: oklch(0.21 0.009 260);
+  --card-foreground: oklch(0.93 0.004 260);
+  --popover: oklch(0.22 0.009 260);
+  --popover-foreground: oklch(0.93 0.004 260);
+  --primary: oklch(0.68 0.15 265);
+  --primary-foreground: oklch(0.16 0.01 260);
+  --secondary: oklch(0.26 0.01 260);
+  --secondary-foreground: oklch(0.93 0.004 260);
+  --muted: oklch(0.25 0.009 260);
+  --muted-foreground: oklch(0.66 0.01 260);
+  --accent: oklch(0.28 0.012 260);
+  --accent-foreground: oklch(0.95 0.004 260);
+  --destructive: oklch(0.62 0.19 27);
+  --destructive-foreground: oklch(0.98 0 0);
+  --warning: oklch(0.76 0.14 70);
+  --success: oklch(0.68 0.12 155);
+  --border: oklch(0.3 0.01 260);
+  --input: oklch(0.31 0.01 260);
+  --ring: oklch(0.68 0.15 265);
+
+  --canvas: oklch(0.16 0.008 260);
+  --canvas-dot: oklch(0.3 0.01 260);
+  --node: oklch(0.23 0.01 260);
+  --node-border: oklch(0.33 0.012 260);
+  --node-external: oklch(0.2 0.009 260);
+  --boundary: oklch(0.7 0.02 260);
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-warning: var(--warning);
+  --color-success: var(--success);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-canvas: var(--canvas);
+  --color-canvas-dot: var(--canvas-dot);
+  --color-node: var(--node);
+  --color-node-border: var(--node-border);
+  --color-node-external: var(--node-external);
+  --color-boundary: var(--boundary);
+  --radius-sm: calc(var(--radius) - 2px);
+  --radius-md: var(--radius);
+  --radius-lg: calc(var(--radius) + 2px);
+  --font-sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --font-mono: ui-monospace, "SF Mono", "JetBrains Mono", Menlo, monospace;
+}
+
+@layer base {
+  * {
+    border-color: var(--border);
+  }
+  html,
+  body,
+  #root {
+    height: 100%;
+  }
+  body {
+    background-color: var(--background);
+    color: var(--foreground);
+    font-family: var(--font-sans);
+    font-size: 13px;
+    -webkit-font-smoothing: antialiased;
+  }
+  ::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: color-mix(in oklch, var(--muted-foreground) 30%, transparent);
+    border-radius: 999px;
+    border: 3px solid transparent;
+    background-clip: content-box;
+  }
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+}
+
+/* React Flow theming — colours come from the design tokens, never hard-coded. */
+.react-flow {
+  --xy-background-color: var(--canvas);
+  --xy-edge-stroke-default: var(--muted-foreground);
+  --xy-edge-stroke-selected-default: var(--primary);
+  --xy-attribution-background-color: transparent;
+}
+.react-flow__attribution {
+  font-size: 10px;
+  opacity: 0.5;
+}
+.react-flow__controls-button {
+  background: var(--card);
+  border-color: var(--border);
+  color: var(--foreground);
+}
+.react-flow__controls-button:hover {
+  background: var(--accent);
+}
+.react-flow__minimap {
+  width: 170px;
+  height: 110px;
+  background-color: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+.react-flow__minimap-node {
+  fill: var(--muted-foreground);
+  opacity: 0.55;
+}
+/* React Flow renders edge labels below the node layer by default, which clips
+   them behind nodes. Labels are small chips, so they read better on top. */
+.react-flow__edgelabel-renderer {
+  z-index: 3;
+}
+.react-flow__handle {
+  background: var(--muted-foreground);
+  border: 1px solid var(--background);
+  width: 7px;
+  height: 7px;
+}
+.react-flow__node.selected > .as-node {
+  outline: 2px solid var(--ring);
+  outline-offset: 1px;
+}
