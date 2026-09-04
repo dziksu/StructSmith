@@ -8,6 +8,8 @@ All notable changes to this project are documented here. The format follows
 
 ### Changed
 
+- Upgrade Drizzle ORM to 0.45.2 and Lucide React to the 1.x line (locked to
+  1.41.0); verify SQLite persistence and icon rendering with regression tests
 - Upgrade i18next/react-i18next together to 26.4.1/17.0.13, tailwind-merge to
   3.6.0 for Tailwind 4, Dagre to 3.1.1, and Zod to 4.5.4 across all workspaces
 - Upgrade React and React DOM together to 19.2.8, Express to 5.2.1, Sonner to
