@@ -1,7 +1,7 @@
 # syntax=docker/dockerfile:1
 
 # ---------- build ----------
-FROM oven/bun:1.3-slim AS build
+FROM oven/bun:1.4-slim AS build
 WORKDIR /app
 
 # Install dependencies from the lockfile first so it stays cached.
@@ -22,7 +22,7 @@ COPY scripts ./scripts
 RUN cd apps/web && bun run build
 
 # ---------- runtime ----------
-FROM oven/bun:1.3-slim AS runtime
+FROM oven/bun:1.4-slim AS runtime
 WORKDIR /app
 
 ENV NODE_ENV=production \
