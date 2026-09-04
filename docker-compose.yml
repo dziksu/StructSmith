@@ -1,7 +1,7 @@
 services:
   structsmith:
     build: .
-    image: ghcr.io/structsmith/structsmith:latest
+    image: ghcr.io/dziksu/structsmith:latest
     ports:
       - "8090:8080"
     volumes:

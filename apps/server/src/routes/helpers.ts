@@ -16,6 +16,6 @@ export function mutationOptions(req: Request): { expectedRevision?: number; sour
 
 export function param(req: Request, name: string): string {
   const value = req.params[name];
-  if (!value) throw new Error(`Missing route parameter "${name}".`);
+  if (typeof value !== "string" || !value) throw new Error(`Missing route parameter "${name}".`);
   return value;
 }

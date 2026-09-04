@@ -6,7 +6,7 @@ below exist so contributions stay easy to review.
 ## Getting started
 
 ```bash
-bun install
+bun install --frozen-lockfile
 bun run dev
 ```
 
@@ -25,6 +25,10 @@ bun run build      # production build of the UI
 
 CI runs exactly these four, plus a Docker image build. `bun run check:fix` applies
 what can be fixed automatically.
+
+When updating dependencies, commit the regenerated `bun.lock` together with the
+workspace manifests. Update `react` and `react-dom` together, and check migration
+notes for major releases before running the checks above.
 
 ## Architecture rules
 
