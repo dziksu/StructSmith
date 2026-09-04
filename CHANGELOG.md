@@ -8,12 +8,17 @@ All notable changes to this project are documented here. The format follows
 
 ### Changed
 
+- Upgrade i18next/react-i18next together to 26.4.1/17.0.13, tailwind-merge to
+  3.6.0 for Tailwind 4, Dagre to 3.1.1, and Zod to 4.5.4 across all workspaces
 - Upgrade React and React DOM together to 19.2.8, Express to 5.2.1, Sonner to
   2.0.8, and react-resizable-panels to 4.12.3; regenerate the Bun lockfile
 - Upgrade the development toolchain, including Vite 8 and TypeScript 7
 
 ### Fixed
 
+- Preserve omitted view settings in Zod 4 partial updates and use one compatible
+  Zod version for the application and MCP SDK; cover translations, layout,
+  utility merging, and MCP schema validation with regression tests
 - Adapt the editor to the new panel API while preserving percentage-based sizes
 - Update Express route parameter validation and TypeScript path/CSS declarations
 - Report HTTP listen errors and exit unsuccessfully when the server cannot bind

@@ -6,6 +6,8 @@ updates:
       interval: weekly
     open-pull-requests-limit: 5
     groups:
+      i18n:
+        patterns: ["i18next", "react-i18next", "i18next-browser-languagedetector"]
       react:
         patterns: ["react", "react-dom", "@types/react", "@types/react-dom"]
       express:

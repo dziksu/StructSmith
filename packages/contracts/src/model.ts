@@ -140,6 +140,14 @@ export const ViewSettingsSchema = z.object({
 });
 export type ViewSettings = z.infer<typeof ViewSettingsSchema>;
 
+// Zod 4 applies defaults even inside optional fields. A patch must only carry
+// explicitly supplied settings, otherwise it resets the other stored values.
+const ViewSettingsPatchSchema = z.object({
+  showBoundaries: ViewSettingsSchema.shape.showBoundaries.unwrap().optional(),
+  snapToGrid: ViewSettingsSchema.shape.snapToGrid.unwrap().optional(),
+  autoLayoutDirection: ViewSettingsSchema.shape.autoLayoutDirection.unwrap().optional(),
+});
+
 export const ViewElementSchema = z.object({
   viewId: IdSchema,
   elementId: IdSchema,
@@ -193,7 +201,7 @@ export const CreateViewSchema = z.object({
   description: optionalText,
   kind: ViewKindSchema,
   scopeElementId: IdSchema.nullable().optional(),
-  settings: ViewSettingsSchema.partial().optional(),
+  settings: ViewSettingsPatchSchema.optional(),
   /** Optionally seed the view with these elements. */
   elementIds: z.array(IdSchema).optional(),
 });
@@ -205,7 +213,7 @@ export const UpdateViewSchema = z.object({
   description: optionalText,
   kind: ViewKindSchema.optional(),
   scopeElementId: IdSchema.nullable().optional(),
-  settings: ViewSettingsSchema.partial().optional(),
+  settings: ViewSettingsPatchSchema.optional(),
 });
 export type UpdateViewInput = z.infer<typeof UpdateViewSchema>;
 

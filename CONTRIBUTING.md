@@ -30,6 +30,12 @@ When updating dependencies, commit the regenerated `bun.lock` together with the
 workspace manifests. Update `react` and `react-dom` together, and check migration
 notes for major releases before running the checks above.
 
+Update `i18next` and `react-i18next` together. Keep Zod workspace dependencies
+and the root `overrides.zod` range aligned: the override prevents the MCP SDK
+from resolving an older bundled Zod 4 type definition through Zod 3.25.
+After changing the override, use `bun install --force --frozen-lockfile` if an
+existing installation retains stale dependency links.
+
 ## Architecture rules
 
 These are the invariants the project is built on. A change that breaks one needs a
