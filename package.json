@@ -54,6 +54,9 @@
     "db:seed": "bun run scripts/seed.ts",
     "mcp:stdio": "bun apps/server/src/mcp-stdio.ts"
   },
+  "overrides": {
+    "zod": "^4.5.4"
+  },
   "devDependencies": {
     "@biomejs/biome": "^2.5.12",
     "@types/bun": "^1.1.14",
