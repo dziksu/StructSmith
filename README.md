@@ -38,26 +38,37 @@ architecture together with an AI assistant.
 
 ## Quick start
 
-### Docker Compose
+### Run the public image
+
+With Docker installed, run:
 
 ```bash
+docker run -d --name structsmith \
+  -p 127.0.0.1:8090:8080 \
+  -v structsmith-data:/data \
+  --restart unless-stopped \
+  ghcr.io/dziksu/structsmith:latest
+```
+
+Then open <http://localhost:8090>. No repository clone or local build is needed.
+Your workspaces persist in the `structsmith-data` Docker volume.
+
+### Build from source with Docker Compose
+
+```bash
+git clone https://github.com/dziksu/StructSmith.git structsmith
+cd structsmith
 docker compose up -d --build
 ```
 
 Then open <http://localhost:8090>.
 
-### Docker run
-
-```bash
-docker run -p 8090:8080 -v structsmith-data:/data ghcr.io/dziksu/structsmith:latest
-```
-
 ### Local development
 
 ```bash
-git clone <repository-url>
+git clone https://github.com/dziksu/StructSmith.git structsmith
 cd structsmith
-bun install
+bun install --frozen-lockfile
 bun run dev
 ```
 

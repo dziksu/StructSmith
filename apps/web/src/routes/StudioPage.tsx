@@ -1,7 +1,7 @@
 import { ReactFlowProvider, useReactFlow } from "@xyflow/react";
 import { useEffect, useMemo } from "react";
 import { useTranslation } from "react-i18next";
-import { Panel, PanelGroup, PanelResizeHandle } from "react-resizable-panels";
+import { Group, Panel, Separator } from "react-resizable-panels";
 import { toast } from "sonner";
 import { Canvas } from "@/features/canvas/Canvas";
 import { CommandPalette } from "@/features/command/CommandPalette";
@@ -167,8 +167,8 @@ function StudioContent({ workspaceId, viewId, onNavigate, onOpenMcp, onGoHome }:
       />
 
       <div className="min-h-0 flex-1">
-        <PanelGroup direction="horizontal">
-          <Panel defaultSize={19} minSize={12} maxSize={34}>
+        <Group orientation="horizontal">
+          <Panel defaultSize="19%" minSize="12%" maxSize="34%">
             <Explorer
               workspaceId={workspaceId}
               elements={elements}
@@ -179,9 +179,9 @@ function StudioContent({ workspaceId, viewId, onNavigate, onOpenMcp, onGoHome }:
               onSelectView={selectView}
             />
           </Panel>
-          <PanelResizeHandle className="w-px bg-border transition-colors hover:bg-primary/40" />
+          <Separator className="w-px bg-border transition-colors hover:bg-primary/40" />
 
-          <Panel minSize={30}>
+          <Panel minSize="30%">
             <div className="flex h-full flex-col">
               <div className="min-h-0 flex-1 bg-canvas">
                 {view.data ? (
@@ -206,8 +206,8 @@ function StudioContent({ workspaceId, viewId, onNavigate, onOpenMcp, onGoHome }:
             </div>
           </Panel>
 
-          <PanelResizeHandle className="w-px bg-border transition-colors hover:bg-primary/40" />
-          <Panel defaultSize={22} minSize={14} maxSize={40}>
+          <Separator className="w-px bg-border transition-colors hover:bg-primary/40" />
+          <Panel defaultSize="22%" minSize="14%" maxSize="40%">
             <Inspector
               workspaceId={workspaceId}
               elements={elements}
@@ -216,7 +216,7 @@ function StudioContent({ workspaceId, viewId, onNavigate, onOpenMcp, onGoHome }:
               view={view.data ?? null}
             />
           </Panel>
-        </PanelGroup>
+        </Group>
       </div>
 
       <StatusBar

@@ -6,4 +6,11 @@ data
 .github
 *.log
 .env
+.env.*
+**/.env
+**/.env.*
+**/*.db*
+**/*.sqlite*
+**/*.pem
+**/*.key
 INSTRUCTION.md

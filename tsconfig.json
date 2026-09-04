@@ -19,13 +19,12 @@
     "isolatedModules": true,
     "verbatimModuleSyntax": true,
     "types": ["bun"],
-    "baseUrl": ".",
     "paths": {
-      "@structsmith/contracts": ["packages/contracts/src/index.ts"],
-      "@structsmith/domain": ["packages/domain/src/index.ts"],
-      "@structsmith/database": ["packages/database/src/index.ts"],
-      "@structsmith/mcp": ["packages/mcp/src/index.ts"],
-      "@/*": ["apps/web/src/*"]
+      "@structsmith/contracts": ["./packages/contracts/src/index.ts"],
+      "@structsmith/domain": ["./packages/domain/src/index.ts"],
+      "@structsmith/database": ["./packages/database/src/index.ts"],
+      "@structsmith/mcp": ["./packages/mcp/src/index.ts"],
+      "@/*": ["./apps/web/src/*"]
     }
   },
   "include": [

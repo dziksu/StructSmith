@@ -6,7 +6,13 @@ const config = loadConfig();
 const ctx = createAppContext(config);
 const { app, mcp } = createApp(ctx);
 
-const server = app.listen(config.port, config.host, () => {
+const server = app.listen(config.port, config.host, (error) => {
+  if (error) {
+    console.error("[server] unable to start:", error);
+    ctx.database.close();
+    process.exitCode = 1;
+    return;
+  }
   const base = `http://localhost:${config.port}`;
   console.log(`\n  ${config.productName} v${config.version}`);
   console.log(

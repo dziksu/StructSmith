@@ -36,6 +36,7 @@ ENV NODE_ENV=production \
 
 COPY --from=build /app/node_modules ./node_modules
 COPY --from=build /app/package.json ./package.json
+COPY LICENSE ./LICENSE
 COPY --from=build /app/tsconfig.json ./tsconfig.json
 COPY --from=build /app/packages ./packages
 COPY --from=build /app/scripts ./scripts

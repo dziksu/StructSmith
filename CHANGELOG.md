@@ -6,6 +6,24 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+### Changed
+
+- Upgrade React and React DOM together to 19.2.8, Express to 5.2.1, Sonner to
+  2.0.8, and react-resizable-panels to 4.12.3; regenerate the Bun lockfile
+- Upgrade the development toolchain, including Vite 8 and TypeScript 7
+
+### Fixed
+
+- Adapt the editor to the new panel API while preserving percentage-based sizes
+- Update Express route parameter validation and TypeScript path/CSS declarations
+- Report HTTP listen errors and exit unsuccessfully when the server cannot bind
+  its port under Express 5
+- Use Bun-aware Dependabot updates and group React/React DOM and Express/type
+  packages so dependency updates include the lockfile and compatible pairs
+- Correct public setup instructions and the Compose image name, include the
+  license in the container, and exclude local environment files and databases
+  from Git and Docker build contexts
+
 ## [0.1.0] - 2026-09-04
 
 First public release.
