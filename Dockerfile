@@ -19,6 +19,10 @@ COPY apps ./apps
 COPY migrations ./migrations
 COPY scripts ./scripts
 
+# Release builds stamp the shared product version without committing to main.
+ARG APP_VERSION
+RUN if [ -n "$APP_VERSION" ]; then bun scripts/set-build-version.ts "$APP_VERSION"; fi
+
 RUN cd apps/web && bun run build
 
 # ---------- runtime ----------

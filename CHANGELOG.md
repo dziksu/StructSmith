@@ -8,6 +8,9 @@ All notable changes to this project are documented here. The format follows
 
 ### Changed
 
+- Automate GitHub releases and versioned GHCR images with semantic-release after
+  successful CI on main; derive release versions from Conventional Commits and
+  stamp the same version into the built application without bot commits
 - Upgrade Drizzle ORM to 0.45.2 and Lucide React to the 1.x line (locked to
   1.41.0); verify SQLite persistence and icon rendering with regression tests
 - Upgrade i18next/react-i18next together to 26.4.1/17.0.13, tailwind-merge to
