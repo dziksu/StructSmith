@@ -1,0 +1,63 @@
+name: Bug report
+description: Something does not work as documented
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for the report. Please do not include secrets or client data —
+        element descriptions and presales records often contain both.
+
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened
+      description: What did you expect, and what happened instead?
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. Open the example workspace
+        2. …
+    validations:
+      required: true
+
+  - type: dropdown
+    id: surface
+    attributes:
+      label: Where does it happen?
+      multiple: true
+      options:
+        - Web UI / canvas
+        - REST API
+        - MCP (AI client)
+        - Docker / deployment
+        - Something else
+    validations:
+      required: true
+
+  - type: input
+    id: version
+    attributes:
+      label: Version or commit
+      placeholder: "0.1.0, or the commit sha"
+    validations:
+      required: true
+
+  - type: input
+    id: environment
+    attributes:
+      label: How are you running it?
+      placeholder: "bun run dev on macOS 15 / docker compose on Ubuntu 24.04"
+    validations:
+      required: true
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Relevant logs or console output
+      render: shell

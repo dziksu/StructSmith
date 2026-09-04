@@ -9,3 +9,8 @@ data/*.db-wal
 
 # Original specification — kept locally, not part of the repository
 INSTRUCTION.md
+
+# IDE
+.idea/
+.vscode/
+*.swp

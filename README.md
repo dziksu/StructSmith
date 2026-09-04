@@ -1,11 +1,22 @@
 <p align="center">
-  <img src="apps/web/public/logo.svg" width="108" height="108" alt="StructSmith" />
+  <img src="public/logo.png" width="108" height="108" alt="StructSmith" />
 </p>
 
 <h1 align="center">StructSmith</h1>
 
 <p align="center">
   Model, document and share software architecture — locally, and with your AI client.
+</p>
+
+<p align="center">
+  <a href="https://github.com/dziksu/structsmith/actions/workflows/ci.yml"><img alt="CI" src="https://github.com/dziksu/structsmith/actions/workflows/ci.yml/badge.svg"></a>
+  <a href="LICENSE"><img alt="License: MIT" src="https://img.shields.io/badge/license-MIT-blue.svg"></a>
+  <a href="https://modelcontextprotocol.io"><img alt="MCP" src="https://img.shields.io/badge/MCP-streamable%20http-0FC6F8.svg"></a>
+  <img alt="Bun" src="https://img.shields.io/badge/runtime-Bun-black.svg">
+</p>
+
+<p align="center">
+  <img src="public/screen_02.png" alt="StructSmith editor: model tree, canvas and inspector" width="900">
 </p>
 
 A local-first, open-source tool for modelling software architecture — a self-hosted
@@ -38,7 +49,7 @@ Then open <http://localhost:8090>.
 ### Docker run
 
 ```bash
-docker run -p 8090:8080 -v structsmith-data:/data ghcr.io/<owner>/structsmith:latest
+docker run -p 8090:8080 -v structsmith-data:/data ghcr.io/dziksu/structsmith:latest
 ```
 
 ### Local development
@@ -168,6 +179,35 @@ Workspace
  └── Snapshots
 ```
 
+StructSmith models itself — this diagram is the container view of the example
+self-model, exported straight from the tool with `export_mermaid`:
+
+```mermaid
+flowchart LR
+  architect(["Architect"])
+  ai_client["AI Client<br/><small>Claude, Cursor, any MCP client</small>"]
+  subgraph structsmith["StructSmith"]
+    direction LR
+    web_ui["Web UI<br/><small>React, Vite, React Flow</small>"]
+    rest_api["REST API<br/><small>Bun, Express</small>"]
+    mcp_server["MCP Server<br/><small>MCP SDK, Streamable HTTP</small>"]
+    domain["Domain Services<br/><small>no Express, no SQL</small>"]
+    event_bus["Event Bus<br/><small>in-process, SSE</small>"]
+    repositories["Repositories<br/><small>Drizzle ORM</small>"]
+    sqlite["SQLite<br/><small>WAL, bun:sqlite</small>"]
+  end
+  architect -->|"Models architecture in"| web_ui
+  ai_client -->|"Reads and changes the model through"| mcp_server
+  web_ui -->|"Calls"| rest_api
+  rest_api -->|"Delegates to"| domain
+  mcp_server -->|"Delegates to the same layer as REST"| domain
+  domain -->|"Reads and writes through"| repositories
+  repositories -->|"Persists to"| sqlite
+  domain -.->|"Publishes model changes to"| event_bus
+  event_bus -.->|"Notifies the SSE stream in"| rest_api
+  rest_api -.->|"Pushes workspace.updated to"| web_ui
+```
+
 Three rules the implementation is built around:
 
 1. **Positions belong to views, not to elements.** One element can appear on five diagrams
@@ -255,6 +295,12 @@ to `supportedLanguages`. No copy is hard-coded in components.
 In token mode, `/api` and `/mcp` require `Authorization: Bearer <APP_TOKEN>`; `/health`
 stays public. There is no user system — this is a local/self-hosted tool.
 
+> [!WARNING]
+> The defaults (`AUTH_MODE=none`, `HOST=0.0.0.0`) are meant for `localhost`. As shipped,
+> anyone who can reach the port can read **and modify** every workspace. Before exposing
+> StructSmith beyond your own machine, set `AUTH_MODE=token`, put TLS in front of it, and
+> publish the container port as `127.0.0.1:8090:8080`. See [SECURITY.md](SECURITY.md).
+
 ---
 
 ## Project layout
@@ -299,6 +345,13 @@ bun run mcp:stdio   # MCP over stdio
 Not in this MVP, but the model is designed for it: Structurizr DSL import/export,
 architecture diff between snapshots, AI change preview before apply, optional vendor icon
 packs, and importers for OpenAPI / Terraform / Kubernetes.
+
+## Contributing
+
+Pull requests are welcome. [CONTRIBUTING.md](CONTRIBUTING.md) covers the local setup, the
+four commands CI runs, and the five architecture invariants a change has to respect.
+Participation is governed by the [Code of Conduct](CODE_OF_CONDUCT.md), and security
+issues go through [SECURITY.md](SECURITY.md) rather than public issues.
 
 ## License
 
