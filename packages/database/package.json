@@ -11,6 +11,6 @@
   "dependencies": {
     "@structsmith/contracts": "workspace:*",
     "@structsmith/domain": "workspace:*",
-    "drizzle-orm": "^0.38.3"
+    "drizzle-orm": "^0.45.2"
   }
 }
