@@ -62,7 +62,9 @@ export function toMermaid(
         sourceElementId: edge.sourceElementId,
         targetElementId: edge.targetElementId,
         description: edge.implied
-          ? [...new Set(edge.relationships.map((item) => item.description).filter(Boolean))].join(", ")
+          ? [...new Set(edge.relationships.map((item) => item.description).filter(Boolean))].join(
+              ", ",
+            )
           : first.description,
       };
     });
@@ -120,7 +122,12 @@ export function toOutline(document: WorkspaceDocument): string {
 
   const render = (element: ArchitectureElement, depth: number): void => {
     const indent = "  ".repeat(depth);
-    const meta = [element.kind, element.role, element.technology, element.external ? "external" : null]
+    const meta = [
+      element.kind,
+      element.role,
+      element.technology,
+      element.external ? "external" : null,
+    ]
       .filter(Boolean)
       .join(" · ");
     lines.push(`${indent}- ${element.name} (${meta}) [${element.id}]`);
@@ -135,8 +142,12 @@ export function toOutline(document: WorkspaceDocument): string {
   for (const relationship of document.relationships) {
     const source = byId.get(relationship.sourceElementId)?.name ?? relationship.sourceElementId;
     const target = byId.get(relationship.targetElementId)?.name ?? relationship.targetElementId;
-    const meta = [relationship.interactionStyle, relationship.technology].filter(Boolean).join(" · ");
-    lines.push(`- ${source} → ${target}: ${relationship.description ?? "(no description)"} (${meta})`);
+    const meta = [relationship.interactionStyle, relationship.technology]
+      .filter(Boolean)
+      .join(" · ");
+    lines.push(
+      `- ${source} → ${target}: ${relationship.description ?? "(no description)"} (${meta})`,
+    );
   }
 
   lines.push("", "## Views");

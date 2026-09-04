@@ -1,4 +1,4 @@
-import { BaseEdge, EdgeLabelRenderer, getBezierPath, type EdgeProps } from "@xyflow/react";
+import { BaseEdge, EdgeLabelRenderer, type EdgeProps, getBezierPath } from "@xyflow/react";
 import { memo } from "react";
 import type { RelationshipEdgeData } from "./graph";
 
@@ -33,7 +33,8 @@ function RelationshipEdgeComponent({
     relationship?.interactionStyle === "event" ||
     relationship?.interactionStyle === "dependency";
 
-  const label = data?.implied && (data?.count ?? 0) > 1 ? `${data.label} (${data.count})` : (data?.label ?? "");
+  const label =
+    data?.implied && (data?.count ?? 0) > 1 ? `${data.label} (${data.count})` : (data?.label ?? "");
 
   return (
     <>

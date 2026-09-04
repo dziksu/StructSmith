@@ -8,8 +8,8 @@ import {
   useSearch,
 } from "@tanstack/react-router";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { McpPage } from "@/features/mcp/McpPage";
 import { HomePage } from "@/features/home/HomePage";
+import { McpPage } from "@/features/mcp/McpPage";
 import { StudioPage } from "./StudioPage";
 
 const rootRoute = createRootRoute({

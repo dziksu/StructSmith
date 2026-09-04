@@ -1,6 +1,7 @@
+import type { ElementKind, ElementRole } from "@structsmith/contracts";
 import {
-  Boxes,
   Box,
+  Boxes,
   Cloud,
   Cog,
   Component,
@@ -9,6 +10,7 @@ import {
   HardDrive,
   KeyRound,
   Layers,
+  type LucideIcon,
   Network,
   Server,
   Shapes,
@@ -16,9 +18,7 @@ import {
   User,
   Workflow,
   Zap,
-  type LucideIcon,
 } from "lucide-react";
-import type { ElementKind, ElementRole } from "@structsmith/contracts";
 
 /** Lucide only — no vendor icon packs in the MVP (spec §51). */
 const ROLE_ICONS: Partial<Record<ElementRole, LucideIcon>> = {

@@ -1,4 +1,9 @@
-import { createDatabase, DrizzleStore, runMigrations, type DatabaseHandle } from "@structsmith/database";
+import {
+  createDatabase,
+  type DatabaseHandle,
+  DrizzleStore,
+  runMigrations,
+} from "@structsmith/database";
 import { createServices, InMemoryEventBus, type Services } from "@structsmith/domain";
 import type { AppConfig } from "./config";
 import { seedExampleWorkspace } from "./seed";
@@ -14,7 +19,9 @@ export function createAppContext(config: AppConfig): AppContext {
   const database = createDatabase(config.databasePath);
   const migration = runMigrations(database.sqlite, config.migrationsDir);
   if (migration.applied.length > 0) {
-    console.log(`[db] applied ${migration.applied.length} migration(s): ${migration.applied.join(", ")}`);
+    console.log(
+      `[db] applied ${migration.applied.length} migration(s): ${migration.applied.join(", ")}`,
+    );
   }
 
   const bus = new InMemoryEventBus();

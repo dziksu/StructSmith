@@ -1,5 +1,5 @@
-import { Download } from "lucide-react";
 import { toPng, toSvg } from "html-to-image";
+import { Download } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -16,7 +16,10 @@ import { api } from "@/lib/api";
 import { downloadBlob, downloadJson, downloadText } from "@/lib/download";
 
 const slug = (value: string): string =>
-  value.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") || "diagram";
+  value
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-|-$/g, "") || "diagram";
 
 /** PNG/SVG come from the live canvas; JSON and Mermaid come from the model. */
 async function captureCanvas(format: "png" | "svg"): Promise<string | null> {

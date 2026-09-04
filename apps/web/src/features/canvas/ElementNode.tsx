@@ -1,4 +1,4 @@
-import { Handle, Position, type NodeProps } from "@xyflow/react";
+import { Handle, type NodeProps, Position } from "@xyflow/react";
 import { AlertTriangle, Lock } from "lucide-react";
 import { memo } from "react";
 import { useTranslation } from "react-i18next";
@@ -41,7 +41,10 @@ function ElementNodeComponent({ data, selected }: NodeProps & { data: ElementNod
         </div>
         {severity && (
           <AlertTriangle
-            className={cn("h-3.5 w-3.5 shrink-0", severity === "critical" ? "text-destructive" : "text-warning")}
+            className={cn(
+              "h-3.5 w-3.5 shrink-0",
+              severity === "critical" ? "text-destructive" : "text-warning",
+            )}
           />
         )}
         {locked && <Lock className="h-3 w-3 shrink-0 text-muted-foreground" />}

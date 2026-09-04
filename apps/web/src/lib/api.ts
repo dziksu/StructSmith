@@ -6,7 +6,6 @@ import type {
   ArchitectureModel,
   ArchitectureRecord,
   ArchitectureRelationship,
-  ArchitectureView,
   CreateRecordInput,
   CreateViewInput,
   CreateWorkspaceInput,
@@ -80,7 +79,8 @@ const body = (value: unknown): RequestInit => ({ body: JSON.stringify(value) });
 
 export const api = {
   /* workspaces */
-  listWorkspaces: () => request<{ workspaces: Workspace[] }>("/workspaces").then((r) => r.workspaces),
+  listWorkspaces: () =>
+    request<{ workspaces: Workspace[] }>("/workspaces").then((r) => r.workspaces),
   getWorkspace: (id: string) => request<Workspace>(`/workspaces/${id}`),
   createWorkspace: (input: CreateWorkspaceInput) =>
     request<Workspace>("/workspaces", { method: "POST", ...body(input) }),
@@ -105,11 +105,16 @@ export const api = {
   exportMermaid: (id: string, viewId?: string) =>
     request<string>(`/workspaces/${id}/export/mermaid${viewId ? `?viewId=${viewId}` : ""}`),
   applyOperations: (id: string, command: ApplyOperationsRequest) =>
-    request<ApplyOperationsResult>(`/workspaces/${id}/commands`, { method: "POST", ...body(command) }),
+    request<ApplyOperationsResult>(`/workspaces/${id}/commands`, {
+      method: "POST",
+      ...body(command),
+    }),
 
   /* elements & relationships (single-entity REST surface) */
   listElements: (id: string) =>
-    request<{ elements: ArchitectureElement[] }>(`/workspaces/${id}/elements`).then((r) => r.elements),
+    request<{ elements: ArchitectureElement[] }>(`/workspaces/${id}/elements`).then(
+      (r) => r.elements,
+    ),
   listRelationships: (id: string) =>
     request<{ relationships: ArchitectureRelationship[] }>(`/workspaces/${id}/relationships`).then(
       (r) => r.relationships,
@@ -117,7 +122,9 @@ export const api = {
 
   /* views */
   listViews: (id: string) =>
-    request<{ views: ViewDetail[] }>(`/workspaces/${id}/views?include=elements`).then((r) => r.views),
+    request<{ views: ViewDetail[] }>(`/workspaces/${id}/views?include=elements`).then(
+      (r) => r.views,
+    ),
   getView: (viewId: string) => request<ViewDetail>(`/views/${viewId}`),
   createView: (id: string, input: CreateViewInput) =>
     request<{ result: ViewDetail; revision: number }>(`/workspaces/${id}/views`, {
@@ -165,7 +172,9 @@ export const api = {
 
   /* snapshots */
   listSnapshots: (id: string) =>
-    request<{ snapshots: SnapshotSummary[] }>(`/workspaces/${id}/snapshots`).then((r) => r.snapshots),
+    request<{ snapshots: SnapshotSummary[] }>(`/workspaces/${id}/snapshots`).then(
+      (r) => r.snapshots,
+    ),
   createSnapshot: (id: string, label: string) =>
     request<SnapshotSummary>(`/workspaces/${id}/snapshots`, {
       method: "POST",
@@ -181,7 +190,10 @@ export const api = {
   getMcpInfo: () => request<McpInfo>("/mcp-info"),
   getPresets: () => request<{ presets: ElementPreset[] }>("/presets").then((r) => r.presets),
   getSettings: () =>
-    request<{ productName: string; version: string; authMode: "none" | "token"; mcpReadOnly: boolean }>(
-      "/settings",
-    ),
+    request<{
+      productName: string;
+      version: string;
+      authMode: "none" | "token";
+      mcpReadOnly: boolean;
+    }>("/settings"),
 };

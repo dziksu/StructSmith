@@ -92,9 +92,7 @@ export function Inspector({ workspaceId, elements, relationships, records, view 
               onPatch={(data, label) =>
                 applyOperations.mutate({
                   label,
-                  operations: [
-                    { op: "updateRelationship", relationshipId: relationship.id, data },
-                  ],
+                  operations: [{ op: "updateRelationship", relationshipId: relationship.id, data }],
                 })
               }
             />
@@ -144,7 +142,7 @@ function ElementInspector({
     setName(element.name);
     setDescription(element.description ?? "");
     setTechnology(element.technology ?? "");
-  }, [element.id, element.name, element.description, element.technology]);
+  }, [element.name, element.description, element.technology]);
 
   const debouncedPatch = useDebouncedCallback(
     (data: UpdateElementInput) => onPatch(data, `Updated ${element.name}`),
@@ -268,10 +266,7 @@ function ElementInspector({
       </div>
 
       <Field label={t("common.tags")}>
-        <TagEditor
-          tags={element.tags}
-          onChange={(tags) => onPatch({ tags }, "Updated tags")}
-        />
+        <TagEditor tags={element.tags} onChange={(tags) => onPatch({ tags }, "Updated tags")} />
       </Field>
 
       <Field label={t("common.properties")}>
@@ -285,7 +280,10 @@ function ElementInspector({
         <Field label={t("inspector.linkedRecords")}>
           <div className="space-y-1">
             {linked.map((record) => (
-              <div key={record.id} className="rounded border border-border/60 px-2 py-1 text-[12px]">
+              <div
+                key={record.id}
+                className="rounded border border-border/60 px-2 py-1 text-[12px]"
+              >
                 <Badge variant="outline">{t(`presales.kinds.${record.kind}`)}</Badge>
                 <div className="mt-1 leading-snug">{record.title}</div>
               </div>
@@ -315,7 +313,7 @@ function RelationshipInspector({
   useEffect(() => {
     setDescription(relationship.description ?? "");
     setTechnology(relationship.technology ?? "");
-  }, [relationship.id, relationship.description, relationship.technology]);
+  }, [relationship.description, relationship.technology]);
 
   const debouncedPatch = useDebouncedCallback(
     (data: UpdateRelationshipInput) => onPatch(data, "Updated relationship"),
@@ -328,7 +326,9 @@ function RelationshipInspector({
     <div className="space-y-4">
       <div className="flex items-center gap-2">
         <Badge variant="primary">{t("inspector.relationship")}</Badge>
-        <span className="truncate font-mono text-[10px] text-muted-foreground">{relationship.id}</span>
+        <span className="truncate font-mono text-[10px] text-muted-foreground">
+          {relationship.id}
+        </span>
       </div>
 
       <div className="grid grid-cols-2 gap-2">
@@ -409,7 +409,10 @@ function RelationshipInspector({
       </Field>
 
       <Field label={t("common.tags")}>
-        <TagEditor tags={relationship.tags} onChange={(tags) => onPatch({ tags }, "Updated tags")} />
+        <TagEditor
+          tags={relationship.tags}
+          onChange={(tags) => onPatch({ tags }, "Updated tags")}
+        />
       </Field>
 
       <Field label={t("common.properties")}>

@@ -6,12 +6,7 @@ import type {
   ValidationResult,
   WorkspaceDocument,
 } from "@structsmith/contracts";
-import {
-  assertRevision,
-  captureDocument,
-  requireWorkspace,
-  type ServiceContext,
-} from "../context";
+import { assertRevision, captureDocument, requireWorkspace, type ServiceContext } from "../context";
 import { toMermaid, toOutline } from "../export";
 import { nowIso } from "../ids";
 import { applyOperations } from "../operations";
@@ -75,7 +70,13 @@ export class ModelService {
       assertRevision(workspace, command.expectedRevision);
 
       const label = command.label ?? `Before ${source.toUpperCase()} change`;
-      const snapshot = writeSnapshot(repos, workspaceId, label, source, this.ctx.config.maxSnapshots);
+      const snapshot = writeSnapshot(
+        repos,
+        workspaceId,
+        label,
+        source,
+        this.ctx.config.maxSnapshots,
+      );
 
       const { applied, warnings } = applyOperations(repos, workspace, command.operations);
 

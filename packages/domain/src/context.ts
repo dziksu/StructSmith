@@ -117,7 +117,13 @@ export function mutate<T>(
   } else if (kind === "record") {
     ctx.bus.emit({ type: "record.changed", workspaceId, revision, source });
   } else if (kind === "model") {
-    ctx.bus.emit({ type: "model.changed", workspaceId, revision, source, message: outcome.message });
+    ctx.bus.emit({
+      type: "model.changed",
+      workspaceId,
+      revision,
+      source,
+      message: outcome.message,
+    });
   }
   ctx.bus.emit({
     type: "workspace.changed",

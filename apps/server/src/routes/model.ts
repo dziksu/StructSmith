@@ -3,8 +3,8 @@ import {
   CreateElementSchema,
   CreateRecordSchema,
   CreateRelationshipSchema,
-  CreateViewSchema,
   CreateSnapshotRequestSchema,
+  CreateViewSchema,
   ERROR_CODES,
   UpdateElementSchema,
   UpdateLayoutRequestSchema,
@@ -153,7 +153,9 @@ export function modelRoutes(services: Services): Router {
     "/relationships/:id",
     handler((req, res) => {
       const id = param(req, "id");
-      res.json(services.relationships.delete(workspaceOfRelationship(id), id, mutationOptions(req)));
+      res.json(
+        services.relationships.delete(workspaceOfRelationship(id), id, mutationOptions(req)),
+      );
     }),
   );
 

@@ -49,7 +49,8 @@ export type Executor = Db | TxLike;
 
 function workspaceRepository(db: Executor): WorkspaceRepository {
   return {
-    list: () => db.select().from(t.workspaces).orderBy(desc(t.workspaces.updatedAt)).all().map(toWorkspace),
+    list: () =>
+      db.select().from(t.workspaces).orderBy(desc(t.workspaces.updatedAt)).all().map(toWorkspace),
     findById: (id) => {
       const row = db.select().from(t.workspaces).where(eq(t.workspaces.id, id)).get();
       return row ? toWorkspace(row) : undefined;

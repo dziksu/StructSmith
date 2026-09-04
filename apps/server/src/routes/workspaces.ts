@@ -70,7 +70,9 @@ export function workspaceRoutes(services: Services): Router {
   router.get(
     "/workspaces/:id/activity",
     handler((req, res) =>
-      res.json({ activity: services.activity.list(param(req, "id"), Number(req.query.limit ?? 100)) }),
+      res.json({
+        activity: services.activity.list(param(req, "id"), Number(req.query.limit ?? 100)),
+      }),
     ),
   );
 

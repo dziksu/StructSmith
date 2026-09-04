@@ -32,7 +32,7 @@ export function McpPage({ onBack }: { onBack: () => void }) {
   };
 
   const clientConfig = JSON.stringify(
-    { mcpServers: { "structsmith": { type: "http", url: endpoint } } },
+    { mcpServers: { structsmith: { type: "http", url: endpoint } } },
     null,
     2,
   );
@@ -60,7 +60,9 @@ export function McpPage({ onBack }: { onBack: () => void }) {
           <Separator />
           <Row label={t("mcp.endpoint")}>
             <div className="flex items-center gap-2">
-              <code className="rounded bg-muted px-1.5 py-0.5 font-mono text-[12px]">{endpoint}</code>
+              <code className="rounded bg-muted px-1.5 py-0.5 font-mono text-[12px]">
+                {endpoint}
+              </code>
               <Button size="sm" variant="ghost" onClick={() => void copy()}>
                 {copied ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
                 {t("mcp.copyEndpoint")}
@@ -93,14 +95,12 @@ export function McpPage({ onBack }: { onBack: () => void }) {
 
         <section className="mt-6">
           <h2 className="text-[13px] font-semibold">
-            {t("mcp.tools")} <span className="text-muted-foreground">({info.data?.tools.length ?? 0})</span>
+            {t("mcp.tools")}{" "}
+            <span className="text-muted-foreground">({info.data?.tools.length ?? 0})</span>
           </h2>
           <div className="mt-2 grid gap-1 sm:grid-cols-2">
             {info.data?.tools.map((tool) => (
-              <div
-                key={tool.name}
-                className="rounded border border-border bg-card px-2.5 py-1.5"
-              >
+              <div key={tool.name} className="rounded border border-border bg-card px-2.5 py-1.5">
                 <div className="flex items-center gap-1.5">
                   <code className="font-mono text-[12px]">{tool.name}</code>
                   <Badge variant={tool.mutating ? "primary" : "outline"}>

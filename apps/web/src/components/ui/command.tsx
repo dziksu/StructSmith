@@ -1,6 +1,6 @@
 import { Command as CommandPrimitive } from "cmdk";
 import { Search } from "lucide-react";
-import { forwardRef, type ComponentPropsWithoutRef, type ElementRef } from "react";
+import { type ComponentPropsWithoutRef, type ElementRef, forwardRef } from "react";
 import { cn } from "@/lib/utils";
 
 export const Command = forwardRef<
@@ -9,7 +9,10 @@ export const Command = forwardRef<
 >(({ className, ...props }, ref) => (
   <CommandPrimitive
     ref={ref}
-    className={cn("flex h-full w-full flex-col overflow-hidden rounded-lg bg-popover text-popover-foreground", className)}
+    className={cn(
+      "flex h-full w-full flex-col overflow-hidden rounded-lg bg-popover text-popover-foreground",
+      className,
+    )}
     {...props}
   />
 ));
@@ -49,7 +52,11 @@ export const CommandEmpty = forwardRef<
   ElementRef<typeof CommandPrimitive.Empty>,
   ComponentPropsWithoutRef<typeof CommandPrimitive.Empty>
 >((props, ref) => (
-  <CommandPrimitive.Empty ref={ref} className="py-6 text-center text-xs text-muted-foreground" {...props} />
+  <CommandPrimitive.Empty
+    ref={ref}
+    className="py-6 text-center text-xs text-muted-foreground"
+    {...props}
+  />
 ));
 CommandEmpty.displayName = "CommandEmpty";
 

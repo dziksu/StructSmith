@@ -3,6 +3,14 @@ import { useEffect, useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { Panel, PanelGroup, PanelResizeHandle } from "react-resizable-panels";
 import { toast } from "sonner";
+import { Canvas } from "@/features/canvas/Canvas";
+import { CommandPalette } from "@/features/command/CommandPalette";
+import { ElementPalette } from "@/features/command/ElementPalette";
+import { Explorer } from "@/features/explorer/Explorer";
+import { Inspector } from "@/features/inspector/Inspector";
+import { BottomPanel } from "@/features/panels/BottomPanel";
+import { StatusBar } from "@/features/panels/StatusBar";
+import { TopBar } from "@/features/topbar/TopBar";
 import {
   useApplyOperations,
   useModel,
@@ -18,14 +26,6 @@ import { useHistory } from "@/hooks/useHistory";
 import { useWorkspaceEvents } from "@/hooks/useWorkspaceEvents";
 import { useEditorStore } from "@/store/editor";
 import { useHistoryStore } from "@/store/history";
-import { Canvas } from "@/features/canvas/Canvas";
-import { CommandPalette } from "@/features/command/CommandPalette";
-import { ElementPalette } from "@/features/command/ElementPalette";
-import { Explorer } from "@/features/explorer/Explorer";
-import { Inspector } from "@/features/inspector/Inspector";
-import { BottomPanel } from "@/features/panels/BottomPanel";
-import { StatusBar } from "@/features/panels/StatusBar";
-import { TopBar } from "@/features/topbar/TopBar";
 
 interface StudioPageProps {
   workspaceId: string;
@@ -66,6 +66,9 @@ function StudioContent({ workspaceId, viewId, onNavigate, onOpenMcp, onGoHome }:
 
   useWorkspaceEvents(workspaceId);
 
+  // The undo stack holds snapshot ids of one workspace, so switching workspaces
+  // has to reset it — otherwise undo would restore into the wrong workspace.
+  // biome-ignore lint/correctness/useExhaustiveDependencies: workspaceId is the trigger, not a value the effect reads.
   useEffect(() => {
     resetHistory();
     clearSelection();
@@ -193,7 +196,9 @@ function StudioContent({ workspaceId, viewId, onNavigate, onOpenMcp, onGoHome }:
                 ) : (
                   <div className="flex h-full flex-col items-center justify-center gap-1 text-center">
                     <p className="text-sm font-medium">{t("explorer.emptyViews")}</p>
-                    <p className="max-w-xs text-xs text-muted-foreground">{t("canvas.emptyHint")}</p>
+                    <p className="max-w-xs text-xs text-muted-foreground">
+                      {t("canvas.emptyHint")}
+                    </p>
                   </div>
                 )}
               </div>

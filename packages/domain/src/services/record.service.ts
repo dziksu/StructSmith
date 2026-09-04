@@ -3,7 +3,7 @@ import type {
   CreateRecordInput,
   UpdateRecordInput,
 } from "@structsmith/contracts";
-import { mutate, type MutationOptions, type ServiceContext } from "../context";
+import { type MutationOptions, mutate, type ServiceContext } from "../context";
 import * as engine from "../engine";
 
 export class RecordService {
@@ -24,10 +24,19 @@ export class RecordService {
     });
   }
 
-  update(workspaceId: string, recordId: string, input: UpdateRecordInput, options: MutationOptions = {}) {
+  update(
+    workspaceId: string,
+    recordId: string,
+    input: UpdateRecordInput,
+    options: MutationOptions = {},
+  ) {
     return mutate(this.ctx, workspaceId, options, (repos, workspace) => {
       const record = engine.updateRecord(repos, workspace, recordId, input);
-      return { result: record, message: `Updated record: ${record.title}`, kind: "record" as const };
+      return {
+        result: record,
+        message: `Updated record: ${record.title}`,
+        kind: "record" as const,
+      };
     });
   }
 
@@ -35,7 +44,11 @@ export class RecordService {
     return mutate(this.ctx, workspaceId, options, (repos, workspace) => {
       const title = repos.records.findById(recordId)?.title ?? recordId;
       engine.deleteRecord(repos, workspace, recordId);
-      return { result: { id: recordId }, message: `Deleted record: ${title}`, kind: "record" as const };
+      return {
+        result: { id: recordId },
+        message: `Deleted record: ${title}`,
+        kind: "record" as const,
+      };
     });
   }
 }

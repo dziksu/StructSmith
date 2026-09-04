@@ -46,7 +46,8 @@ export const useEditorStore = create<EditorState>((set) => ({
   select: (selection) => set({ selection }),
   clearSelection: () => set({ selection: { type: "none" }, connectFrom: null }),
   setExplorerTab: (explorerTab) => set({ explorerTab }),
-  setBottomPanel: (bottomPanel) => set((state) => ({ bottomPanel: state.bottomPanel === bottomPanel ? null : bottomPanel })),
+  setBottomPanel: (bottomPanel) =>
+    set((state) => ({ bottomPanel: state.bottomPanel === bottomPanel ? null : bottomPanel })),
   setCommandOpen: (commandOpen) => set({ commandOpen }),
   setPaletteOpen: (paletteOpen) => set({ paletteOpen }),
   setConnectFrom: (connectFrom) => set({ connectFrom }),

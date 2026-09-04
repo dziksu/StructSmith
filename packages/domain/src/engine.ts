@@ -21,11 +21,11 @@ import type {
   WorkspaceMode,
 } from "@structsmith/contracts";
 import { ERROR_CODES } from "@structsmith/contracts";
-import { DomainError, badRequest, ruleViolation } from "./errors";
+import { badRequest, DomainError, ruleViolation } from "./errors";
 import { createId, nowIso, uniqueKey } from "./ids";
+import { edgeLabel, resolveRelationshipsForView } from "./implied";
 import { computeLayout, DEFAULT_NODE_HEIGHT, DEFAULT_NODE_WIDTH } from "./layout";
 import type { Repositories } from "./ports";
-import { edgeLabel, resolveRelationshipsForView } from "./implied";
 import { checkParent, descendantsOf, wouldCreateCycle } from "./rules";
 
 /* ------------------------------------------------------------------ */
@@ -148,7 +148,8 @@ export function updateElement(
     kind: input.kind ?? current.kind,
     role: input.role !== undefined ? input.role : current.role,
     name: input.name ?? current.name,
-    description: input.description !== undefined ? (input.description ?? null) : current.description,
+    description:
+      input.description !== undefined ? (input.description ?? null) : current.description,
     technology: input.technology !== undefined ? (input.technology ?? null) : current.technology,
     external: input.external ?? current.external,
     tags: input.tags ?? current.tags,
@@ -243,7 +244,8 @@ export function updateRelationship(
     ...current,
     sourceElementId: input.sourceElementId ?? current.sourceElementId,
     targetElementId: input.targetElementId ?? current.targetElementId,
-    description: input.description !== undefined ? (input.description ?? null) : current.description,
+    description:
+      input.description !== undefined ? (input.description ?? null) : current.description,
     technology: input.technology !== undefined ? (input.technology ?? null) : current.technology,
     interactionStyle: input.interactionStyle ?? current.interactionStyle,
     tags: input.tags ?? current.tags,
@@ -283,7 +285,8 @@ export function createView(
   if (input.scopeElementId) requireElement(repos, input.scopeElementId, workspace.id);
 
   const keys = new Set(repos.views.listByWorkspace(workspace.id).map((view) => view.key));
-  const key = input.key && !keys.has(input.key) ? input.key : uniqueKey(keys, input.key ?? input.name);
+  const key =
+    input.key && !keys.has(input.key) ? input.key : uniqueKey(keys, input.key ?? input.name);
 
   const timestamp = nowIso();
   const view: ArchitectureView = {
@@ -326,7 +329,8 @@ export function updateView(
     ...current,
     key: input.key ?? current.key,
     name: input.name ?? current.name,
-    description: input.description !== undefined ? (input.description ?? null) : current.description,
+    description:
+      input.description !== undefined ? (input.description ?? null) : current.description,
     kind: input.kind ?? current.kind,
     scopeElementId:
       input.scopeElementId !== undefined ? (input.scopeElementId ?? null) : current.scopeElementId,
@@ -539,7 +543,11 @@ export function updateRecord(
 ): ArchitectureRecord {
   const current = repos.records.findById(recordId);
   if (!current || current.workspaceId !== workspace.id) {
-    throw new DomainError(ERROR_CODES.RECORD_NOT_FOUND, `Record "${recordId}" does not exist.`, 404);
+    throw new DomainError(
+      ERROR_CODES.RECORD_NOT_FOUND,
+      `Record "${recordId}" does not exist.`,
+      404,
+    );
   }
   if (input.linkedElementIds) {
     for (const elementId of input.linkedElementIds) requireElement(repos, elementId, workspace.id);
@@ -562,7 +570,11 @@ export function updateRecord(
 export function deleteRecord(repos: Repositories, workspace: Workspace, recordId: string): void {
   const current = repos.records.findById(recordId);
   if (!current || current.workspaceId !== workspace.id) {
-    throw new DomainError(ERROR_CODES.RECORD_NOT_FOUND, `Record "${recordId}" does not exist.`, 404);
+    throw new DomainError(
+      ERROR_CODES.RECORD_NOT_FOUND,
+      `Record "${recordId}" does not exist.`,
+      404,
+    );
   }
   repos.records.delete(recordId);
 }

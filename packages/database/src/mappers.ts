@@ -220,10 +220,7 @@ export function fromViewRelationship(entry: ViewRelationship): Row<typeof viewRe
   };
 }
 
-export function toRecord(
-  row: Row<typeof records>,
-  linkedElementIds: string[],
-): ArchitectureRecord {
+export function toRecord(row: Row<typeof records>, linkedElementIds: string[]): ArchitectureRecord {
   return {
     id: row.id,
     workspaceId: row.workspaceId,

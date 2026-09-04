@@ -77,7 +77,7 @@ export function PresalesPanel({
   const [draft, setDraft] = useState<Draft | null>(null);
 
   const save = (): void => {
-    if (!draft || !draft.title.trim()) return;
+    if (!draft?.title.trim()) return;
     const data = {
       kind: draft.kind,
       title: draft.title.trim(),
@@ -137,7 +137,9 @@ export function PresalesPanel({
                   linkedElementIds: record.linkedElementIds,
                 })
               }
-              onKeyDown={(event) => event.key === "Enter" && select({ type: "record", id: record.id })}
+              onKeyDown={(event) =>
+                event.key === "Enter" && select({ type: "record", id: record.id })
+              }
               className="group cursor-pointer rounded border border-border/60 bg-card px-2 py-1.5 transition-colors hover:border-border hover:bg-accent/50"
             >
               <div className="flex items-center gap-1.5">

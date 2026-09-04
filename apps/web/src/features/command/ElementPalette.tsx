@@ -88,7 +88,9 @@ export function ElementPalette({
                     onSelect={() => add(preset)}
                   >
                     <Icon className="h-3.5 w-3.5 text-muted-foreground" />
-                    <span className="flex-1">{t(`presets.${preset.id}`, { defaultValue: preset.label })}</span>
+                    <span className="flex-1">
+                      {t(`presets.${preset.id}`, { defaultValue: preset.label })}
+                    </span>
                     <span className="text-[10px] uppercase tracking-wide text-muted-foreground">
                       {t(`kinds.${preset.kind}`)}
                     </span>

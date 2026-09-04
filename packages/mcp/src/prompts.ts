@@ -74,7 +74,7 @@ export function registerPrompts(server: McpServer): void {
         [
           `Analyse workspace "${workspaceId}" and identify architectural risks.`,
           "For each risk: what could go wrong, what it affects, how likely and how severe.",
-          "Store the important ones with `record_create` (kind: \"risk\") and link them to the affected elements.",
+          'Store the important ones with `record_create` (kind: "risk") and link them to the affected elements.',
         ].join("\n"),
       ),
   );
@@ -91,7 +91,7 @@ export function registerPrompts(server: McpServer): void {
         [
           `Read workspace "${workspaceId}" and list everything that is still unknown:`,
           "protocols, volumes, SLAs, data ownership, auth, environments, migration.",
-          "Group the findings into questions for a discovery call and store them with `record_create` (kind: \"unknown\").",
+          'Group the findings into questions for a discovery call and store them with `record_create` (kind: "unknown").',
         ].join("\n"),
       ),
   );

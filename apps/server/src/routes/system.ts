@@ -27,7 +27,9 @@ export function systemRoutes(ctx: AppContext): Router {
       if (filter && event.workspaceId !== filter) return;
 
       if (event.type === "workspace.deleted") {
-        res.write(`event: workspace.deleted\ndata: ${JSON.stringify({ workspaceId: event.workspaceId })}\n\n`);
+        res.write(
+          `event: workspace.deleted\ndata: ${JSON.stringify({ workspaceId: event.workspaceId })}\n\n`,
+        );
         return;
       }
 
@@ -60,9 +62,11 @@ export function systemRoutes(ctx: AppContext): Router {
         endpoint: `${protocol}://${host}/mcp`,
         readOnly: ctx.config.mcpReadOnly,
         authMode: ctx.config.authMode,
-        tools: MCP_TOOLS.filter((tool) => !ctx.config.mcpReadOnly || !tool.mutating).map((tool) => ({
-          ...tool,
-        })),
+        tools: MCP_TOOLS.filter((tool) => !ctx.config.mcpReadOnly || !tool.mutating).map(
+          (tool) => ({
+            ...tool,
+          }),
+        ),
         resources: [...MCP_RESOURCES],
         prompts: MCP_PROMPTS.map((prompt) => ({ ...prompt })),
       };

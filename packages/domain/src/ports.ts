@@ -78,7 +78,12 @@ export interface SnapshotRepository {
 
 export interface ActivityRepository {
   listByWorkspace(workspaceId: string, limit: number): ActivityEntry[];
-  insert(entry: { workspaceId: string; source: ChangeSource; message: string; createdAt: string }): void;
+  insert(entry: {
+    workspaceId: string;
+    source: ChangeSource;
+    message: string;
+    createdAt: string;
+  }): void;
   trim(workspaceId: string, keep: number): void;
 }
 
@@ -98,9 +103,27 @@ export interface Store extends Repositories {
 }
 
 export type DomainEvent =
-  | { type: "workspace.changed"; workspaceId: string; revision: number; source: ChangeSource; message?: string }
-  | { type: "model.changed"; workspaceId: string; revision: number; source: ChangeSource; message?: string }
-  | { type: "view.changed"; workspaceId: string; viewId: string; revision: number; source: ChangeSource }
+  | {
+      type: "workspace.changed";
+      workspaceId: string;
+      revision: number;
+      source: ChangeSource;
+      message?: string;
+    }
+  | {
+      type: "model.changed";
+      workspaceId: string;
+      revision: number;
+      source: ChangeSource;
+      message?: string;
+    }
+  | {
+      type: "view.changed";
+      workspaceId: string;
+      viewId: string;
+      revision: number;
+      source: ChangeSource;
+    }
   | { type: "record.changed"; workspaceId: string; revision: number; source: ChangeSource }
   | { type: "workspace.deleted"; workspaceId: string; source: ChangeSource };
 

@@ -1,6 +1,6 @@
 export * from "./catalog";
-export * from "./server";
 export * from "./http";
-export { registerTools } from "./tools";
-export { registerResources } from "./resources";
 export { registerPrompts } from "./prompts";
+export { registerResources } from "./resources";
+export * from "./server";
+export { registerTools } from "./tools";

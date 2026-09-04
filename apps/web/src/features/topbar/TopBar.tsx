@@ -14,6 +14,7 @@ import {
   Undo2,
 } from "lucide-react";
 import { useTranslation } from "react-i18next";
+import { Logo } from "@/components/Logo";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -24,11 +25,10 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Logo } from "@/components/Logo";
 import { Separator } from "@/components/ui/separator";
 import { Tooltip } from "@/components/ui/tooltip";
 import { supportedLanguages } from "@/i18n";
-import { useTheme, type Theme } from "@/lib/theme";
+import { type Theme, useTheme } from "@/lib/theme";
 import { useEditorStore } from "@/store/editor";
 import { ExportMenu } from "./ExportMenu";
 

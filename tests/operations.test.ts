@@ -14,7 +14,11 @@ describe("batch operations", () => {
         ref: "queue",
         data: { kind: "container", role: "queue", name: "Invoice Queue", technology: "SQS" },
       },
-      { op: "createElement", ref: "worker", data: { kind: "container", role: "worker", name: "Invoice Worker" } },
+      {
+        op: "createElement",
+        ref: "worker",
+        data: { kind: "container", role: "worker", name: "Invoice Worker" },
+      },
       {
         op: "createRelationship",
         data: {

@@ -2,7 +2,7 @@ import type { ArchitectureOperationInput } from "@structsmith/contracts";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
-import { api, ApiError } from "@/lib/api";
+import { ApiError, api } from "@/lib/api";
 import { invalidateWorkspace, queryKeys } from "@/lib/query";
 import { useEditorStore } from "@/store/editor";
 import { useHistoryStore } from "@/store/history";

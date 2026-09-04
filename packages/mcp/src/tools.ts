@@ -1,3 +1,4 @@
+import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import {
   ApplyOperationsRequestSchema,
   CreateElementSchema,
@@ -14,7 +15,6 @@ import {
   UpdateWorkspaceSchema,
 } from "@structsmith/contracts";
 import type { Services } from "@structsmith/domain";
-import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
 import { MCP_TOOLS } from "./catalog";
 
@@ -91,7 +91,11 @@ export function registerTools(
     { workspaceId, expectedRevision, data: UpdateWorkspaceSchema },
     (args: unknown) => {
       const input = z
-        .object({ workspaceId: z.string(), expectedRevision: z.number().int().optional(), data: UpdateWorkspaceSchema })
+        .object({
+          workspaceId: z.string(),
+          expectedRevision: z.number().int().optional(),
+          data: UpdateWorkspaceSchema,
+        })
         .parse(args);
       return json(
         services.workspaces.update(input.workspaceId, input.data, {
@@ -123,9 +127,7 @@ export function registerTools(
       annotations: readOnlyAnnotations,
     },
     ({ workspaceId: id, format }) =>
-      format === "outline"
-        ? plain(services.model.exportOutline(id))
-        : json(services.model.get(id)),
+      format === "outline" ? plain(services.model.exportOutline(id)) : json(services.model.get(id)),
   );
 
   server.registerTool(
@@ -167,7 +169,11 @@ export function registerTools(
     { workspaceId, expectedRevision, data: CreateElementSchema },
     (args: unknown) => {
       const input = z
-        .object({ workspaceId: z.string(), expectedRevision: z.number().int().optional(), data: CreateElementSchema })
+        .object({
+          workspaceId: z.string(),
+          expectedRevision: z.number().int().optional(),
+          data: CreateElementSchema,
+        })
         .parse(args);
       return json(
         services.elements.create(input.workspaceId, input.data, {
@@ -290,7 +296,11 @@ export function registerTools(
 
   server.registerTool(
     "view_list",
-    { description: describe("view_list"), inputSchema: { workspaceId }, annotations: readOnlyAnnotations },
+    {
+      description: describe("view_list"),
+      inputSchema: { workspaceId },
+      annotations: readOnlyAnnotations,
+    },
     ({ workspaceId: id }) => json(services.views.list(id)),
   );
 
@@ -309,7 +319,11 @@ export function registerTools(
     { workspaceId, expectedRevision, data: CreateViewSchema },
     (args: unknown) => {
       const input = z
-        .object({ workspaceId: z.string(), expectedRevision: z.number().int().optional(), data: CreateViewSchema })
+        .object({
+          workspaceId: z.string(),
+          expectedRevision: z.number().int().optional(),
+          data: CreateViewSchema,
+        })
         .parse(args);
       return json(
         services.views.create(input.workspaceId, input.data, {
@@ -346,7 +360,11 @@ export function registerTools(
     { workspaceId, viewId: z.string(), expectedRevision },
     (args: unknown) => {
       const input = z
-        .object({ workspaceId: z.string(), viewId: z.string(), expectedRevision: z.number().int().optional() })
+        .object({
+          workspaceId: z.string(),
+          viewId: z.string(),
+          expectedRevision: z.number().int().optional(),
+        })
         .parse(args);
       return json(
         services.views.delete(input.workspaceId, input.viewId, {
@@ -409,7 +427,12 @@ export function registerTools(
 
   registerWrite(
     "view_auto_layout",
-    { workspaceId, viewId: z.string(), direction: LayoutDirectionSchema.default("LR"), expectedRevision },
+    {
+      workspaceId,
+      viewId: z.string(),
+      direction: LayoutDirectionSchema.default("LR"),
+      expectedRevision,
+    },
     (args: unknown) => {
       const input = z
         .object({
@@ -432,7 +455,11 @@ export function registerTools(
 
   server.registerTool(
     "record_list",
-    { description: describe("record_list"), inputSchema: { workspaceId }, annotations: readOnlyAnnotations },
+    {
+      description: describe("record_list"),
+      inputSchema: { workspaceId },
+      annotations: readOnlyAnnotations,
+    },
     ({ workspaceId: id }) => json(services.records.list(id)),
   );
 
@@ -441,7 +468,11 @@ export function registerTools(
     { workspaceId, expectedRevision, data: CreateRecordSchema },
     (args: unknown) => {
       const input = z
-        .object({ workspaceId: z.string(), expectedRevision: z.number().int().optional(), data: CreateRecordSchema })
+        .object({
+          workspaceId: z.string(),
+          expectedRevision: z.number().int().optional(),
+          data: CreateRecordSchema,
+        })
         .parse(args);
       return json(
         services.records.create(input.workspaceId, input.data, {
@@ -478,7 +509,11 @@ export function registerTools(
     { workspaceId, recordId: z.string(), expectedRevision },
     (args: unknown) => {
       const input = z
-        .object({ workspaceId: z.string(), recordId: z.string(), expectedRevision: z.number().int().optional() })
+        .object({
+          workspaceId: z.string(),
+          recordId: z.string(),
+          expectedRevision: z.number().int().optional(),
+        })
         .parse(args);
       return json(
         services.records.delete(input.workspaceId, input.recordId, {
@@ -494,7 +529,11 @@ export function registerTools(
 
   server.registerTool(
     "snapshot_list",
-    { description: describe("snapshot_list"), inputSchema: { workspaceId }, annotations: readOnlyAnnotations },
+    {
+      description: describe("snapshot_list"),
+      inputSchema: { workspaceId },
+      annotations: readOnlyAnnotations,
+    },
     ({ workspaceId: id }) => json(services.snapshots.list(id)),
   );
 
@@ -517,7 +556,11 @@ export function registerTools(
 
   server.registerTool(
     "export_json",
-    { description: describe("export_json"), inputSchema: { workspaceId }, annotations: readOnlyAnnotations },
+    {
+      description: describe("export_json"),
+      inputSchema: { workspaceId },
+      annotations: readOnlyAnnotations,
+    },
     ({ workspaceId: id }) => json(services.model.getDocument(id)),
   );
 

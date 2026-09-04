@@ -188,7 +188,10 @@ export function ViewsPanel({
                 <SelectContent>
                   <SelectItem value="none">{t("common.none")}</SelectItem>
                   {elements
-                    .filter((element) => element.kind === "softwareSystem" || element.kind === "container")
+                    .filter(
+                      (element) =>
+                        element.kind === "softwareSystem" || element.kind === "container",
+                    )
                     .map((element) => (
                       <SelectItem key={element.id} value={element.id}>
                         {element.name}

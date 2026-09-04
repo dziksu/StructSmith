@@ -3,8 +3,8 @@ import type {
   ArchitectureOperation,
   Workspace,
 } from "@structsmith/contracts";
-import { badRequest } from "./errors";
 import * as engine from "./engine";
+import { badRequest } from "./errors";
 import type { Repositories } from "./ports";
 
 type Applied = { op: string; ref?: string; id?: string };
@@ -163,7 +163,10 @@ export function applyOperations(
           repos,
           workspace,
           viewId,
-          operation.entries.map((entry) => ({ ...entry, elementId: refs.resolve(entry.elementId) })),
+          operation.entries.map((entry) => ({
+            ...entry,
+            elementId: refs.resolve(entry.elementId),
+          })),
         );
         applied.push({ op: operation.op, id: viewId });
         break;

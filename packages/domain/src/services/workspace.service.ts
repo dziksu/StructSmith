@@ -5,7 +5,13 @@ import type {
   Workspace,
   WorkspaceDocument,
 } from "@structsmith/contracts";
-import { captureDocument, mutate, requireWorkspace, type MutationOptions, type ServiceContext } from "../context";
+import {
+  captureDocument,
+  type MutationOptions,
+  mutate,
+  requireWorkspace,
+  type ServiceContext,
+} from "../context";
 import { createId, nowIso } from "../ids";
 
 export class WorkspaceService {
@@ -58,7 +64,8 @@ export class WorkspaceService {
       const next: Workspace = {
         ...workspace,
         name: input.name ?? workspace.name,
-        description: input.description !== undefined ? (input.description ?? null) : workspace.description,
+        description:
+          input.description !== undefined ? (input.description ?? null) : workspace.description,
         mode: input.mode ?? workspace.mode,
         updatedAt: nowIso(),
       };

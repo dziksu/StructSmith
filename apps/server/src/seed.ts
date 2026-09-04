@@ -8,7 +8,9 @@ export const EXAMPLE_WORKSPACE_ID = "example-client-portal";
  * within seconds of opening the app.
  */
 export function seedExampleWorkspace(services: Services): string {
-  const existing = services.workspaces.list().find((workspace) => workspace.id === EXAMPLE_WORKSPACE_ID);
+  const existing = services.workspaces
+    .list()
+    .find((workspace) => workspace.id === EXAMPLE_WORKSPACE_ID);
   if (existing) return existing.id;
 
   services.workspaces.create({
@@ -266,7 +268,8 @@ export function seedExampleWorkspace(services: Services): string {
       data: {
         kind: "unknown",
         title: "ERP API protocol",
-        contentMd: "Is the ERP integration SOAP, REST or a file drop? Needs confirmation from the client.",
+        contentMd:
+          "Is the ERP integration SOAP, REST or a file drop? Needs confirmation from the client.",
         status: "open",
         severity: "medium",
         linkedElementIds: ["@erp"],
@@ -277,7 +280,8 @@ export function seedExampleWorkspace(services: Services): string {
       data: {
         kind: "risk",
         title: "ERP availability may affect invoice processing",
-        contentMd: "The ERP has no documented SLA. Sustained downtime would stall invoice delivery.",
+        contentMd:
+          "The ERP has no documented SLA. Sustained downtime would stall invoice delivery.",
         status: "open",
         severity: "high",
         linkedElementIds: ["@erp", "@queue"],

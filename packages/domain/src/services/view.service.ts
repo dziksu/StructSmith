@@ -8,7 +8,7 @@ import type {
   ViewRelationshipPatch,
 } from "@structsmith/contracts";
 import { ERROR_CODES } from "@structsmith/contracts";
-import { mutate, requireWorkspace, type MutationOptions, type ServiceContext } from "../context";
+import { type MutationOptions, mutate, requireWorkspace, type ServiceContext } from "../context";
 import * as engine from "../engine";
 import { DomainError } from "../errors";
 import type { Repositories } from "../ports";
@@ -37,9 +37,7 @@ export class ViewService {
   listDetailed(workspaceId: string): ViewDetail[] {
     return this.ctx.store.transaction((repos) => {
       requireWorkspace(repos, workspaceId);
-      return repos.views
-        .listByWorkspace(workspaceId)
-        .map((view) => readDetail(repos, view.id));
+      return repos.views.listByWorkspace(workspaceId).map((view) => readDetail(repos, view.id));
     });
   }
 
@@ -59,7 +57,12 @@ export class ViewService {
     });
   }
 
-  update(workspaceId: string, viewId: string, input: UpdateViewInput, options: MutationOptions = {}) {
+  update(
+    workspaceId: string,
+    viewId: string,
+    input: UpdateViewInput,
+    options: MutationOptions = {},
+  ) {
     return mutate(this.ctx, workspaceId, options, (repos, workspace) => {
       const view = engine.updateView(repos, workspace, viewId, input);
       return {
@@ -75,7 +78,12 @@ export class ViewService {
     return mutate(this.ctx, workspaceId, options, (repos, workspace) => {
       const name = repos.views.findById(viewId)?.name ?? viewId;
       engine.deleteView(repos, workspace, viewId);
-      return { result: { id: viewId }, message: `Deleted view "${name}"`, kind: "view" as const, viewId };
+      return {
+        result: { id: viewId },
+        message: `Deleted view "${name}"`,
+        kind: "view" as const,
+        viewId,
+      };
     });
   }
 

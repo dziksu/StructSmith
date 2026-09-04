@@ -35,8 +35,7 @@ export const useHistoryStore = create<HistoryState>((set, get) => ({
       undoStack: [...state.undoStack, entry].slice(-LIMIT),
       redoStack: [],
     })),
-  pushUndo: (entry) =>
-    set((state) => ({ undoStack: [...state.undoStack, entry].slice(-LIMIT) })),
+  pushUndo: (entry) => set((state) => ({ undoStack: [...state.undoStack, entry].slice(-LIMIT) })),
   popUndo: () => {
     const stack = get().undoStack;
     const entry = stack[stack.length - 1];

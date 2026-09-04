@@ -1,7 +1,7 @@
-import { PRODUCT } from "@structsmith/contracts";
 import { existsSync } from "node:fs";
 import { dirname, isAbsolute, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
+import { PRODUCT } from "@structsmith/contracts";
 
 const here = dirname(fileURLToPath(import.meta.url));
 /** apps/server/src -> repository root (or /app inside the container). */

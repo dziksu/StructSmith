@@ -1,4 +1,4 @@
-import { defaultDomainConfig, type DomainConfig, type ServiceContext } from "../context";
+import { type DomainConfig, defaultDomainConfig, type ServiceContext } from "../context";
 import type { EventBus, Store } from "../ports";
 import { ActivityService } from "./activity.service";
 import { ElementService } from "./element.service";

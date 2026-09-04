@@ -17,15 +17,33 @@ export interface ElementPreset {
 
 export const presets: readonly ElementPreset[] = [
   { id: "person", label: "Person", kind: "person", role: null, icon: "User" },
-  { id: "softwareSystem", label: "Software System", kind: "softwareSystem", role: null, icon: "Box" },
+  {
+    id: "softwareSystem",
+    label: "Software System",
+    kind: "softwareSystem",
+    role: null,
+    icon: "Box",
+  },
   { id: "webApp", label: "Web App", kind: "container", role: "webApp", icon: "Globe" },
-  { id: "mobileApp", label: "Mobile App", kind: "container", role: "mobileApp", icon: "Smartphone" },
+  {
+    id: "mobileApp",
+    label: "Mobile App",
+    kind: "container",
+    role: "mobileApp",
+    icon: "Smartphone",
+  },
   { id: "api", label: "API", kind: "container", role: "apiGateway", icon: "Network" },
   { id: "service", label: "Service", kind: "container", role: "service", icon: "Server" },
   { id: "database", label: "Database", kind: "container", role: "database", icon: "Database" },
   { id: "queue", label: "Queue", kind: "container", role: "queue", icon: "Workflow" },
   { id: "worker", label: "Worker", kind: "container", role: "worker", icon: "Cog" },
-  { id: "objectStorage", label: "Object Storage", kind: "container", role: "objectStorage", icon: "HardDrive" },
+  {
+    id: "objectStorage",
+    label: "Object Storage",
+    kind: "container",
+    role: "objectStorage",
+    icon: "HardDrive",
+  },
   { id: "cache", label: "Cache", kind: "container", role: "cache", icon: "Zap" },
   {
     id: "identityProvider",

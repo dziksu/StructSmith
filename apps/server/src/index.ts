@@ -9,9 +9,13 @@ const { app, mcp } = createApp(ctx);
 const server = app.listen(config.port, config.host, () => {
   const base = `http://localhost:${config.port}`;
   console.log(`\n  ${config.productName} v${config.version}`);
-  console.log(`  UI        ${ctx.config.webDistDir ? base : "http://localhost:5173 (vite dev server)"}`);
+  console.log(
+    `  UI        ${ctx.config.webDistDir ? base : "http://localhost:5173 (vite dev server)"}`,
+  );
   console.log(`  REST API  ${base}/api`);
-  console.log(`  MCP       ${base}/mcp  (streamable http${config.mcpReadOnly ? ", read-only" : ""})`);
+  console.log(
+    `  MCP       ${base}/mcp  (streamable http${config.mcpReadOnly ? ", read-only" : ""})`,
+  );
   console.log(`  Health    ${base}/health`);
   console.log(`  Database  ${config.databasePath}\n`);
 });

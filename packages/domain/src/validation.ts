@@ -1,8 +1,4 @@
-import type {
-  ValidationIssue,
-  ValidationResult,
-  WorkspaceDocument,
-} from "@structsmith/contracts";
+import type { ValidationIssue, ValidationResult, WorkspaceDocument } from "@structsmith/contracts";
 import { checkParent, wouldCreateCycle } from "./rules";
 
 /**
@@ -62,9 +58,7 @@ export function validateDocument(document: WorkspaceDocument): ValidationResult 
       });
     }
 
-    if (
-      wouldCreateCycle(element.id, element.parentId, (id) => byId.get(id)?.parentId ?? null)
-    ) {
+    if (wouldCreateCycle(element.id, element.parentId, (id) => byId.get(id)?.parentId ?? null)) {
       issues.push({
         level: "error",
         code: "HIERARCHY_CYCLE",

@@ -1,6 +1,6 @@
-import type { Services } from "@structsmith/domain";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { ResourceTemplate } from "@modelcontextprotocol/sdk/server/mcp.js";
+import type { Services } from "@structsmith/domain";
 
 const jsonResource = (uri: string, value: unknown) => ({
   contents: [{ uri, mimeType: "application/json", text: JSON.stringify(value, null, 2) }],

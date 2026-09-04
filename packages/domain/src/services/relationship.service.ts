@@ -3,7 +3,7 @@ import type {
   CreateRelationshipInput,
   UpdateRelationshipInput,
 } from "@structsmith/contracts";
-import { mutate, type MutationOptions, type ServiceContext } from "../context";
+import { type MutationOptions, mutate, type ServiceContext } from "../context";
 import * as engine from "../engine";
 
 export class RelationshipService {

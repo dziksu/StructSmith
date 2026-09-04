@@ -1,6 +1,6 @@
+import { fileURLToPath } from "node:url";
 import { createDatabase, DrizzleStore, runMigrations } from "@structsmith/database";
 import { createServices, InMemoryEventBus, type Services } from "@structsmith/domain";
-import { fileURLToPath } from "node:url";
 
 const migrationsDir = fileURLToPath(new URL("../migrations", import.meta.url));
 

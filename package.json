@@ -3,6 +3,33 @@
   "private": true,
   "version": "0.1.0",
   "license": "MIT",
+  "description": "Local-first, MCP-native tool for modelling software architecture \u2014 a self-hosted alternative to Structurizr with a React Flow editor.",
+  "keywords": [
+    "architecture",
+    "c4-model",
+    "structurizr",
+    "mcp",
+    "model-context-protocol",
+    "diagram",
+    "react-flow",
+    "bun",
+    "sqlite",
+    "self-hosted",
+    "presales",
+    "software-architecture",
+    "local-first"
+  ],
+  "homepage": "https://github.com/dziksu/structsmith#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/dziksu/structsmith.git"
+  },
+  "bugs": {
+    "url": "https://github.com/dziksu/structsmith/issues"
+  },
+  "engines": {
+    "bun": ">=1.2.0"
+  },
   "type": "module",
   "workspaces": [
     "apps/*",
@@ -18,12 +45,17 @@
     "start": "NODE_ENV=production bun apps/server/src/index.ts",
     "test": "bun test",
     "typecheck": "tsc --noEmit -p tsconfig.json",
+    "check": "biome check .",
+    "check:fix": "biome check --write .",
+    "format": "biome format --write .",
+    "lint": "biome lint .",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "bun run scripts/migrate.ts",
     "db:seed": "bun run scripts/seed.ts",
     "mcp:stdio": "bun apps/server/src/mcp-stdio.ts"
   },
   "devDependencies": {
+    "@biomejs/biome": "^2.5.12",
     "@types/bun": "^1.1.14",
     "drizzle-kit": "^0.30.1",
     "typescript": "^5.7.2"

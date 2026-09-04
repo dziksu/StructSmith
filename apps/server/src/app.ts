@@ -1,8 +1,8 @@
+import { join } from "node:path";
 import type { HealthResponse } from "@structsmith/contracts";
 import { McpHttpHandler } from "@structsmith/mcp";
 import cors from "cors";
 import express, { type Express } from "express";
-import { join } from "node:path";
 import { createAuthMiddleware } from "./auth";
 import type { AppContext } from "./bootstrap";
 import { errorMiddleware } from "./http-errors";

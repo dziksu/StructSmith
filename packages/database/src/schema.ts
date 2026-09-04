@@ -83,7 +83,9 @@ export const views = sqliteTable(
     kind: text("kind").notNull(),
     name: text("name").notNull(),
     description: text("description"),
-    scopeElementId: text("scope_element_id").references(() => elements.id, { onDelete: "set null" }),
+    scopeElementId: text("scope_element_id").references(() => elements.id, {
+      onDelete: "set null",
+    }),
     settingsJson: text("settings_json").notNull().default("{}"),
     createdAt: text("created_at").notNull(),
     updatedAt: text("updated_at").notNull(),
@@ -190,7 +192,5 @@ export const activity = sqliteTable(
 
 export const schemaMigrations = sqliteTable("schema_migrations", {
   name: text("name").primaryKey(),
-  appliedAt: text("applied_at")
-    .notNull()
-    .default(sql`CURRENT_TIMESTAMP`),
+  appliedAt: text("applied_at").notNull().default(sql`CURRENT_TIMESTAMP`),
 });

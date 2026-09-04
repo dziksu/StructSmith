@@ -34,6 +34,8 @@ export interface LayoutPosition {
   y: number;
 }
 
+const clusterId = (parentId: string): string => `cluster:${parentId}`;
+
 export interface LabelBox {
   width: number;
   height: number;
@@ -66,10 +68,11 @@ export function computeLayout(
   const graph = new dagre.graphlib.Graph({ compound: true });
   graph.setGraph({
     rankdir: direction,
-    // Ranks have to be far enough apart for an edge label to sit between them.
-    nodesep: 80,
-    ranksep: 150,
-    edgesep: 30,
+    // Edge labels are reserved as their own boxes below, and dagre adds ranksep
+    // on both sides of them — so this stays small to keep diagrams compact.
+    nodesep: 72,
+    ranksep: 80,
+    edgesep: 24,
     marginx: 48,
     marginy: 48,
   });
@@ -77,15 +80,31 @@ export function computeLayout(
 
   const present = new Set(nodes.map((node) => node.id));
 
+  // A parent that is not itself on the view is still drawn as a boundary around
+  // its children, so it needs a cluster here too — otherwise dagre spreads the
+  // children across ranks and unrelated nodes land inside the boundary.
+  const detachedParents = new Set(
+    nodes
+      .map((node) => node.parentId)
+      .filter((parentId): parentId is string => Boolean(parentId))
+      .filter((parentId) => !present.has(parentId)),
+  );
+
   for (const node of nodes) {
     graph.setNode(node.id, {
       width: node.width ?? DEFAULT_NODE_WIDTH,
       height: node.height ?? DEFAULT_NODE_HEIGHT,
     });
   }
+  for (const parentId of detachedParents) {
+    graph.setNode(clusterId(parentId), {});
+  }
   for (const node of nodes) {
-    if (node.parentId && present.has(node.parentId)) {
+    if (!node.parentId) continue;
+    if (present.has(node.parentId)) {
       graph.setParent(node.id, node.parentId);
+    } else if (detachedParents.has(node.parentId)) {
+      graph.setParent(node.id, clusterId(node.parentId));
     }
   }
   for (const edge of edges) {

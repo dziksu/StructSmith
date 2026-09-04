@@ -120,9 +120,13 @@ describe("semantic model", () => {
 
     services.elements.delete(workspace.id, system.id);
 
-    expect(services.model.get(workspace.id).elements.map((element) => element.id)).toEqual([other.id]);
+    expect(services.model.get(workspace.id).elements.map((element) => element.id)).toEqual([
+      other.id,
+    ]);
     expect(services.model.get(workspace.id).relationships).toHaveLength(0);
-    expect(services.views.get(view.id).elements.map((entry) => entry.elementId)).toEqual([other.id]);
+    expect(services.views.get(view.id).elements.map((entry) => entry.elementId)).toEqual([
+      other.id,
+    ]);
 
     close();
   });

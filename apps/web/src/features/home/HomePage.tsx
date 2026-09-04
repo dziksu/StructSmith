@@ -126,7 +126,9 @@ export function HomePage({ onOpenWorkspace }: { onOpenWorkspace: (workspaceId: s
         </h2>
 
         <div className="mt-2 divide-y divide-border rounded-lg border border-border bg-card">
-          {workspaces.isLoading && <p className="px-3 py-6 text-xs text-muted-foreground">{t("common.loading")}</p>}
+          {workspaces.isLoading && (
+            <p className="px-3 py-6 text-xs text-muted-foreground">{t("common.loading")}</p>
+          )}
           {workspaces.data?.length === 0 && (
             <p className="px-3 py-6 text-xs text-muted-foreground">{t("home.noWorkspaces")}</p>
           )}
@@ -148,7 +150,9 @@ export function HomePage({ onOpenWorkspace }: { onOpenWorkspace: (workspaceId: s
               </div>
               <div className="hidden shrink-0 text-right text-[11px] text-muted-foreground sm:block">
                 <div>{formatDateTime(workspace.updatedAt, i18n.language)}</div>
-                <div className="font-mono">{t("home.revision", { revision: workspace.revision })}</div>
+                <div className="font-mono">
+                  {t("home.revision", { revision: workspace.revision })}
+                </div>
               </div>
               <button
                 type="button"

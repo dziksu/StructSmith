@@ -5,20 +5,20 @@ import type {
   ViewDetail,
 } from "@structsmith/contracts";
 import {
-  Background,
-  BackgroundVariant,
-  Controls,
-  MiniMap,
-  ReactFlow,
   applyEdgeChanges,
   applyNodeChanges,
-  useNodesInitialized,
-  useReactFlow,
+  Background,
+  BackgroundVariant,
   type Connection,
+  Controls,
   type EdgeChange,
+  MiniMap,
   type NodeChange,
   type NodeMouseHandler,
   type OnSelectionChangeParams,
+  ReactFlow,
+  useNodesInitialized,
+  useReactFlow,
 } from "@xyflow/react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -30,19 +30,19 @@ import { useEditorStore } from "@/store/editor";
 import { useHistoryStore } from "@/store/history";
 import { BoundaryNode } from "./BoundaryNode";
 import { ElementNode } from "./ElementNode";
-import { RelationshipEdge } from "./RelationshipEdge";
-import { NodeContextMenu, type ContextMenuItem } from "./NodeContextMenu";
 import {
   boundaryElementId,
   buildGraph,
   computeBoundaries,
+  type FlowEdge,
+  type FlowNode,
   isBoundaryId,
   NODE_HEIGHT,
   NODE_WIDTH,
-  type FlowEdge,
-  type FlowNode,
   type RelationshipEdgeData,
 } from "./graph";
+import { type ContextMenuItem, NodeContextMenu } from "./NodeContextMenu";
+import { RelationshipEdge } from "./RelationshipEdge";
 
 /** An implied edge carries a derived id, so always resolve the real one. */
 const relationshipIdOf = (edge: { id: string; data?: Record<string, unknown> }): string =>
@@ -179,7 +179,12 @@ export function Canvas({ workspaceId, view, elements, relationships, records }: 
     api
       .saveLayout(view.id, { entries })
       .then(() => {
-        pushHistory({ kind: "layout", viewId: view.id, entries: previous, label: t("toast.layoutSaved") });
+        pushHistory({
+          kind: "layout",
+          viewId: view.id,
+          entries: previous,
+          label: t("toast.layoutSaved"),
+        });
         invalidateWorkspace(workspaceId);
       })
       .catch(onError);
@@ -210,7 +215,8 @@ export function Canvas({ workspaceId, view, elements, relationships, records }: 
   );
 
   const onEdgesChange = useCallback(
-    (changes: EdgeChange[]) => setEdges((current) => applyEdgeChanges(changes, current) as FlowEdge[]),
+    (changes: EdgeChange[]) =>
+      setEdges((current) => applyEdgeChanges(changes, current) as FlowEdge[]),
     [],
   );
 
@@ -271,7 +277,9 @@ export function Canvas({ workspaceId, view, elements, relationships, records }: 
     (elementId: string) =>
       applyOperations.mutate({
         label: t("contextMenu.removeFromView"),
-        operations: [{ op: "setViewElements", viewId: view.id, elementIds: [elementId], mode: "remove" }],
+        operations: [
+          { op: "setViewElements", viewId: view.id, elementIds: [elementId], mode: "remove" },
+        ],
       }),
     [applyOperations, t, view.id],
   );
@@ -357,7 +365,10 @@ export function Canvas({ workspaceId, view, elements, relationships, records }: 
         x: event.clientX,
         y: event.clientY,
         items: [
-          { label: t("contextMenu.edit"), onSelect: () => select({ type: "element", id: elementId }) },
+          {
+            label: t("contextMenu.edit"),
+            onSelect: () => select({ type: "element", id: elementId }),
+          },
           { label: t("contextMenu.duplicate"), onSelect: () => duplicateElement(elementId) },
           { label: t("contextMenu.connect"), onSelect: () => setConnectFrom(elementId) },
           {
@@ -497,7 +508,13 @@ export function Canvas({ workspaceId, view, elements, relationships, records }: 
       >
         <Background variant={BackgroundVariant.Dots} gap={18} size={1} color="var(--canvas-dot)" />
         <Controls showInteractive={false} position="bottom-left" />
-        <MiniMap pannable zoomable position="bottom-right" nodeStrokeWidth={2} maskColor="transparent" />
+        <MiniMap
+          pannable
+          zoomable
+          position="bottom-right"
+          nodeStrokeWidth={2}
+          maskColor="transparent"
+        />
       </ReactFlow>
 
       {graph.nodes.length === 0 && (

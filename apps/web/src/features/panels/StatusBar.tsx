@@ -86,7 +86,12 @@ export function StatusBar({
       <span className="font-mono">{t("status.revision", { revision })}</span>
       <span>·</span>
       <span className={cn("flex items-center gap-1", mcpReady && "text-success")}>
-        <span className={cn("h-1.5 w-1.5 rounded-full", mcpReady ? "bg-success" : "bg-muted-foreground")} />
+        <span
+          className={cn(
+            "h-1.5 w-1.5 rounded-full",
+            mcpReady ? "bg-success" : "bg-muted-foreground",
+          )}
+        />
         MCP{mcpReadOnly ? " (read-only)" : ""}
       </span>
     </div>

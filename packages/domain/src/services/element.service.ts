@@ -3,7 +3,7 @@ import type {
   CreateElementInput,
   UpdateElementInput,
 } from "@structsmith/contracts";
-import { mutate, type MutationOptions, type ServiceContext } from "../context";
+import { type MutationOptions, mutate, type ServiceContext } from "../context";
 import * as engine from "../engine";
 
 export class ElementService {
@@ -32,7 +32,11 @@ export class ElementService {
     });
   }
 
-  delete(workspaceId: string, elementId: string, options: MutationOptions & { cascade?: boolean } = {}) {
+  delete(
+    workspaceId: string,
+    elementId: string,
+    options: MutationOptions & { cascade?: boolean } = {},
+  ) {
     return mutate(this.ctx, workspaceId, options, (repos, workspace) => {
       const name = repos.elements.findById(elementId)?.name ?? elementId;
       const ids = engine.deleteElement(repos, workspace, elementId, options.cascade ?? true);

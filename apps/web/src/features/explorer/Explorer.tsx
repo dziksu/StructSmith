@@ -6,7 +6,7 @@ import type {
 } from "@structsmith/contracts";
 import { useTranslation } from "react-i18next";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useEditorStore, type ExplorerTab } from "@/store/editor";
+import { type ExplorerTab, useEditorStore } from "@/store/editor";
 import { ModelTree } from "./ModelTree";
 import { PresalesPanel } from "./PresalesPanel";
 import { ViewsPanel } from "./ViewsPanel";

@@ -35,7 +35,10 @@ export function ModelTree({ workspaceId, elements, view }: ModelTreeProps) {
   const applyOperations = useApplyOperations(workspaceId);
 
   const onView = useMemo(
-    () => new Set((view?.elements ?? []).filter((entry) => !entry.hidden).map((entry) => entry.elementId)),
+    () =>
+      new Set(
+        (view?.elements ?? []).filter((entry) => !entry.hidden).map((entry) => entry.elementId),
+      ),
     [view],
   );
 
@@ -55,7 +58,11 @@ export function ModelTree({ workspaceId, elements, view }: ModelTreeProps) {
 
   const roots = elements.filter((element) => !element.parentId);
   const groups: Group[] = [
-    { key: "people", label: t("explorer.people"), elements: roots.filter((e) => e.kind === "person") },
+    {
+      key: "people",
+      label: t("explorer.people"),
+      elements: roots.filter((e) => e.kind === "person"),
+    },
     {
       key: "systems",
       label: t("explorer.systems"),
@@ -144,14 +151,20 @@ export function ModelTree({ workspaceId, elements, view }: ModelTreeProps) {
                 setCollapsed((current) => ({ ...current, [element.id]: !isCollapsed }));
               }}
             >
-              {isCollapsed ? <ChevronRight className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
+              {isCollapsed ? (
+                <ChevronRight className="h-3 w-3" />
+              ) : (
+                <ChevronDown className="h-3 w-3" />
+              )}
             </button>
           ) : (
             <span className="w-4" />
           )}
 
           <Icon className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
-          <span className={cn("flex-1 truncate", !onView.has(element.id) && "text-muted-foreground")}>
+          <span
+            className={cn("flex-1 truncate", !onView.has(element.id) && "text-muted-foreground")}
+          >
             {element.name}
           </span>
 

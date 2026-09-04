@@ -38,7 +38,11 @@ export function BottomPanel({ workspaceId }: { workspaceId: string }) {
   if (!panel) return null;
 
   const title =
-    panel === "issues" ? t("issues.title") : panel === "activity" ? t("activity.title") : t("snapshots.title");
+    panel === "issues"
+      ? t("issues.title")
+      : panel === "activity"
+        ? t("activity.title")
+        : t("snapshots.title");
 
   const restore = (snapshotId: string): void => {
     api

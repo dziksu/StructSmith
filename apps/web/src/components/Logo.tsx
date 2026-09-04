@@ -20,7 +20,14 @@ export function Logo({ className, size = 20 }: { className?: string; size?: numb
       className={cn("shrink-0", className)}
     >
       <defs>
-        <linearGradient id={gradientId} x1="74" y1="10" x2="118" y2="96" gradientUnits="userSpaceOnUse">
+        <linearGradient
+          id={gradientId}
+          x1="74"
+          y1="10"
+          x2="118"
+          y2="96"
+          gradientUnits="userSpaceOnUse"
+        >
           <stop offset="0" stopColor="#0FC6F8" />
           <stop offset=".62" stopColor="#22E4CD" />
           <stop offset="1" stopColor="#00BDFB" />

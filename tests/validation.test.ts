@@ -25,7 +25,10 @@ describe("validator", () => {
   test("a person cannot contain other elements", () => {
     const { services, close } = createTestContext();
     const workspace = createWorkspace(services);
-    const person = services.elements.create(workspace.id, { kind: "person", name: "Customer" }).result;
+    const person = services.elements.create(workspace.id, {
+      kind: "person",
+      name: "Customer",
+    }).result;
 
     // Relaxed mode records a warning instead of refusing the change.
     services.elements.create(workspace.id, {
@@ -44,7 +47,10 @@ describe("validator", () => {
   test("strict workspaces refuse invalid nesting", () => {
     const { services, close } = createTestContext();
     const workspace = services.workspaces.create({ name: "Strict", mode: "strict" });
-    const person = services.elements.create(workspace.id, { kind: "person", name: "Customer" }).result;
+    const person = services.elements.create(workspace.id, {
+      kind: "person",
+      name: "Customer",
+    }).result;
 
     expect(() =>
       services.elements.create(workspace.id, {
@@ -63,7 +69,10 @@ describe("implied relationships", () => {
     const { services, close } = createTestContext();
     const workspace = createWorkspace(services);
 
-    const person = services.elements.create(workspace.id, { kind: "person", name: "Customer" }).result;
+    const person = services.elements.create(workspace.id, {
+      kind: "person",
+      name: "Customer",
+    }).result;
     const system = services.elements.create(workspace.id, {
       kind: "softwareSystem",
       name: "Portal",
