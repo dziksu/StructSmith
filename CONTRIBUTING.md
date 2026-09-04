@@ -93,7 +93,47 @@ they describe patterns this editor cannot express.
 
 ## Commits and pull requests
 
-Write commit subjects in the imperative mood ("Add auto layout direction"), keep
-them under ~72 characters, and explain *why* in the body when it is not obvious.
+Use Conventional Commits, keep subjects under ~72 characters, and explain *why*
+in the body when it is not obvious:
+
+- `fix: ...` or `perf: ...` creates a patch release.
+- `feat: ...` creates a minor release.
+- `feat!: ...`, any other `type!: ...`, or a `BREAKING CHANGE:` footer creates a major release.
+- `build(deps): ...` creates a patch release for runtime dependency updates.
+- `docs: ...`, `chore: ...`, and `build(deps-dev): ...` do not release on their own.
+
+When squash-merging, use this format in the PR title: that title becomes the
+commit analyzed for release. A merge commit preserves the original commit subjects.
+
 One logical change per pull request. Include a screenshot for anything that changes
 the canvas or a panel.
+
+## Automated releases
+
+After both CI jobs succeed on `main`, [semantic-release](https://github.com/semantic-release/semantic-release)
+analyzes commits since the last `vX.Y.Z` tag, generates release notes, and publishes
+a GitHub release. With no existing release tag, the first release is `1.0.0`;
+the development version in `package.json` is not the release baseline.
+
+The same workflow then publishes multi-architecture GHCR images tagged `latest`,
+`vX.Y.Z`, `vX.Y`, and `sha-…`, built from the tested commit. Release builds stamp
+the version into the shared product identity, including HTTP health and MCP.
+No npm packages or automatic commits to protected `main` are published. GitHub
+release notes are the generated changelog; `CHANGELOG.md` remains manually maintained.
+
+Only the built-in `GITHUB_TOKEN` is needed (contents write for releases, packages
+write for images); no personal access token or branch-protection bypass is needed.
+Image publication is called directly because tags/releases created with that token
+do not trigger another workflow. See the [GitHub plugin documentation](https://github.com/semantic-release/github#github-authentication).
+
+If image publication fails after the release exists, rerun the failed image job,
+or rerun the full workflow for the same commit: its existing release tag is reused.
+The CI workflow can also be dispatched manually on `main`. Check both release and
+image jobs before announcing availability; release notes can exist before the image finishes.
+New tag-protection rules must allow the Actions token to create release tags.
+
+Node 24.10+ is required only for the release command; normal development still
+uses Bun. `bun run release` deliberately refuses to publish from a local shell.
+Keep the Conventional Commits preset on 9.x until the release-notes generator
+supports changelog-writer 9; preset 10 requires that newer writer. The release
+tests cover both version selection and generated notes to catch this mismatch.

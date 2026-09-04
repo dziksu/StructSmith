@@ -38,6 +38,11 @@ architecture together with an AI assistant.
 
 ## Quick start
 
+Stable releases and automatically generated release notes are available under
+[GitHub Releases](https://github.com/dziksu/StructSmith/releases). After the first
+automated release, `latest` tracks the latest published release; use `:vX.Y.Z`
+instead of `:latest` to pin a specific published version.
+
 ### Run the public image
 
 With Docker installed, run:

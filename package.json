@@ -52,12 +52,18 @@
     "db:generate": "drizzle-kit generate",
     "db:migrate": "bun run scripts/migrate.ts",
     "db:seed": "bun run scripts/seed.ts",
-    "mcp:stdio": "bun apps/server/src/mcp-stdio.ts"
+    "mcp:stdio": "bun apps/server/src/mcp-stdio.ts",
+    "release": "node scripts/release.ts"
   },
   "overrides": {
     "zod": "^4.5.4"
   },
   "devDependencies": {
+    "semantic-release": "^25.0.9",
+    "@semantic-release/commit-analyzer": "^13.0.1",
+    "@semantic-release/release-notes-generator": "^14.1.1",
+    "@semantic-release/github": "^12.0.9",
+    "conventional-changelog-conventionalcommits": "^9.3.1",
     "@biomejs/biome": "^2.5.12",
     "@types/bun": "^1.1.14",
     "drizzle-kit": "^0.31.10",

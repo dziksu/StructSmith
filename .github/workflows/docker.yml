@@ -1,13 +1,17 @@
 name: Container image
 
 on:
-  push:
-    branches: [main]
-    tags: ["v*.*.*"]
-  workflow_dispatch:
+  workflow_call:
+    inputs:
+      version:
+        required: true
+        type: string
+      ref:
+        required: true
+        type: string
 
 concurrency:
-  group: image-${{ github.ref }}
+  group: release-image
   cancel-in-progress: false
 
 env:
@@ -22,6 +26,9 @@ jobs:
       packages: write
     steps:
       - uses: actions/checkout@v7
+        with:
+          ref: ${{ inputs.ref }}
+          persist-credentials: false
 
       - uses: docker/setup-qemu-action@v4
       - uses: docker/setup-buildx-action@v3
@@ -37,9 +44,9 @@ jobs:
         with:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
           tags: |
-            type=raw,value=latest,enable={{is_default_branch}}
-            type=semver,pattern=v{{version}}
-            type=semver,pattern=v{{major}}.{{minor}}
+            type=raw,value=latest
+            type=semver,pattern=v{{version}},value=${{ inputs.version }}
+            type=semver,pattern=v{{major}}.{{minor}},value=${{ inputs.version }}
             type=sha,prefix=sha-
 
       - uses: docker/build-push-action@v6
@@ -47,6 +54,8 @@ jobs:
           context: .
           platforms: linux/amd64,linux/arm64
           push: true
+          build-args: |
+            APP_VERSION=${{ inputs.version }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha
