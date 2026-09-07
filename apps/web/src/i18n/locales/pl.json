@@ -257,10 +257,18 @@
     "mutating": "zapis",
     "readOnlyTool": "odczyt",
     "howToTitle": "Podłącz klienta",
-    "howToHint": "Wskaż klientowi MCP powyższy endpoint Streamable HTTP.",
-    "codexConfig": "Konfiguracja projektu Codex",
-    "codexHint": "Dodaj do .codex/config.toml w zaufanym projekcie, a następnie uruchom nową sesję Codex.",
-    "genericConfig": "Konfiguracja ogólna"
+    "howToHint": "Wybierz klienta i skopiuj konfigurację wygenerowaną z aktualnym endpointem.",
+    "fullGuide": "Pełna instrukcja",
+    "clientCodex": "Codex",
+    "clientClaudeCode": "Claude Code",
+    "clientClaudeDesktop": "Claude Desktop",
+    "clientCopilot": "VS Code / Copilot",
+    "clientGeneric": "Inni klienci",
+    "codexHint": "Uruchom raz. Codex Desktop, CLI i rozszerzenie IDE współdzielą konfigurację tego samego hosta.",
+    "claudeCodeHint": "Uruchom komendę, a następnie użyj /mcp w Claude Code, aby sprawdzić połączenie.",
+    "claudeDesktopHint": "Localhost wymaga Node.js 18+ i zewnętrznego mostu STDIO mcp-remote. Dodaj ten wpis do claude_desktop_config.json i całkowicie uruchom ponownie Claude Desktop.",
+    "copilotHint": "Zapisz jako .vscode/mcp.json, uruchom serwer przez MCP: List Servers i użyj Copilot Chat w trybie Agent.",
+    "genericHint": "Użyj tego formatu w klientach z natywnym Streamable HTTP. Niektóre używają klucza servers zamiast mcpServers."
   },
   "settings": {
     "title": "Ustawienia",
