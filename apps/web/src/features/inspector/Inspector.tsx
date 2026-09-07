@@ -536,6 +536,34 @@ function ViewInspector({
             </SelectContent>
           </Select>
         </Field>
+
+        <Field label={t("inspector.relationshipRouting")}>
+          <Select
+            value={view.settings.relationshipRouting}
+            onValueChange={(value) =>
+              onPatch({
+                relationshipRouting: value as ViewDetail["settings"]["relationshipRouting"],
+              })
+            }
+          >
+            <SelectTrigger>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="orthogonal">{t("inspector.routingOrthogonal")}</SelectItem>
+              <SelectItem value="curved">{t("inspector.routingCurved")}</SelectItem>
+              <SelectItem value="straight">{t("inspector.routingStraight")}</SelectItem>
+            </SelectContent>
+          </Select>
+        </Field>
+
+        <div className="flex items-center justify-between">
+          <span className="text-[12.5px]">{t("inspector.showRelationshipLabels")}</span>
+          <Switch
+            checked={view.settings.showRelationshipLabels}
+            onCheckedChange={(checked) => onPatch({ showRelationshipLabels: checked })}
+          />
+        </div>
       </div>
     </div>
   );

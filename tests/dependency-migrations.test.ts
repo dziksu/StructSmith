@@ -1,6 +1,7 @@
 import { describe, expect, test } from "bun:test";
 import { CreateViewSchema, UpdateViewSchema, ViewSettingsSchema } from "@structsmith/contracts";
 import { computeLayout } from "@structsmith/domain";
+import { buildGraph } from "../apps/web/src/features/canvas/graph";
 import { createTestContext, createWorkspace } from "./helpers";
 
 describe("Zod view settings", () => {
@@ -16,6 +17,8 @@ describe("Zod view settings", () => {
       showBoundaries: true,
       snapToGrid: false,
       autoLayoutDirection: "LR",
+      relationshipRouting: "orthogonal",
+      showRelationshipLabels: true,
     });
   });
 
@@ -26,7 +29,13 @@ describe("Zod view settings", () => {
       const view = services.views.create(workspace.id, {
         name: "Context",
         kind: "systemContext",
-        settings: { showBoundaries: false, snapToGrid: false, autoLayoutDirection: "TB" },
+        settings: {
+          showBoundaries: false,
+          snapToGrid: false,
+          autoLayoutDirection: "TB",
+          relationshipRouting: "straight",
+          showRelationshipLabels: false,
+        },
       }).result;
       services.views.update(
         workspace.id,
@@ -37,6 +46,8 @@ describe("Zod view settings", () => {
         showBoundaries: false,
         snapToGrid: true,
         autoLayoutDirection: "TB",
+        relationshipRouting: "straight",
+        showRelationshipLabels: false,
       });
     } finally {
       close();
@@ -74,6 +85,55 @@ describe("Dagre layout", () => {
     expect(computeLayout(nodes, edges)).toEqual(positions);
     for (const position of positions) {
       expect(Number.isFinite(position.x) && Number.isFinite(position.y)).toBe(true);
+    }
+  });
+});
+
+describe("Canvas relationship presentation", () => {
+  test("maps view routing, label visibility and direction to rendered edges", () => {
+    const { services, close } = createTestContext();
+    try {
+      const workspace = createWorkspace(services);
+      const source = services.elements.create(workspace.id, {
+        kind: "container",
+        name: "Source",
+      }).result;
+      const target = services.elements.create(workspace.id, {
+        kind: "container",
+        name: "Target",
+      }).result;
+      services.relationships.create(workspace.id, {
+        sourceElementId: source.id,
+        targetElementId: target.id,
+        description: "Calls",
+      });
+      const view = services.views.create(workspace.id, {
+        name: "Containers",
+        kind: "container",
+        elementIds: [source.id, target.id],
+        settings: {
+          autoLayoutDirection: "TB",
+          relationshipRouting: "curved",
+          showRelationshipLabels: false,
+        },
+      }).result;
+      const model = services.model.get(workspace.id);
+
+      const graph = buildGraph({
+        view: services.views.get(view.id),
+        elements: model.elements,
+        relationships: model.relationships,
+        records: [],
+      });
+
+      expect(graph.edges).toHaveLength(1);
+      expect(graph.edges[0]).toMatchObject({
+        sourceHandle: "b",
+        targetHandle: "t",
+        data: { routing: "curved", showLabel: false, label: "Calls" },
+      });
+    } finally {
+      close();
     }
   });
 });
