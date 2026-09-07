@@ -16,7 +16,8 @@
 </p>
 
 <p align="center">
-  <img src="public/screen_02.png" alt="StructSmith editor: model tree, canvas and inspector" width="900">
+  <img src="public/screen_01.png" alt="StructSmith system context view in dark mode" width="900">
+  <img src="public/screen_02.png" alt="StructSmith container view in light mode" width="900">
 </p>
 
 A local-first, open-source tool for modelling software architecture — a self-hosted
