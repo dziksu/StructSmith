@@ -104,7 +104,57 @@ MCP is a core feature, not an add-on: it starts with the backend and is served f
 process. The transport is **Streamable HTTP** (the deprecated SSE transport is not
 implemented).
 
-Point any MCP client at the endpoint:
+### Quick install by client
+
+Start StructSmith first, then use the command for your client. The examples assume the public
+Docker image is available at `http://localhost:8090`.
+
+**Codex CLI, Codex Desktop and the Codex IDE extension** share the same MCP configuration:
+
+```bash
+codex mcp add structsmith --url http://localhost:8090/mcp
+```
+
+In Codex Desktop you can instead open **Settings → MCP servers → Add server**, choose
+**Streamable HTTP**, and paste the endpoint. Restart the current session after changing MCP
+configuration.
+
+**Claude Code:**
+
+```bash
+claude mcp add --transport http structsmith http://localhost:8090/mcp
+```
+
+**GitHub Copilot CLI:**
+
+```bash
+copilot mcp add --transport http structsmith http://localhost:8090/mcp
+```
+
+**VS Code with GitHub Copilot** — add `.vscode/mcp.json` to the project where you want to use
+StructSmith:
+
+```json
+{
+  "servers": {
+    "structsmith": {
+      "type": "http",
+      "url": "http://localhost:8090/mcp"
+    }
+  }
+}
+```
+
+Then run **MCP: List Servers** and start `structsmith`; use Copilot Chat in Agent mode.
+
+**Claude Desktop** needs a local STDIO bridge to reach a StructSmith instance on `localhost`.
+See the [AI client installation guide](docs/AI_CLIENTS.md#claude-desktop) for a copy-ready
+configuration. A public HTTPS deployment can instead be added under
+**Customize → Connectors → Add custom connector**, but Claude connects to it from Anthropic's
+cloud — `localhost` will not work there.
+
+For Cursor, Windsurf, JetBrains IDEs and other MCP clients, point a native Streamable HTTP
+connection at the endpoint or use this common configuration shape:
 
 ```json
 {
@@ -117,23 +167,19 @@ Point any MCP client at the endpoint:
 }
 ```
 
-Codex can load StructSmith automatically from a trusted project's `.codex/config.toml`:
+For full client-specific instructions, token authentication, local-development ports and
+troubleshooting, see **[Install StructSmith in AI clients](docs/AI_CLIENTS.md)**. The MCP page in
+StructSmith also generates copy-ready snippets using the live URL, including custom ports.
+
+### Manual Codex configuration
+
+Codex can also load StructSmith automatically from a trusted project's `.codex/config.toml`:
 
 ```toml
 [mcp_servers.structsmith]
 url = "http://localhost:8090/mcp"
 default_tools_approval_mode = "writes"
 tool_timeout_sec = 120
-```
-
-The ChatGPT desktop app, Codex CLI and Codex IDE extension share this project-scoped
-configuration. Start a new local Codex session after adding or changing the server. The MCP page
-in StructSmith always shows a copy-ready snippet with the live URL, including custom ports.
-
-Claude Code, for example:
-
-```bash
-claude mcp add --transport http structsmith http://localhost:8090/mcp
 ```
 
 For clients that only speak stdio:
@@ -350,6 +396,7 @@ stays public. There is no user system — this is a local/self-hosted tool.
 apps/
   web/        React + Vite UI          (React Flow, TanStack Router/Query, Zustand, shadcn-style UI)
   server/     Bun + Express            (REST, MCP transport, SSE, static UI)
+docs/         Client setup and operating guides
 packages/
   contracts/  Zod schemas and DTOs shared by frontend, backend and MCP
   domain/     Pure domain: rules, validation, operations, services (no Express, no SQLite)

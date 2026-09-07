@@ -1,4 +1,4 @@
-import { ArrowLeft, Check, Copy } from "lucide-react";
+import { ArrowLeft, Check, Copy, ExternalLink } from "lucide-react";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
@@ -6,6 +6,8 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { useMcpInfo, useSettings } from "@/hooks/useApi";
+
+type ClientId = "codex" | "claudeCode" | "claudeDesktop" | "copilot" | "generic";
 
 const Row = ({ label, children }: { label: string; children: React.ReactNode }) => (
   <div className="flex items-start gap-4 py-2">
@@ -20,28 +22,79 @@ export function McpPage({ onBack }: { onBack: () => void }) {
   const { t } = useTranslation();
   const info = useMcpInfo();
   const settings = useSettings();
-  const [copied, setCopied] = useState<"endpoint" | "codex" | null>(null);
+  const [copied, setCopied] = useState<string | null>(null);
+  const [selectedClient, setSelectedClient] = useState<ClientId>("codex");
 
   const endpoint = info.data?.endpoint ?? `${window.location.origin}/mcp`;
 
-  const copy = async (value: string, target: "endpoint" | "codex"): Promise<void> => {
+  const copy = async (value: string, target: string): Promise<void> => {
     await navigator.clipboard.writeText(value);
     setCopied(target);
     toast.success(t("common.copied"));
     setTimeout(() => setCopied(null), 1500);
   };
 
-  const clientConfig = JSON.stringify(
+  const genericConfig = JSON.stringify(
     { mcpServers: { structsmith: { type: "http", url: endpoint } } },
     null,
     2,
   );
-  const codexConfig = [
-    "[mcp_servers.structsmith]",
-    `url = "${endpoint}"`,
-    'default_tools_approval_mode = "writes"',
-    "tool_timeout_sec = 120",
-  ].join("\n");
+  const clients: Array<{ id: ClientId; label: string; hint: string; snippet: string }> = [
+    {
+      id: "codex",
+      label: t("mcp.clientCodex"),
+      hint: t("mcp.codexHint"),
+      snippet: `codex mcp add structsmith --url ${endpoint}`,
+    },
+    {
+      id: "claudeCode",
+      label: t("mcp.clientClaudeCode"),
+      hint: t("mcp.claudeCodeHint"),
+      snippet: `claude mcp add --transport http structsmith ${endpoint}`,
+    },
+    {
+      id: "claudeDesktop",
+      label: t("mcp.clientClaudeDesktop"),
+      hint: t("mcp.claudeDesktopHint"),
+      snippet: JSON.stringify(
+        {
+          mcpServers: {
+            structsmith: {
+              command: "npx",
+              args: [
+                "-y",
+                "mcp-remote@latest",
+                endpoint,
+                "--transport",
+                "http-only",
+                "--allow-http",
+              ],
+            },
+          },
+        },
+        null,
+        2,
+      ),
+    },
+    {
+      id: "copilot",
+      label: t("mcp.clientCopilot"),
+      hint: t("mcp.copilotHint"),
+      snippet: JSON.stringify(
+        { servers: { structsmith: { type: "http", url: endpoint } } },
+        null,
+        2,
+      ),
+    },
+    {
+      id: "generic",
+      label: t("mcp.clientGeneric"),
+      hint: t("mcp.genericHint"),
+      snippet: genericConfig,
+    },
+  ];
+  const activeClient =
+    clients.find((client) => client.id === selectedClient) ?? (clients[0] as (typeof clients)[0]);
 
   return (
     <div className="h-full overflow-y-auto bg-background">
@@ -96,22 +149,54 @@ export function McpPage({ onBack }: { onBack: () => void }) {
         </div>
 
         <section className="mt-6">
-          <h2 className="text-[13px] font-semibold">{t("mcp.howToTitle")}</h2>
-          <p className="mt-1 text-[12.5px] text-muted-foreground">{t("mcp.howToHint")}</p>
+          <div className="flex items-start justify-between gap-4">
+            <div>
+              <h2 className="text-[13px] font-semibold">{t("mcp.howToTitle")}</h2>
+              <p className="mt-1 text-[12.5px] text-muted-foreground">{t("mcp.howToHint")}</p>
+            </div>
+            <Button variant="link" size="sm" asChild className="shrink-0 px-0">
+              <a
+                href="https://github.com/dziksu/StructSmith/blob/main/docs/AI_CLIENTS.md"
+                target="_blank"
+                rel="noreferrer"
+              >
+                {t("mcp.fullGuide")}
+                <ExternalLink className="h-3 w-3" />
+              </a>
+            </Button>
+          </div>
+
+          <div className="mt-3 flex flex-wrap gap-1 rounded-lg border border-border bg-card p-1">
+            {clients.map((client) => (
+              <Button
+                key={client.id}
+                size="sm"
+                variant={client.id === selectedClient ? "secondary" : "ghost"}
+                onClick={() => setSelectedClient(client.id)}
+              >
+                {client.label}
+              </Button>
+            ))}
+          </div>
+
           <div className="mt-3 flex items-center justify-between">
-            <h3 className="text-[12px] font-medium">{t("mcp.codexConfig")}</h3>
-            <Button size="sm" variant="ghost" onClick={() => void copy(codexConfig, "codex")}>
-              {copied === "codex" ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
+            <h3 className="text-[12px] font-medium">{activeClient.label}</h3>
+            <Button
+              size="sm"
+              variant="ghost"
+              onClick={() => void copy(activeClient.snippet, activeClient.id)}
+            >
+              {copied === activeClient.id ? (
+                <Check className="h-3 w-3" />
+              ) : (
+                <Copy className="h-3 w-3" />
+              )}
               {t("common.copy")}
             </Button>
           </div>
-          <p className="mt-1 text-[11.5px] text-muted-foreground">{t("mcp.codexHint")}</p>
+          <p className="mt-1 text-[11.5px] text-muted-foreground">{activeClient.hint}</p>
           <pre className="mt-2 overflow-x-auto rounded-lg border border-border bg-card p-3 font-mono text-[11.5px] leading-relaxed">
-            {codexConfig}
-          </pre>
-          <h3 className="mt-4 text-[12px] font-medium">{t("mcp.genericConfig")}</h3>
-          <pre className="mt-2 overflow-x-auto rounded-lg border border-border bg-card p-3 font-mono text-[11.5px] leading-relaxed">
-            {clientConfig}
+            {activeClient.snippet}
           </pre>
         </section>
 
