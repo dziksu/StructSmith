@@ -1,5 +1,15 @@
 # Changelog
 
+## [1.3.0](https://github.com/dziksu/structsmith/compare/v1.2.0...v1.3.0) (2026-09-07)
+
+### Features
+
+* **web:** redesign workspace home ([728d575](https://github.com/dziksu/structsmith/commit/728d5755db4be791ca7ded5779c9f9a9f1d3315e))
+
+### Bug Fixes
+
+* **editor:** restore view inspector from canvas ([3b2dda5](https://github.com/dziksu/structsmith/commit/3b2dda59d35ff9e596e834a0fed82ee13c2ea309))
+
 ## [1.2.0](https://github.com/dziksu/structsmith/compare/v1.1.1...v1.2.0) (2026-09-07)
 
 ### Features
