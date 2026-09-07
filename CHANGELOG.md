@@ -1,5 +1,15 @@
 # Changelog
 
+## [1.6.0](https://github.com/dziksu/structsmith/compare/v1.5.0...v1.6.0) (2026-09-07)
+
+### Features
+
+* **site:** add marketing site and Pages deployment ([1cb2f5f](https://github.com/dziksu/structsmith/commit/1cb2f5f60e4c26186532263ef44ca714b5fbcce7))
+
+### Bug Fixes
+
+* **release:** align changelog writer versions ([e8fd854](https://github.com/dziksu/structsmith/commit/e8fd854bfb7cc95c90d56dd3949c431d9268df9f))
+
 ## [1.5.0](https://github.com/dziksu/structsmith/compare/v1.4.0...v1.5.0) (2026-09-07)
 
 ### Features
