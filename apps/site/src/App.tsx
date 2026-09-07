@@ -17,6 +17,10 @@ import {
 
 const githubUrl = "https://github.com/dziksu/StructSmith";
 
+type AppProps = {
+  baseUrl?: string;
+};
+
 function ArchitectureCanvas() {
   return (
     <div
@@ -91,12 +95,12 @@ function ArchitectureCanvas() {
   );
 }
 
-export function App() {
+export function App({ baseUrl = "/" }: AppProps) {
   return (
     <main>
       <nav className="site-nav" aria-label="Primary navigation">
         <a className="brand" href="#top" aria-label="StructSmith home">
-          <img src={`${import.meta.env.BASE_URL}logo.png`} alt="" />
+          <img src={`${baseUrl}logo.png`} alt="" />
           <span>StructSmith</span>
         </a>
         <div className="nav-links">
@@ -201,7 +205,7 @@ export function App() {
             </span>
           </div>
           <img
-            src={`${import.meta.env.BASE_URL}screen_01.png`}
+            src={`${baseUrl}screen_01.png`}
             alt="StructSmith system context diagram in the visual editor"
           />
           <div className="frame-callout callout-model">
@@ -460,7 +464,7 @@ export function App() {
 
       <footer className="site-footer section-shell">
         <a className="brand" href="#top">
-          <img src={`${import.meta.env.BASE_URL}logo.png`} alt="" />
+          <img src={`${baseUrl}logo.png`} alt="" />
           <span>StructSmith</span>
         </a>
         <p>Model, document and share software architecture — locally, and with your AI client.</p>

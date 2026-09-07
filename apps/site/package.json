@@ -5,7 +5,8 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "vite build",
+    "build": "vite build && bun run verify:static",
+    "verify:static": "bun scripts/verify-static.ts",
     "preview": "vite preview"
   },
   "dependencies": {
@@ -16,7 +17,6 @@
   "devDependencies": {
     "@types/react": "^19.2.18",
     "@types/react-dom": "^19.2.5",
-    "@vitejs/plugin-react": "^6.1.1",
     "vite": "^8.2.2"
   }
 }

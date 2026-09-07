@@ -43,4 +43,19 @@ describe("marketing site discovery metadata", () => {
     expect(llms).toContain("AI client installation guide");
     expect(markdownOverview).toContain("self-hosted alternative to paid software architecture");
   });
+
+  test("prerenders the page without a client-side React entrypoint", async () => {
+    const [html, viteConfig, packageJson] = await Promise.all([
+      readProjectFile("apps/site/index.html"),
+      readProjectFile("apps/site/vite.config.ts"),
+      readProjectFile("apps/site/package.json"),
+    ]);
+
+    expect(html).toContain("<!--STRUCTSMITH_STATIC_HTML-->");
+    expect(html).not.toMatch(/<script\b[^>]*\bsrc=/i);
+    expect(viteConfig).toContain("renderToStaticMarkup");
+    expect(viteConfig).toContain("structsmith-static-prerender");
+    expect(packageJson).toContain("verify:static");
+    expect(await Bun.file(projectFile("apps/site/src/main.tsx")).exists()).toBeFalse();
+  });
 });

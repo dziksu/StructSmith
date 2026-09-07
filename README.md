@@ -93,7 +93,9 @@ bun run dev:site
 `bun run build:site` creates the GitHub Pages artifact in `apps/site/dist`. Changes to the
 site, shared public assets, or its workflow are published automatically from `main` by the
 `GitHub Pages` action. Before the first deployment, select **GitHub Actions** as the source in
-the repository's **Settings → Pages**; later pushes need no manual publishing step.
+the repository's **Settings → Pages**; later pushes need no manual publishing step. The build
+prerenders the complete page with React's server renderer and inlines its CSS into `index.html`;
+the published page has no client-side React runtime or JavaScript bundle.
 
 ---
 
