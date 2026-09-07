@@ -1,6 +1,6 @@
-import type { WorkspaceMode } from "@structsmith/contracts";
+import type { Workspace, WorkspaceMode } from "@structsmith/contracts";
 import { WorkspaceDocumentSchema } from "@structsmith/contracts";
-import { FileUp, FolderOpen, Plus, Sparkles, Trash2 } from "lucide-react";
+import { FileUp, FolderOpen, MoreHorizontal, Pencil, Plus, Sparkles, Trash2 } from "lucide-react";
 import { useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
@@ -15,6 +15,12 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -40,26 +46,68 @@ export function HomePage({ onOpenWorkspace }: { onOpenWorkspace: (workspaceId: s
   const fileInput = useRef<HTMLInputElement>(null);
 
   const [createOpen, setCreateOpen] = useState(false);
+  const [editingWorkspace, setEditingWorkspace] = useState<Workspace | null>(null);
+  const [deletingWorkspace, setDeletingWorkspace] = useState<Workspace | null>(null);
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [mode, setMode] = useState<WorkspaceMode>("relaxed");
+  const [saving, setSaving] = useState(false);
+  const [deleting, setDeleting] = useState(false);
 
   const refresh = (): void => {
     void queryClient.invalidateQueries({ queryKey: queryKeys.workspaces });
   };
 
-  const create = (): void => {
+  const resetForm = (): void => {
+    setName("");
+    setDescription("");
+    setMode("relaxed");
+  };
+
+  const openCreate = (): void => {
+    resetForm();
+    setCreateOpen(true);
+  };
+
+  const openEdit = (workspace: Workspace): void => {
+    setName(workspace.name);
+    setDescription(workspace.description ?? "");
+    setMode(workspace.mode);
+    setEditingWorkspace(workspace);
+  };
+
+  const closeForm = (): void => {
+    if (saving) return;
+    setCreateOpen(false);
+    setEditingWorkspace(null);
+    resetForm();
+  };
+
+  const save = async (): Promise<void> => {
     if (!name.trim()) return;
-    api
-      .createWorkspace({ name: name.trim(), description: description.trim() || null, mode })
-      .then((workspace) => {
+    setSaving(true);
+    try {
+      const input = { name: name.trim(), description: description.trim() || null, mode };
+      if (editingWorkspace) {
+        await api.updateWorkspace(editingWorkspace.id, input);
+        toast.success(t("home.updated"));
         refresh();
-        setCreateOpen(false);
-        setName("");
-        setDescription("");
-        onOpenWorkspace(workspace.id);
-      })
-      .catch(onError);
+        setEditingWorkspace(null);
+        resetForm();
+        return;
+      }
+
+      const workspace = await api.createWorkspace(input);
+      toast.success(t("home.created"));
+      refresh();
+      setCreateOpen(false);
+      resetForm();
+      onOpenWorkspace(workspace.id);
+    } catch (error) {
+      onError(error);
+    } finally {
+      setSaving(false);
+    }
   };
 
   const importFile = async (file: File): Promise<void> => {
@@ -74,9 +122,20 @@ export function HomePage({ onOpenWorkspace }: { onOpenWorkspace: (workspaceId: s
     }
   };
 
-  const remove = (workspaceId: string, workspaceName: string): void => {
-    if (!window.confirm(t("home.deleteHint", { name: workspaceName }))) return;
-    api.deleteWorkspace(workspaceId).then(refresh).catch(onError);
+  const remove = async (): Promise<void> => {
+    if (!deletingWorkspace) return;
+    setDeleting(true);
+    try {
+      await api.deleteWorkspace(deletingWorkspace.id);
+      queryClient.removeQueries({ queryKey: ["workspace", deletingWorkspace.id] });
+      toast.success(t("home.deleted"));
+      setDeletingWorkspace(null);
+      refresh();
+    } catch (error) {
+      onError(error);
+    } finally {
+      setDeleting(false);
+    }
   };
 
   const example = workspaces.data?.find((workspace) => workspace.id === EXAMPLE_ID);
@@ -94,7 +153,7 @@ export function HomePage({ onOpenWorkspace }: { onOpenWorkspace: (workspaceId: s
         <p className="mt-2 max-w-xl text-[13px] text-muted-foreground">{t("home.subtitle")}</p>
 
         <div className="mt-6 flex flex-wrap gap-2">
-          <Button onClick={() => setCreateOpen(true)}>
+          <Button onClick={openCreate}>
             <Plus className="h-3.5 w-3.5" />
             {t("home.newWorkspace")}
           </Button>
@@ -135,45 +194,63 @@ export function HomePage({ onOpenWorkspace }: { onOpenWorkspace: (workspaceId: s
           {workspaces.data?.map((workspace) => (
             <div
               key={workspace.id}
-              role="button"
-              tabIndex={0}
-              onClick={() => onOpenWorkspace(workspace.id)}
-              onKeyDown={(event) => event.key === "Enter" && onOpenWorkspace(workspace.id)}
-              className="group flex cursor-pointer items-center gap-3 px-3 py-2.5 transition-colors hover:bg-accent/50"
+              className="group flex items-center gap-2 px-3 py-2.5 transition-colors hover:bg-accent/50"
             >
-              <FolderOpen className="h-4 w-4 shrink-0 text-muted-foreground" />
-              <div className="min-w-0 flex-1">
-                <div className="truncate text-[13px] font-medium">{workspace.name}</div>
-                <div className="truncate text-[11.5px] text-muted-foreground">
-                  {workspace.description || t("common.empty")}
-                </div>
-              </div>
-              <div className="hidden shrink-0 text-right text-[11px] text-muted-foreground sm:block">
-                <div>{formatDateTime(workspace.updatedAt, i18n.language)}</div>
-                <div className="font-mono">
-                  {t("home.revision", { revision: workspace.revision })}
-                </div>
-              </div>
               <button
                 type="button"
-                className="rounded p-1 text-muted-foreground opacity-0 transition-opacity hover:text-destructive group-hover:opacity-100"
-                onClick={(event) => {
-                  event.stopPropagation();
-                  remove(workspace.id, workspace.name);
-                }}
+                onClick={() => onOpenWorkspace(workspace.id)}
+                className="flex min-w-0 flex-1 items-center gap-3 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
               >
-                <Trash2 className="h-3.5 w-3.5" />
+                <FolderOpen className="h-4 w-4 shrink-0 text-muted-foreground" />
+                <div className="min-w-0 flex-1">
+                  <div className="truncate text-[13px] font-medium">{workspace.name}</div>
+                  <div className="truncate text-[11.5px] text-muted-foreground">
+                    {workspace.description || t("common.empty")}
+                  </div>
+                </div>
+                <div className="hidden shrink-0 text-right text-[11px] text-muted-foreground sm:block">
+                  <div>{formatDateTime(workspace.updatedAt, i18n.language)}</div>
+                  <div className="font-mono">
+                    {t("home.revision", { revision: workspace.revision })}
+                  </div>
+                </div>
               </button>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <button
+                    type="button"
+                    aria-label={t("home.workspaceActions", { name: workspace.name })}
+                    className="rounded p-1 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                  >
+                    <MoreHorizontal className="h-4 w-4" />
+                  </button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem onSelect={() => openEdit(workspace)}>
+                    <Pencil className="h-3.5 w-3.5" />
+                    {t("common.edit")}
+                  </DropdownMenuItem>
+                  <DropdownMenuItem destructive onSelect={() => setDeletingWorkspace(workspace)}>
+                    <Trash2 className="h-3.5 w-3.5" />
+                    {t("common.delete")}
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             </div>
           ))}
         </div>
       </div>
 
-      <Dialog open={createOpen} onOpenChange={setCreateOpen}>
+      <Dialog
+        open={createOpen || Boolean(editingWorkspace)}
+        onOpenChange={(open) => !open && closeForm()}
+      >
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>{t("home.createTitle")}</DialogTitle>
-            <DialogDescription>{t("home.createHint")}</DialogDescription>
+            <DialogTitle>{t(editingWorkspace ? "home.editTitle" : "home.createTitle")}</DialogTitle>
+            <DialogDescription>
+              {t(editingWorkspace ? "home.editHint" : "home.createHint")}
+            </DialogDescription>
           </DialogHeader>
 
           <div className="space-y-3">
@@ -183,8 +260,9 @@ export function HomePage({ onOpenWorkspace }: { onOpenWorkspace: (workspaceId: s
                 id="workspace-name"
                 value={name}
                 autoFocus
+                maxLength={200}
                 onChange={(event) => setName(event.target.value)}
-                onKeyDown={(event) => event.key === "Enter" && create()}
+                onKeyDown={(event) => event.key === "Enter" && void save()}
               />
             </div>
             <div className="space-y-1">
@@ -211,11 +289,34 @@ export function HomePage({ onOpenWorkspace }: { onOpenWorkspace: (workspaceId: s
           </div>
 
           <DialogFooter>
-            <Button variant="ghost" onClick={() => setCreateOpen(false)}>
+            <Button variant="ghost" onClick={closeForm} disabled={saving}>
               {t("common.cancel")}
             </Button>
-            <Button onClick={create} disabled={!name.trim()}>
-              {t("common.create")}
+            <Button onClick={() => void save()} disabled={!name.trim() || saving}>
+              {t(editingWorkspace ? "common.save" : "common.create")}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog
+        open={Boolean(deletingWorkspace)}
+        onOpenChange={(open) => !open && !deleting && setDeletingWorkspace(null)}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{t("home.deleteTitle")}</DialogTitle>
+            <DialogDescription>
+              {t("home.deleteHint", { name: deletingWorkspace?.name ?? "" })}
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => setDeletingWorkspace(null)} disabled={deleting}>
+              {t("common.cancel")}
+            </Button>
+            <Button variant="destructive" onClick={() => void remove()} disabled={deleting}>
+              <Trash2 className="h-3.5 w-3.5" />
+              {t("common.delete")}
             </Button>
           </DialogFooter>
         </DialogContent>

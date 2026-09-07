@@ -60,7 +60,7 @@ export class WorkspaceService {
     input: UpdateWorkspaceInput,
     options: MutationOptions = {},
   ): { result: Workspace; revision: number } {
-    return mutate(this.ctx, workspaceId, options, (repos, workspace) => {
+    const mutation = mutate(this.ctx, workspaceId, options, (repos, workspace) => {
       const next: Workspace = {
         ...workspace,
         name: input.name ?? workspace.name,
@@ -72,6 +72,10 @@ export class WorkspaceService {
       repos.workspaces.update(next);
       return { result: next, message: `Updated workspace settings`, kind: "workspace" };
     });
+
+    // A workspace embeds its own revision, so return the committed row rather
+    // than the pre-bump value produced inside the mutation callback.
+    return { result: this.get(workspaceId), revision: mutation.revision };
   }
 
   delete(workspaceId: string): void {

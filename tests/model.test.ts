@@ -2,6 +2,42 @@ import { describe, expect, test } from "bun:test";
 import { DomainError } from "@structsmith/domain";
 import { createTestContext, createWorkspace } from "./helpers";
 
+describe("workspace lifecycle", () => {
+  test("workspace settings can be edited", () => {
+    const { services, close } = createTestContext();
+    const workspace = createWorkspace(services, "Before");
+
+    const updated = services.workspaces.update(workspace.id, {
+      name: "After",
+      description: "Updated description",
+      mode: "strict",
+    });
+
+    expect(updated.result).toMatchObject({
+      id: workspace.id,
+      name: "After",
+      description: "Updated description",
+      mode: "strict",
+      revision: 2,
+    });
+    expect(updated.revision).toBe(2);
+    expect(services.workspaces.get(workspace.id)).toEqual(updated.result);
+    close();
+  });
+
+  test("a workspace can be deleted", () => {
+    const { services, close } = createTestContext();
+    const workspace = createWorkspace(services);
+    services.elements.create(workspace.id, { kind: "person", name: "Customer" });
+
+    services.workspaces.delete(workspace.id);
+
+    expect(services.workspaces.list()).toHaveLength(0);
+    expect(() => services.workspaces.get(workspace.id)).toThrow(DomainError);
+    close();
+  });
+});
+
 describe("semantic model", () => {
   test("elements, relationships and views live in one model", () => {
     const { services, close } = createTestContext();
