@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.4.0](https://github.com/dziksu/structsmith/compare/v1.3.0...v1.4.0) (2026-09-07)
+
+### Features
+
+* **canvas:** add relationship routing options ([11dbc12](https://github.com/dziksu/structsmith/commit/11dbc1202241922b442c9269bbdab1edd7bb89d4))
+
 ## [1.3.0](https://github.com/dziksu/structsmith/compare/v1.2.0...v1.3.0) (2026-09-07)
 
 ### Features
