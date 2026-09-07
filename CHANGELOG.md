@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.2.0](https://github.com/dziksu/structsmith/compare/v1.1.1...v1.2.0) (2026-09-07)
+
+### Features
+
+* refresh branding and backfill changelog ([b1613d1](https://github.com/dziksu/structsmith/commit/b1613d15878e2d65ab9fd8cc62a28fbfd7459164))
+
 ## [1.1.1](https://github.com/dziksu/structsmith/compare/v1.1.0...v1.1.1) (2026-09-07)
 
 ### Bug Fixes
