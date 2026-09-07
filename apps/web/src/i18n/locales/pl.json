@@ -27,6 +27,13 @@
     "unnamed": "Bez nazwy",
     "value": "Wartość"
   },
+  "reference": {
+    "copy": "Kopiuj odnośnik dla agenta",
+    "copyWorkspace": "Kopiuj odnośnik do przestrzeni",
+    "copyView": "Kopiuj odnośnik do widoku",
+    "copied": "Skopiowano odnośnik dla agenta",
+    "copyFailed": "Nie udało się skopiować odnośnika"
+  },
   "home": {
     "subtitle": "Modeluj, dokumentuj i udostępniaj architekturę — lokalnie i razem z klientem AI.",
     "recentWorkspaces": "Ostatnie przestrzenie",
@@ -37,6 +44,8 @@
     "revision": "rewizja {{revision}}",
     "createTitle": "Nowa przestrzeń",
     "createHint": "Przestrzeń zawiera jeden model architektury i dowolną liczbę widoków.",
+    "editTitle": "Edytuj przestrzeń",
+    "editHint": "Zmień nazwę, opis lub tryb walidacji przestrzeni.",
     "modeLabel": "Tryb walidacji",
     "modeRelaxed": "Swobodny — ostrzegaj o naruszeniach reguł C4",
     "modeStrict": "Ścisły — blokuj naruszenia reguł C4",
@@ -44,6 +53,10 @@
     "importHint": "Wklej natywny eksport JSON lub wskaż plik .json.",
     "importFile": "Wybierz plik",
     "imported": "Przestrzeń zaimportowana",
+    "created": "Przestrzeń utworzona",
+    "updated": "Przestrzeń zaktualizowana",
+    "deleted": "Przestrzeń usunięta",
+    "workspaceActions": "Akcje dla przestrzeni {{name}}",
     "deleteTitle": "Usunąć przestrzeń?",
     "deleteHint": "To trwale usuwa „{{name}}” wraz z całą zawartością."
   },
@@ -204,7 +217,10 @@
     "mutating": "zapis",
     "readOnlyTool": "odczyt",
     "howToTitle": "Podłącz klienta",
-    "howToHint": "Wskaż klientowi MCP powyższy endpoint Streamable HTTP."
+    "howToHint": "Wskaż klientowi MCP powyższy endpoint Streamable HTTP.",
+    "codexConfig": "Konfiguracja projektu Codex",
+    "codexHint": "Dodaj do .codex/config.toml w zaufanym projekcie, a następnie uruchom nową sesję Codex.",
+    "genericConfig": "Konfiguracja ogólna"
   },
   "settings": {
     "title": "Ustawienia",

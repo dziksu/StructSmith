@@ -6,7 +6,7 @@ import type {
   Severity,
 } from "@structsmith/contracts";
 import { Plus, Trash2 } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -31,6 +31,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Tooltip } from "@/components/ui/tooltip";
 import { useApplyOperations } from "@/hooks/useApi";
 import { useEditorStore } from "@/store/editor";
+import { CopyReferenceButton } from "../reference/CopyReferenceButton";
 
 const KINDS: RecordKind[] = ["assumption", "risk", "unknown", "requirement", "decision", "note"];
 const STATUSES: RecordStatus[] = ["open", "confirmed", "resolved", "rejected"];
@@ -73,8 +74,24 @@ export function PresalesPanel({
   const { t } = useTranslation();
   const applyOperations = useApplyOperations(workspaceId);
   const requestFocus = useEditorStore((state) => state.requestFocus);
+  const selection = useEditorStore((state) => state.selection);
   const select = useEditorStore((state) => state.select);
   const [draft, setDraft] = useState<Draft | null>(null);
+
+  useEffect(() => {
+    if (selection.type !== "record") return;
+    const record = records.find((item) => item.id === selection.id);
+    if (!record) return;
+    setDraft({
+      id: record.id,
+      kind: record.kind,
+      title: record.title,
+      contentMd: record.contentMd ?? "",
+      status: record.status,
+      severity: record.severity ?? "none",
+      linkedElementIds: record.linkedElementIds,
+    });
+  }, [records, selection]);
 
   const save = (): void => {
     if (!draft?.title.trim()) return;
@@ -126,7 +143,8 @@ export function PresalesPanel({
               key={record.id}
               role="button"
               tabIndex={0}
-              onClick={() =>
+              onClick={() => {
+                select({ type: "record", id: record.id });
                 setDraft({
                   id: record.id,
                   kind: record.kind,
@@ -135,12 +153,16 @@ export function PresalesPanel({
                   status: record.status,
                   severity: record.severity ?? "none",
                   linkedElementIds: record.linkedElementIds,
-                })
-              }
+                });
+              }}
               onKeyDown={(event) =>
                 event.key === "Enter" && select({ type: "record", id: record.id })
               }
-              className="group cursor-pointer rounded border border-border/60 bg-card px-2 py-1.5 transition-colors hover:border-border hover:bg-accent/50"
+              className={
+                selection.type === "record" && selection.id === record.id
+                  ? "group cursor-pointer rounded border border-primary/50 bg-accent px-2 py-1.5 transition-colors"
+                  : "group cursor-pointer rounded border border-border/60 bg-card px-2 py-1.5 transition-colors hover:border-border hover:bg-accent/50"
+              }
             >
               <div className="flex items-center gap-1.5">
                 <Badge variant="outline">{t(`presales.kinds.${record.kind}`)}</Badge>
@@ -150,6 +172,15 @@ export function PresalesPanel({
                   </Badge>
                 )}
                 <span className="flex-1" />
+                <CopyReferenceButton
+                  className="hidden group-hover:block"
+                  reference={{
+                    type: "record",
+                    workspaceId,
+                    targetId: record.id,
+                    label: record.title,
+                  }}
+                />
                 <button
                   type="button"
                   className="hidden rounded p-0.5 text-muted-foreground hover:text-destructive group-hover:block"

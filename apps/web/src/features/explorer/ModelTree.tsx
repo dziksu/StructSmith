@@ -11,6 +11,7 @@ import { cn } from "@/lib/utils";
 import { useEditorStore } from "@/store/editor";
 import { DRAG_MIME } from "../canvas/Canvas";
 import { iconFor } from "../icons";
+import { CopyReferenceButton } from "../reference/CopyReferenceButton";
 
 interface ModelTreeProps {
   workspaceId: string;
@@ -169,6 +170,15 @@ export function ModelTree({ workspaceId, elements, view }: ModelTreeProps) {
           </span>
 
           <span className="hidden items-center gap-0.5 group-hover:flex">
+            <CopyReferenceButton
+              reference={{
+                type: "element",
+                workspaceId,
+                targetId: element.id,
+                label: element.name,
+                viewId: view?.id,
+              }}
+            />
             {view && !onView.has(element.id) && (
               <Tooltip label={t("explorer.addToView")}>
                 <button

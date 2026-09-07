@@ -28,6 +28,7 @@ import { api } from "@/lib/api";
 import { invalidateWorkspace } from "@/lib/query";
 import { useEditorStore } from "@/store/editor";
 import { useHistoryStore } from "@/store/history";
+import { useCopyAgentReference } from "../reference/useCopyAgentReference";
 import { BoundaryNode } from "./BoundaryNode";
 import { ElementNode } from "./ElementNode";
 import {
@@ -67,6 +68,7 @@ export function Canvas({ workspaceId, view, elements, relationships, records }: 
   const flow = useReactFlow();
   const onError = useApiErrorHandler();
   const applyOperations = useApplyOperations(workspaceId);
+  const copyReference = useCopyAgentReference();
   const pushHistory = useHistoryStore((state) => state.push);
 
   const select = useEditorStore((state) => state.select);
@@ -159,6 +161,19 @@ export function Canvas({ workspaceId, view, elements, relationships, records }: 
       current.map((edge) => (edge.selected ? { ...edge, selected: false } : edge)),
     );
   }, [focusRequest, flow]);
+
+  useEffect(() => {
+    if (selection.type !== "relationship") return;
+    setNodes((current) =>
+      current.map((node) => (node.selected ? { ...node, selected: false } : node)),
+    );
+    setEdges((current) =>
+      current.map((edge) => {
+        const shouldSelect = relationshipIdOf(edge) === selection.id;
+        return edge.selected === shouldSelect ? edge : { ...edge, selected: shouldSelect };
+      }),
+    );
+  }, [selection]);
 
   /* --------------------------- layout persistence --------------------------- */
 
@@ -369,6 +384,17 @@ export function Canvas({ workspaceId, view, elements, relationships, records }: 
             label: t("contextMenu.edit"),
             onSelect: () => select({ type: "element", id: elementId }),
           },
+          {
+            label: t("reference.copy"),
+            onSelect: () =>
+              void copyReference({
+                type: "element",
+                workspaceId,
+                targetId: elementId,
+                label: elementsById.get(elementId)?.name,
+                viewId: view.id,
+              }),
+          },
           { label: t("contextMenu.duplicate"), onSelect: () => duplicateElement(elementId) },
           { label: t("contextMenu.connect"), onSelect: () => setConnectFrom(elementId) },
           {
@@ -386,27 +412,63 @@ export function Canvas({ workspaceId, view, elements, relationships, records }: 
         ],
       });
     },
-    [deleteFromModel, duplicateElement, hideInView, removeFromView, select, setConnectFrom, t],
+    [
+      copyReference,
+      deleteFromModel,
+      duplicateElement,
+      elementsById,
+      hideInView,
+      removeFromView,
+      select,
+      setConnectFrom,
+      t,
+      view.id,
+      workspaceId,
+    ],
   );
 
   const onEdgeContextMenu = useCallback(
     (event: React.MouseEvent, edge: FlowEdge) => {
       event.preventDefault();
       const relationshipId = relationshipIdOf(edge);
+      const relationship = relationships.find((item) => item.id === relationshipId);
       select({ type: "relationship", id: relationshipId });
       setMenu({
         x: event.clientX,
         y: event.clientY,
         items: [
           {
+            label: t("reference.copy"),
+            onSelect: () =>
+              void copyReference({
+                type: "relationship",
+                workspaceId,
+                targetId: relationshipId,
+                label: relationship
+                  ? `${elementsById.get(relationship.sourceElementId)?.name ?? relationship.sourceElementId} → ${elementsById.get(relationship.targetElementId)?.name ?? relationship.targetElementId}`
+                  : relationshipId,
+                viewId: view.id,
+              }),
+          },
+          {
             label: t("contextMenu.deleteRelationship"),
             destructive: true,
+            separatorBefore: true,
             onSelect: () => deleteRelationships([relationshipId]),
           },
         ],
       });
     },
-    [deleteRelationships, select, t],
+    [
+      copyReference,
+      deleteRelationships,
+      elementsById,
+      relationships,
+      select,
+      t,
+      view.id,
+      workspaceId,
+    ],
   );
 
   /* ------------------------------ drag and drop ----------------------------- */

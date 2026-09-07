@@ -11,6 +11,7 @@ import {
   UpdateRecordSchema,
   UpdateRelationshipSchema,
   UpdateViewSchema,
+  ValidationResultSchema,
   ViewRelationshipPatchSchema,
 } from "./model";
 
@@ -169,3 +170,16 @@ export const ApplyOperationsResultSchema = z.object({
   snapshotId: z.string().nullable(),
 });
 export type ApplyOperationsResult = z.infer<typeof ApplyOperationsResultSchema>;
+
+/** Result of applying a batch inside a transaction that is always rolled back. */
+export const PreviewOperationsResultSchema = z.object({
+  success: z.literal(true),
+  baseRevision: z.number().int(),
+  predictedRevision: z.number().int(),
+  appliedOperations: z.array(AppliedOperationSchema),
+  warnings: z.array(z.string()),
+  validation: ValidationResultSchema,
+  persisted: z.literal(false),
+  note: z.string(),
+});
+export type PreviewOperationsResult = z.infer<typeof PreviewOperationsResultSchema>;

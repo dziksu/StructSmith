@@ -6,8 +6,25 @@ export interface McpToolInfo {
 
 /** Advertised in the UI (Settings → MCP) and used to gate read-only mode. */
 export const MCP_TOOLS: readonly McpToolInfo[] = [
+  {
+    name: "modeling_guide",
+    description: "Read modeling rules, allowed enum values and the recommended MCP workflow.",
+    mutating: false,
+  },
   { name: "workspace_list", description: "List all workspaces.", mutating: false },
   { name: "workspace_get", description: "Read a single workspace.", mutating: false },
+  {
+    name: "workspace_inspect",
+    description:
+      "Read a complete AI-oriented workspace packet: model, views, records, validation and optional history.",
+    mutating: false,
+  },
+  {
+    name: "reference_resolve",
+    description:
+      "Resolve a copied StructSmith reference to its exact object and useful surrounding context.",
+    mutating: false,
+  },
   { name: "workspace_create", description: "Create a workspace.", mutating: true },
   {
     name: "workspace_update",
@@ -32,8 +49,15 @@ export const MCP_TOOLS: readonly McpToolInfo[] = [
   },
   {
     name: "model_apply_operations",
-    description: "Apply a batch of model operations atomically. Preferred for larger changes.",
+    description:
+      "Apply 1-500 operations atomically with @ref aliases and an automatic snapshot. Preferred for larger changes.",
     mutating: true,
+  },
+  {
+    name: "model_preview_operations",
+    description:
+      "Run a batch through the real engine and validator, then roll it back without persisting anything.",
+    mutating: false,
   },
 
   { name: "element_create", description: "Add an element to the model.", mutating: true },
@@ -83,8 +107,10 @@ export const MCP_TOOLS: readonly McpToolInfo[] = [
 ];
 
 export const MCP_RESOURCES: readonly string[] = [
+  "architecture://guide",
   "architecture://workspaces",
   "architecture://workspace/{workspaceId}",
+  "architecture://workspace/{workspaceId}/inspection",
   "architecture://workspace/{workspaceId}/model",
   "architecture://workspace/{workspaceId}/views",
   "architecture://workspace/{workspaceId}/view/{viewId}",
