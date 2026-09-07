@@ -20,6 +20,16 @@ test("release writes the changelog before publishing to GitHub", () => {
   ]);
 });
 
+test("release enables auto-merge for generated changelog pull requests", () => {
+  const workflow = readFileSync(new URL("../.github/workflows/ci.yml", import.meta.url), "utf8");
+
+  expect(workflow).toContain("id: changelog-pr");
+  expect(workflow).toContain("steps.changelog-pr.outputs.pull-request-number != ''");
+  expect(workflow).toContain("gh pr merge --squash --auto");
+  expect(workflow).toContain("GH_TOKEN:");
+  expect(workflow).toContain("secrets.RELEASE_PR_TOKEN");
+});
+
 test("release notes include runtime dependency updates", async () => {
   const notes = await generateNotes(config.plugins[1][1], {
     cwd: process.cwd(),
