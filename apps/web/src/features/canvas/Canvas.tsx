@@ -72,6 +72,7 @@ export function Canvas({ workspaceId, view, elements, relationships, records }: 
   const pushHistory = useHistoryStore((state) => state.push);
 
   const select = useEditorStore((state) => state.select);
+  const clearSelection = useEditorStore((state) => state.clearSelection);
   const selection = useEditorStore((state) => state.selection);
   const connectFrom = useEditorStore((state) => state.connectFrom);
   const setConnectFrom = useEditorStore((state) => state.setConnectFrom);
@@ -551,7 +552,13 @@ export function Canvas({ workspaceId, view, elements, relationships, records }: 
         onEdgeContextMenu={onEdgeContextMenu}
         onPaneClick={() => {
           setMenu(null);
-          setConnectFrom(null);
+          clearSelection();
+          setNodes((current) =>
+            current.map((node) => (node.selected ? { ...node, selected: false } : node)),
+          );
+          setEdges((current) =>
+            current.map((edge) => (edge.selected ? { ...edge, selected: false } : edge)),
+          );
         }}
         onNodesDelete={(deleted) => {
           for (const node of deleted) {

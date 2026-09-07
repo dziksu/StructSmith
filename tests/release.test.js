@@ -20,14 +20,27 @@ test("release writes the changelog before publishing to GitHub", () => {
   ]);
 });
 
-test("release enables auto-merge for generated changelog pull requests", () => {
+test("release syncs changelog and package version through one auto-merged pull request", () => {
   const workflow = readFileSync(new URL("../.github/workflows/ci.yml", import.meta.url), "utf8");
 
+  const stamp = `bun scripts/set-build-version.ts "\${{ steps.release.outputs.version }}"`;
   expect(workflow).toContain("id: changelog-pr");
   expect(workflow).toContain("steps.changelog-pr.outputs.pull-request-number != ''");
   expect(workflow).toContain("gh pr merge --squash --auto");
   expect(workflow).toContain("GH_TOKEN:");
   expect(workflow).toContain("secrets.RELEASE_PR_TOKEN");
+  expect(workflow).toContain(stamp);
+  expect(workflow).toContain("add-paths: |\n            CHANGELOG.md\n            package.json");
+  expect(workflow.indexOf(stamp)).toBeLessThan(workflow.indexOf("id: changelog-pr"));
+});
+
+test("source package version matches the newest changelog release", () => {
+  const manifest = JSON.parse(readFileSync(new URL("../package.json", import.meta.url), "utf8"));
+  const changelog = readFileSync(new URL("../CHANGELOG.md", import.meta.url), "utf8");
+  const newestRelease = changelog.match(/^## \[(\d+\.\d+\.\d+)\]/m)?.[1];
+
+  expect(newestRelease).toBeDefined();
+  expect(manifest.version).toBe(newestRelease);
 });
 
 test("release notes include runtime dependency updates", async () => {

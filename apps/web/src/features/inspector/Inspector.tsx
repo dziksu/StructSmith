@@ -110,8 +110,21 @@ export function Inspector({ workspaceId, elements, relationships, records, view 
               workspaceId={workspaceId}
               onPatch={(settings) =>
                 applyOperations.mutate({
-                  label: t("inspector.viewSettings"),
-                  operations: [{ op: "updateView", viewId: view.id, data: { settings } }],
+                  label: settings.autoLayoutDirection
+                    ? t("inspector.layoutDirection")
+                    : t("inspector.viewSettings"),
+                  operations: [
+                    { op: "updateView", viewId: view.id, data: { settings } },
+                    ...(settings.autoLayoutDirection
+                      ? [
+                          {
+                            op: "autoLayoutView" as const,
+                            viewId: view.id,
+                            direction: settings.autoLayoutDirection,
+                          },
+                        ]
+                      : []),
+                  ],
                 })
               }
             />

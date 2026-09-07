@@ -30,6 +30,7 @@ const indexRoute = createRoute({
         onOpenWorkspace={(workspaceId) =>
           void navigate({ to: "/w/$workspaceId", params: { workspaceId } })
         }
+        onOpenMcp={() => void navigate({ to: "/settings/mcp" })}
       />
     );
   },
