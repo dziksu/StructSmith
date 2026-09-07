@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.6.1](https://github.com/dziksu/structsmith/compare/v1.6.0...v1.6.1) (2026-09-07)
+
+### Bug Fixes
+
+* **site:** prerender marketing page ([2e8788d](https://github.com/dziksu/structsmith/commit/2e8788dbb688e1d354c79a57709f4f8ef43c8cf3))
+
 ## [1.6.0](https://github.com/dziksu/structsmith/compare/v1.5.0...v1.6.0) (2026-09-07)
 
 ### Features
