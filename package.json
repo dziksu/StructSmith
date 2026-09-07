@@ -58,7 +58,6 @@
     "release": "node scripts/release.ts"
   },
   "overrides": {
-    "conventional-changelog-writer": "^9.2.1",
     "zod": "^4.5.4"
   },
   "devDependencies": {
