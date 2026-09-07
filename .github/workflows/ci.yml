@@ -41,6 +41,9 @@ jobs:
       - name: Build the web app
         run: bun run build
 
+      - name: Build the marketing site
+        run: bun run build:site
+
   docker:
     name: Docker image builds
     runs-on: ubuntu-latest
