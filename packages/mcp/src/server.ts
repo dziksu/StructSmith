@@ -16,7 +16,7 @@ export function createMcpServer({ services, readOnly }: McpServerOptions): McpSe
     { name: PRODUCT.slug, version: PRODUCT.version },
     {
       instructions: [
-        `Start with workspace_list, then workspace_inspect. Call modeling_guide for model rules and allowed values; never inspect ${PRODUCT.name} source code to discover schemas. For multi-entity changes use model_preview_operations, then one model_apply_operations batch with @ref aliases, and finish with model_validate. The semantic model is the source of truth; views only control membership and layout. Model a relationship once at the most specific C4 level because views automatically lift descendant relationships.`,
+        `Start with workspace_list, then workspace_inspect. When the user provides a StructSmithRef payload, call reference_resolve before acting. Call modeling_guide for model rules and allowed values; never inspect ${PRODUCT.name} source code to discover schemas. For multi-entity changes use model_preview_operations, then one model_apply_operations batch with @ref aliases, and finish with model_validate. The semantic model is the source of truth; views only control membership and layout. Model a relationship once at the most specific C4 level because views automatically lift descendant relationships.`,
         "Use expectedRevision when replacing or deleting existing data. On conflict inspect again and reconcile before retrying.",
         readOnly
           ? "This server is running in read-only mode; no mutating tools are available."

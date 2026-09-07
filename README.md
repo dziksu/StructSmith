@@ -157,6 +157,8 @@ first:
 - Run `model_preview_operations` before a large batch. It uses the real operation engine and
   validator, then rolls the transaction back.
 - Apply the accepted batch with `model_apply_operations` and finish with `model_validate`.
+- References copied from the UI are one-line `StructSmithRef` JSON payloads. Pass their
+  `workspaceId`, `type` and `targetId` to `reference_resolve` to fetch the exact object and context.
 
 ```jsonc
 {
@@ -186,8 +188,10 @@ Resources expose the model in an AI-friendly shape (no React internals, no CSS, 
 data):
 
 ```
+architecture://guide
 architecture://workspaces
 architecture://workspace/{workspaceId}
+architecture://workspace/{workspaceId}/inspection
 architecture://workspace/{workspaceId}/model
 architecture://workspace/{workspaceId}/views
 architecture://workspace/{workspaceId}/view/{viewId}

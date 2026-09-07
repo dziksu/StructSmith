@@ -16,7 +16,12 @@ test("MCP exposes and validates Zod 4 tools and prompt arguments", async () => {
     expect(client.getInstructions()).toContain("never inspect StructSmith source code");
     const { tools } = await client.listTools();
     expect(tools.map((tool) => tool.name)).toEqual(
-      expect.arrayContaining(["modeling_guide", "workspace_inspect", "model_preview_operations"]),
+      expect.arrayContaining([
+        "modeling_guide",
+        "workspace_inspect",
+        "reference_resolve",
+        "model_preview_operations",
+      ]),
     );
     expect(tools.find((tool) => tool.name === "workspace_create")?.inputSchema).toMatchObject({
       type: "object",
@@ -71,6 +76,23 @@ test("MCP exposes and validates Zod 4 tools and prompt arguments", async () => {
       ]),
     );
     expect(services.model.get(workspace.id).elements).toHaveLength(0);
+
+    const element = services.elements.create(workspace.id, {
+      kind: "person",
+      name: "Referenced user",
+    }).result;
+    const resolved = await client.callTool({
+      name: "reference_resolve",
+      arguments: { workspaceId: workspace.id, type: "element", targetId: element.id },
+    });
+    expect(resolved.content).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          type: "text",
+          text: expect.stringContaining('"name": "Referenced user"'),
+        }),
+      ]),
+    );
 
     const guideResource = await client.readResource({ uri: "architecture://guide" });
     const guideContent = guideResource.contents[0];

@@ -37,6 +37,7 @@ export function modelingGuide() {
     startHere: [
       "Call workspace_list to resolve the target workspace id.",
       "Call workspace_inspect before planning a change.",
+      "When a prompt contains a StructSmithRef payload, call reference_resolve with its workspaceId, type and targetId.",
       "Use the tool input schemas and this guide; do not inspect StructSmith source code.",
       "For multi-entity changes call model_preview_operations, then model_apply_operations.",
       "Finish with model_validate and inspect the affected views.",
@@ -63,6 +64,8 @@ export function modelingGuide() {
       operationKinds: OPERATION_KINDS,
     },
     references: {
+      copiedReferences:
+        "The UI copies one-line StructSmithRef JSON. Resolve it with reference_resolve; its url also deep-links to the target in the editor.",
       syntax: "Assign ref on a create operation and use @ref in later id fields in the same batch.",
       example: [
         { op: "createElement", ref: "api", data: { kind: "container", name: "API" } },

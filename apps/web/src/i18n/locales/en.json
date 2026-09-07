@@ -27,6 +27,13 @@
     "unnamed": "Untitled",
     "value": "Value"
   },
+  "reference": {
+    "copy": "Copy reference for agent",
+    "copyWorkspace": "Copy workspace reference",
+    "copyView": "Copy view reference",
+    "copied": "Agent reference copied",
+    "copyFailed": "Could not copy reference"
+  },
   "home": {
     "subtitle": "Model, document and share software architecture — locally, and with your AI client.",
     "recentWorkspaces": "Recent workspaces",

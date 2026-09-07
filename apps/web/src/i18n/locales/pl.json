@@ -27,6 +27,13 @@
     "unnamed": "Bez nazwy",
     "value": "Wartość"
   },
+  "reference": {
+    "copy": "Kopiuj odnośnik dla agenta",
+    "copyWorkspace": "Kopiuj odnośnik do przestrzeni",
+    "copyView": "Kopiuj odnośnik do widoku",
+    "copied": "Skopiowano odnośnik dla agenta",
+    "copyFailed": "Nie udało się skopiować odnośnika"
+  },
   "home": {
     "subtitle": "Modeluj, dokumentuj i udostępniaj architekturę — lokalnie i razem z klientem AI.",
     "recentWorkspaces": "Ostatnie przestrzenie",

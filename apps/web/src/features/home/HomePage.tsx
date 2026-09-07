@@ -1,6 +1,15 @@
 import type { Workspace, WorkspaceMode } from "@structsmith/contracts";
 import { WorkspaceDocumentSchema } from "@structsmith/contracts";
-import { FileUp, FolderOpen, MoreHorizontal, Pencil, Plus, Sparkles, Trash2 } from "lucide-react";
+import {
+  Copy,
+  FileUp,
+  FolderOpen,
+  MoreHorizontal,
+  Pencil,
+  Plus,
+  Sparkles,
+  Trash2,
+} from "lucide-react";
 import { useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
@@ -35,6 +44,7 @@ import { useApiErrorHandler, useSettings, useWorkspaces } from "@/hooks/useApi";
 import { api } from "@/lib/api";
 import { queryClient, queryKeys } from "@/lib/query";
 import { formatDateTime } from "@/lib/utils";
+import { useCopyAgentReference } from "../reference/useCopyAgentReference";
 
 const EXAMPLE_ID = "example-client-portal";
 
@@ -43,6 +53,7 @@ export function HomePage({ onOpenWorkspace }: { onOpenWorkspace: (workspaceId: s
   const settings = useSettings();
   const workspaces = useWorkspaces();
   const onError = useApiErrorHandler();
+  const copyReference = useCopyAgentReference();
   const fileInput = useRef<HTMLInputElement>(null);
 
   const [createOpen, setCreateOpen] = useState(false);
@@ -229,6 +240,19 @@ export function HomePage({ onOpenWorkspace }: { onOpenWorkspace: (workspaceId: s
                   <DropdownMenuItem onSelect={() => openEdit(workspace)}>
                     <Pencil className="h-3.5 w-3.5" />
                     {t("common.edit")}
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    onSelect={() =>
+                      void copyReference({
+                        type: "workspace",
+                        workspaceId: workspace.id,
+                        targetId: workspace.id,
+                        label: workspace.name,
+                      })
+                    }
+                  >
+                    <Copy className="h-3.5 w-3.5" />
+                    {t("reference.copyWorkspace")}
                   </DropdownMenuItem>
                   <DropdownMenuItem destructive onSelect={() => setDeletingWorkspace(workspace)}>
                     <Trash2 className="h-3.5 w-3.5" />

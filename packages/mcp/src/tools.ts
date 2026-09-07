@@ -8,6 +8,7 @@ import {
   CreateWorkspaceSchema,
   LayoutDirectionSchema,
   LayoutEntrySchema,
+  ReferenceTargetKindSchema,
   UpdateElementSchema,
   UpdateRecordSchema,
   UpdateRelationshipSchema,
@@ -19,6 +20,7 @@ import { z } from "zod";
 import { MCP_TOOLS } from "./catalog";
 import { modelingGuide } from "./guide";
 import { workspaceInspection } from "./inspection";
+import { resolveReference } from "./reference";
 
 export interface McpToolOptions {
   readOnly: boolean;
@@ -113,6 +115,20 @@ export function registerTools(
     },
     ({ workspaceId: id, includeLayouts, includeHistory }) =>
       json(workspaceInspection(services, id, { includeLayouts, includeHistory })),
+  );
+
+  server.registerTool(
+    "reference_resolve",
+    {
+      description: describe("reference_resolve"),
+      inputSchema: {
+        workspaceId,
+        type: ReferenceTargetKindSchema.describe("The type field from a StructSmithRef payload."),
+        targetId: z.string().describe("The targetId field from a StructSmithRef payload."),
+      },
+      annotations: readOnlyAnnotations,
+    },
+    ({ workspaceId: id, type, targetId }) => json(resolveReference(services, id, type, targetId)),
   );
 
   registerWrite("workspace_create", CreateWorkspaceSchema.shape, (args: unknown) =>

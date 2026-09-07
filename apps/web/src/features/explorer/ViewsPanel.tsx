@@ -24,6 +24,7 @@ import {
 import { Tooltip } from "@/components/ui/tooltip";
 import { useApplyOperations } from "@/hooks/useApi";
 import { cn } from "@/lib/utils";
+import { CopyReferenceButton } from "../reference/CopyReferenceButton";
 
 const VIEW_KINDS: ViewKind[] = [
   "systemContext",
@@ -130,6 +131,16 @@ export function ViewsPanel({
                   {t(`viewKinds.${view.kind}`)}
                 </div>
               </div>
+              <CopyReferenceButton
+                className="hidden group-hover:block"
+                reference={{
+                  type: "view",
+                  workspaceId,
+                  targetId: view.id,
+                  label: view.name,
+                  viewId: view.id,
+                }}
+              />
               <button
                 type="button"
                 className="hidden rounded p-0.5 text-muted-foreground hover:text-destructive group-hover:block"

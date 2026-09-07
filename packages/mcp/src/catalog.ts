@@ -19,6 +19,12 @@ export const MCP_TOOLS: readonly McpToolInfo[] = [
       "Read a complete AI-oriented workspace packet: model, views, records, validation and optional history.",
     mutating: false,
   },
+  {
+    name: "reference_resolve",
+    description:
+      "Resolve a copied StructSmith reference to its exact object and useful surrounding context.",
+    mutating: false,
+  },
   { name: "workspace_create", description: "Create a workspace.", mutating: true },
   {
     name: "workspace_update",
