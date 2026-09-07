@@ -210,7 +210,10 @@
     "mutating": "writes",
     "readOnlyTool": "reads",
     "howToTitle": "Connect a client",
-    "howToHint": "Point your MCP client at the Streamable HTTP endpoint above."
+    "howToHint": "Point your MCP client at the Streamable HTTP endpoint above.",
+    "codexConfig": "Codex project configuration",
+    "codexHint": "Add this to .codex/config.toml in a trusted project, then start a new Codex session.",
+    "genericConfig": "Generic configuration"
   },
   "settings": {
     "title": "Settings",

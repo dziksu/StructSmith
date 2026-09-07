@@ -1,6 +1,8 @@
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { ResourceTemplate } from "@modelcontextprotocol/sdk/server/mcp.js";
 import type { Services } from "@structsmith/domain";
+import { modelingGuide } from "./guide";
+import { workspaceInspection } from "./inspection";
 
 const jsonResource = (uri: string, value: unknown) => ({
   contents: [{ uri, mimeType: "application/json", text: JSON.stringify(value, null, 2) }],
@@ -14,6 +16,17 @@ const first = (value: string | string[] | undefined): string =>
  * data, nothing an AI client cannot reason about (spec §23).
  */
 export function registerResources(server: McpServer, services: Services): void {
+  server.registerResource(
+    "modeling-guide",
+    "architecture://guide",
+    {
+      title: "StructSmith modeling guide",
+      description: "Model semantics, allowed values and the recommended agent workflow.",
+      mimeType: "application/json",
+    },
+    (uri) => jsonResource(uri.href, modelingGuide()),
+  );
+
   server.registerResource(
     "workspaces",
     "architecture://workspaces",
@@ -50,6 +63,20 @@ export function registerResources(server: McpServer, services: Services): void {
       mimeType: "application/json",
     },
     (uri, variables) => jsonResource(uri.href, services.model.get(first(variables.workspaceId))),
+  );
+
+  server.registerResource(
+    "workspace-inspection",
+    new ResourceTemplate("architecture://workspace/{workspaceId}/inspection", {
+      list: undefined,
+    }),
+    {
+      title: "Workspace inspection packet",
+      description: "Complete model, views, records and validation in one AI-oriented resource.",
+      mimeType: "application/json",
+    },
+    (uri, variables) =>
+      jsonResource(uri.href, workspaceInspection(services, first(variables.workspaceId))),
   );
 
   server.registerResource(

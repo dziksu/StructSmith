@@ -210,7 +210,10 @@
     "mutating": "zapis",
     "readOnlyTool": "odczyt",
     "howToTitle": "Podłącz klienta",
-    "howToHint": "Wskaż klientowi MCP powyższy endpoint Streamable HTTP."
+    "howToHint": "Wskaż klientowi MCP powyższy endpoint Streamable HTTP.",
+    "codexConfig": "Konfiguracja projektu Codex",
+    "codexHint": "Dodaj do .codex/config.toml w zaufanym projekcie, a następnie uruchom nową sesję Codex.",
+    "genericConfig": "Konfiguracja ogólna"
   },
   "settings": {
     "title": "Ustawienia",

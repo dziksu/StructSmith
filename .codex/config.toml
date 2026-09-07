@@ -1,0 +1,8 @@
+# Project-scoped MCP connection for the local development instance.
+# Keep this URL aligned with PORT in the local .env file.
+[mcp_servers.structsmith]
+url = "http://localhost:3500/mcp"
+required = false
+startup_timeout_sec = 10
+tool_timeout_sec = 120
+default_tools_approval_mode = "writes"

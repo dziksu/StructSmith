@@ -116,6 +116,19 @@ Point any MCP client at the endpoint:
 }
 ```
 
+Codex can load StructSmith automatically from a trusted project's `.codex/config.toml`:
+
+```toml
+[mcp_servers.structsmith]
+url = "http://localhost:8090/mcp"
+default_tools_approval_mode = "writes"
+tool_timeout_sec = 120
+```
+
+The ChatGPT desktop app, Codex CLI and Codex IDE extension share this project-scoped
+configuration. Start a new local Codex session after adding or changing the server. The MCP page
+in StructSmith always shows a copy-ready snippet with the live URL, including custom ports.
+
 Claude Code, for example:
 
 ```bash
@@ -137,6 +150,13 @@ Tools cover workspaces, the model, elements, relationships, views, presales reco
 snapshots and export. The preferred way to make a larger change is a single call to
 `model_apply_operations`, which is atomic, revision-guarded and takes an automatic snapshot
 first:
+
+- Start with `workspace_list`, then `workspace_inspect` for one complete, validated context packet.
+- Call `modeling_guide` for allowed values, C4 rules, relationship lifting and the recommended
+  workflow instead of reading StructSmith source code.
+- Run `model_preview_operations` before a large batch. It uses the real operation engine and
+  validator, then rolls the transaction back.
+- Apply the accepted batch with `model_apply_operations` and finish with `model_validate`.
 
 ```jsonc
 {

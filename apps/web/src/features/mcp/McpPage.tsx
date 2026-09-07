@@ -20,15 +20,15 @@ export function McpPage({ onBack }: { onBack: () => void }) {
   const { t } = useTranslation();
   const info = useMcpInfo();
   const settings = useSettings();
-  const [copied, setCopied] = useState(false);
+  const [copied, setCopied] = useState<"endpoint" | "codex" | null>(null);
 
   const endpoint = info.data?.endpoint ?? `${window.location.origin}/mcp`;
 
-  const copy = async (): Promise<void> => {
-    await navigator.clipboard.writeText(endpoint);
-    setCopied(true);
+  const copy = async (value: string, target: "endpoint" | "codex"): Promise<void> => {
+    await navigator.clipboard.writeText(value);
+    setCopied(target);
     toast.success(t("common.copied"));
-    setTimeout(() => setCopied(false), 1500);
+    setTimeout(() => setCopied(null), 1500);
   };
 
   const clientConfig = JSON.stringify(
@@ -36,6 +36,12 @@ export function McpPage({ onBack }: { onBack: () => void }) {
     null,
     2,
   );
+  const codexConfig = [
+    "[mcp_servers.structsmith]",
+    `url = "${endpoint}"`,
+    'default_tools_approval_mode = "writes"',
+    "tool_timeout_sec = 120",
+  ].join("\n");
 
   return (
     <div className="h-full overflow-y-auto bg-background">
@@ -63,8 +69,12 @@ export function McpPage({ onBack }: { onBack: () => void }) {
               <code className="rounded bg-muted px-1.5 py-0.5 font-mono text-[12px]">
                 {endpoint}
               </code>
-              <Button size="sm" variant="ghost" onClick={() => void copy()}>
-                {copied ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
+              <Button size="sm" variant="ghost" onClick={() => void copy(endpoint, "endpoint")}>
+                {copied === "endpoint" ? (
+                  <Check className="h-3 w-3" />
+                ) : (
+                  <Copy className="h-3 w-3" />
+                )}
                 {t("mcp.copyEndpoint")}
               </Button>
             </div>
@@ -88,6 +98,18 @@ export function McpPage({ onBack }: { onBack: () => void }) {
         <section className="mt-6">
           <h2 className="text-[13px] font-semibold">{t("mcp.howToTitle")}</h2>
           <p className="mt-1 text-[12.5px] text-muted-foreground">{t("mcp.howToHint")}</p>
+          <div className="mt-3 flex items-center justify-between">
+            <h3 className="text-[12px] font-medium">{t("mcp.codexConfig")}</h3>
+            <Button size="sm" variant="ghost" onClick={() => void copy(codexConfig, "codex")}>
+              {copied === "codex" ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
+              {t("common.copy")}
+            </Button>
+          </div>
+          <p className="mt-1 text-[11.5px] text-muted-foreground">{t("mcp.codexHint")}</p>
+          <pre className="mt-2 overflow-x-auto rounded-lg border border-border bg-card p-3 font-mono text-[11.5px] leading-relaxed">
+            {codexConfig}
+          </pre>
+          <h3 className="mt-4 text-[12px] font-medium">{t("mcp.genericConfig")}</h3>
           <pre className="mt-2 overflow-x-auto rounded-lg border border-border bg-card p-3 font-mono text-[11.5px] leading-relaxed">
             {clientConfig}
           </pre>

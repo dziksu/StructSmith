@@ -17,6 +17,8 @@ import {
 import type { Services } from "@structsmith/domain";
 import { z } from "zod";
 import { MCP_TOOLS } from "./catalog";
+import { modelingGuide } from "./guide";
+import { workspaceInspection } from "./inspection";
 
 export interface McpToolOptions {
   readOnly: boolean;
@@ -64,6 +66,16 @@ export function registerTools(
     );
   };
 
+  server.registerTool(
+    "modeling_guide",
+    {
+      description: describe("modeling_guide"),
+      inputSchema: {},
+      annotations: readOnlyAnnotations,
+    },
+    () => json(modelingGuide()),
+  );
+
   /* ----------------------------- workspaces ----------------------------- */
 
   server.registerTool(
@@ -80,6 +92,27 @@ export function registerTools(
       annotations: readOnlyAnnotations,
     },
     ({ workspaceId: id }) => json(services.workspaces.get(id)),
+  );
+
+  server.registerTool(
+    "workspace_inspect",
+    {
+      description: describe("workspace_inspect"),
+      inputSchema: {
+        workspaceId,
+        includeLayouts: z
+          .boolean()
+          .default(false)
+          .describe("Include every saved node position and relationship routing entry."),
+        includeHistory: z
+          .boolean()
+          .default(false)
+          .describe("Include recent activity and snapshot summaries."),
+      },
+      annotations: readOnlyAnnotations,
+    },
+    ({ workspaceId: id, includeLayouts, includeHistory }) =>
+      json(workspaceInspection(services, id, { includeLayouts, includeHistory })),
   );
 
   registerWrite("workspace_create", CreateWorkspaceSchema.shape, (args: unknown) =>
@@ -138,6 +171,28 @@ export function registerTools(
       annotations: readOnlyAnnotations,
     },
     ({ workspaceId: id }) => json(services.model.validate(id)),
+  );
+
+  server.registerTool(
+    "model_preview_operations",
+    {
+      description: describe("model_preview_operations"),
+      inputSchema: { workspaceId, ...ApplyOperationsRequestSchema.shape },
+      annotations: readOnlyAnnotations,
+    },
+    (args: unknown) => {
+      const input = z
+        .object({ workspaceId: z.string() })
+        .and(ApplyOperationsRequestSchema)
+        .parse(args);
+      return json(
+        services.model.previewOperations(input.workspaceId, {
+          expectedRevision: input.expectedRevision,
+          label: input.label,
+          operations: input.operations,
+        }),
+      );
+    },
   );
 
   registerWrite(

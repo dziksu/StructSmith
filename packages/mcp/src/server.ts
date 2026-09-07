@@ -16,10 +16,8 @@ export function createMcpServer({ services, readOnly }: McpServerOptions): McpSe
     { name: PRODUCT.slug, version: PRODUCT.version },
     {
       instructions: [
-        `${PRODUCT.name} exposes a semantic architecture model (C4-style elements, relationships and views).`,
-        "The diagram is not the source of truth — the model is. Layout lives on views only.",
-        "Prefer `model_apply_operations` for anything larger than a single change: it is atomic,",
-        "revision-guarded and creates a snapshot automatically.",
+        `Start with workspace_list, then workspace_inspect. Call modeling_guide for model rules and allowed values; never inspect ${PRODUCT.name} source code to discover schemas. For multi-entity changes use model_preview_operations, then one model_apply_operations batch with @ref aliases, and finish with model_validate. The semantic model is the source of truth; views only control membership and layout. Model a relationship once at the most specific C4 level because views automatically lift descendant relationships.`,
+        "Use expectedRevision when replacing or deleting existing data. On conflict inspect again and reconcile before retrying.",
         readOnly
           ? "This server is running in read-only mode; no mutating tools are available."
           : "",
