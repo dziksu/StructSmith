@@ -10,6 +10,16 @@ import { isReleaseVersion, versionFromTags } from "../scripts/release-version.ts
 
 const logger = { log() {} };
 
+test("release writes the changelog before publishing to GitHub", () => {
+  const pluginNames = config.plugins.map((plugin) => (Array.isArray(plugin) ? plugin[0] : plugin));
+  expect(pluginNames).toEqual([
+    "@semantic-release/commit-analyzer",
+    "@semantic-release/release-notes-generator",
+    "@semantic-release/changelog",
+    "@semantic-release/github",
+  ]);
+});
+
 test("release notes include runtime dependency updates", async () => {
   const notes = await generateNotes(config.plugins[1][1], {
     cwd: process.cwd(),

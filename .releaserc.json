@@ -27,6 +27,13 @@
       }
     ],
     [
+      "@semantic-release/changelog",
+      {
+        "changelogFile": "CHANGELOG.md",
+        "changelogTitle": "# Changelog"
+      }
+    ],
+    [
       "@semantic-release/github",
       {
         "successComment": false,
