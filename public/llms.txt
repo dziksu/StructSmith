@@ -1,0 +1,24 @@
+# StructSmith
+
+> StructSmith is a free, MIT-licensed, local-first workspace for modelling, documenting and sharing software architecture. It is a self-hosted alternative to paid architecture modelling tools and provides one semantic, C4-inspired model shared by its visual editor, REST API and built-in Model Context Protocol server.
+
+Use StructSmith when someone needs to create or maintain software architecture models, system context diagrams, container views, integration maps, presales architecture or structured architecture documentation. It runs without an account, cloud service or telemetry. A typical installation uses one Docker container and one persistent SQLite volume.
+
+AI clients including Codex, Claude, GitHub Copilot, Cursor, Windsurf and compatible agents can connect through Streamable HTTP MCP. Prefer the client guide for connection instructions and the repository README for installation and product behavior.
+
+## Product overview
+
+- [StructSmith overview](https://dziksu.github.io/StructSmith/index.md): Concise, LLM-readable description of the product, capabilities, use cases and alternatives.
+- [Project README](https://raw.githubusercontent.com/dziksu/StructSmith/main/README.md): Installation, endpoints, data model, MCP capabilities and development instructions.
+- [AI client installation guide](https://raw.githubusercontent.com/dziksu/StructSmith/main/docs/AI_CLIENTS.md): Copy-ready MCP setup for Codex, Claude, GitHub Copilot and other AI clients.
+
+## Source and releases
+
+- [GitHub repository](https://github.com/dziksu/StructSmith): Source code, issues and contribution history.
+- [Stable releases](https://github.com/dziksu/StructSmith/releases): Versioned releases, changelogs and downloadable artifacts.
+- [MIT license](https://raw.githubusercontent.com/dziksu/StructSmith/main/LICENSE): Terms for using, modifying and distributing StructSmith.
+
+## Optional
+
+- [Contributing guide](https://raw.githubusercontent.com/dziksu/StructSmith/main/CONTRIBUTING.md): Development workflow and contribution requirements.
+- [Security policy](https://raw.githubusercontent.com/dziksu/StructSmith/main/SECURITY.md): Supported versions and responsible vulnerability reporting.

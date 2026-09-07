@@ -19,7 +19,7 @@
     "software-architecture",
     "local-first"
   ],
-  "homepage": "https://github.com/dziksu/structsmith#readme",
+  "homepage": "https://dziksu.github.io/StructSmith/",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/dziksu/structsmith.git"
@@ -39,9 +39,11 @@
     "dev": "bun run scripts/dev.ts",
     "dev:server": "bun --watch apps/server/src/index.ts",
     "dev:web": "cd apps/web && bun run dev",
+    "dev:site": "cd apps/site && bun run dev",
     "stop": "bun run scripts/stop.ts",
     "build": "bun run build:web",
     "build:web": "cd apps/web && bun run build",
+    "build:site": "cd apps/site && bun run build",
     "start": "NODE_ENV=production bun apps/server/src/index.ts",
     "test": "bun test",
     "typecheck": "tsc --noEmit -p tsconfig.json",
@@ -65,7 +67,7 @@
     "@semantic-release/commit-analyzer": "^13.0.1",
     "@semantic-release/release-notes-generator": "^14.1.1",
     "@semantic-release/github": "^12.0.9",
-    "conventional-changelog-conventionalcommits": "^10.4.0",
+    "conventional-changelog-conventionalcommits": "^9.3.1",
     "@biomejs/biome": "^2.5.12",
     "@types/bun": "^1.1.14",
     "drizzle-kit": "^0.31.10",

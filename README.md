@@ -83,6 +83,18 @@ on <http://localhost:5173>, which proxies `/api` and `/mcp` to the backend. The 
 database is created and migrated automatically — no Docker, Postgres, Redis, Java or Python
 required for development.
 
+The static project website lives in `apps/site`. Run it separately on
+<http://localhost:4174> with:
+
+```bash
+bun run dev:site
+```
+
+`bun run build:site` creates the GitHub Pages artifact in `apps/site/dist`. Changes to the
+site, shared public assets, or its workflow are published automatically from `main` by the
+`GitHub Pages` action. Before the first deployment, select **GitHub Actions** as the source in
+the repository's **Settings → Pages**; later pushes need no manual publishing step.
+
 ---
 
 ## Endpoints

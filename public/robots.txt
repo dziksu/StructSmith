@@ -1,0 +1,11 @@
+# StructSmith is public documentation and may be indexed by search engines and AI search agents.
+User-agent: OAI-SearchBot
+Allow: /
+
+User-agent: ChatGPT-User
+Allow: /
+
+User-agent: *
+Allow: /
+
+Sitemap: https://dziksu.github.io/StructSmith/sitemap.xml
