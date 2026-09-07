@@ -36,6 +36,8 @@ export const defaultViewSettings: ViewSettings = {
   showBoundaries: true,
   snapToGrid: false,
   autoLayoutDirection: "LR",
+  relationshipRouting: "orthogonal",
+  showRelationshipLabels: true,
 };
 
 const GRID_COLUMNS = 4;

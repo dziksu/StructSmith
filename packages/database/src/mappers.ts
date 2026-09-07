@@ -140,6 +140,8 @@ const defaultSettings: ViewSettings = {
   showBoundaries: true,
   snapToGrid: false,
   autoLayoutDirection: "LR",
+  relationshipRouting: "orthogonal",
+  showRelationshipLabels: true,
 };
 
 export function toView(row: Row<typeof views>): ArchitectureView {

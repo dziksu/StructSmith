@@ -29,6 +29,8 @@ export interface RelationshipEdgeData extends Record<string, unknown> {
   implied: boolean;
   label: string;
   count: number;
+  routing: ViewDetail["settings"]["relationshipRouting"];
+  showLabel: boolean;
 }
 
 export type FlowNode = Node<ElementNodeData, "element"> | Node<BoundaryNodeData, "boundary">;
@@ -109,6 +111,8 @@ export function buildGraph({ view, elements, relationships, records }: BuildInpu
       type: "relationship",
       source: edge.sourceElementId,
       target: edge.targetElementId,
+      sourceHandle: view.settings.autoLayoutDirection === "TB" ? "b" : undefined,
+      targetHandle: view.settings.autoLayoutDirection === "TB" ? "t" : undefined,
       selectable: unambiguous,
       deletable: unambiguous,
       data: {
@@ -116,6 +120,8 @@ export function buildGraph({ view, elements, relationships, records }: BuildInpu
         implied: edge.implied,
         label,
         count: edge.relationships.length,
+        routing: view.settings.relationshipRouting,
+        showLabel: view.settings.showRelationshipLabels,
       },
     };
   });

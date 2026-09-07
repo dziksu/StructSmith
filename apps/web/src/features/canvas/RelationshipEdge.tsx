@@ -1,4 +1,11 @@
-import { BaseEdge, EdgeLabelRenderer, type EdgeProps, getBezierPath } from "@xyflow/react";
+import {
+  BaseEdge,
+  EdgeLabelRenderer,
+  type EdgeProps,
+  getBezierPath,
+  getSmoothStepPath,
+  getStraightPath,
+} from "@xyflow/react";
 import { memo } from "react";
 import type { RelationshipEdgeData } from "./graph";
 
@@ -18,14 +25,21 @@ function RelationshipEdgeComponent({
   selected,
   data,
 }: EdgeProps & { data?: RelationshipEdgeData }) {
-  const [path, labelX, labelY] = getBezierPath({
+  const pathOptions = {
     sourceX,
     sourceY,
     targetX,
     targetY,
     sourcePosition,
     targetPosition,
-  });
+  };
+
+  const [path, labelX, labelY] =
+    data?.routing === "straight"
+      ? getStraightPath(pathOptions)
+      : data?.routing === "curved"
+        ? getBezierPath(pathOptions)
+        : getSmoothStepPath({ ...pathOptions, borderRadius: 8, offset: 24 });
 
   const relationship = data?.relationship;
   const dashed =
@@ -48,7 +62,7 @@ function RelationshipEdgeComponent({
           stroke: selected ? "var(--primary)" : "var(--muted-foreground)",
         }}
       />
-      {label && (
+      {label && (data?.showLabel !== false || selected) && (
         <EdgeLabelRenderer>
           <div
             className="pointer-events-none absolute max-w-[170px] rounded border border-border bg-background px-1.5 py-0.5 text-center text-[10px] leading-[1.3] text-muted-foreground shadow-sm"
