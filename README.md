@@ -92,8 +92,8 @@ bun run dev:site
 
 `bun run build:site` creates the GitHub Pages artifact in `apps/site/dist`. Changes to the
 site, shared public assets, or its workflow are published automatically from `main` by the
-`GitHub Pages` action. Before the first deployment, select **GitHub Actions** as the source in
-the repository's **Settings → Pages**; later pushes need no manual publishing step.
+`GitHub Pages` action. The workflow enables Pages on its first run, so publishing does not
+require a manual repository setting.
 
 ---
 
