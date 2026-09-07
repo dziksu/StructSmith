@@ -37,6 +37,7 @@ const indexRoute = createRoute({
 
 interface StudioSearch {
   view?: string;
+  ref?: string;
 }
 
 const workspaceRoute = createRoute({
@@ -44,16 +45,18 @@ const workspaceRoute = createRoute({
   path: "/w/$workspaceId",
   validateSearch: (search: Record<string, unknown>): StudioSearch => ({
     view: typeof search.view === "string" ? search.view : undefined,
+    ref: typeof search.ref === "string" ? search.ref : undefined,
   }),
   component: function Studio() {
     const navigate = useNavigate();
     const { workspaceId } = useParams({ from: "/w/$workspaceId" });
-    const { view } = useSearch({ from: "/w/$workspaceId" });
+    const { view, ref } = useSearch({ from: "/w/$workspaceId" });
 
     return (
       <StudioPage
         workspaceId={workspaceId}
         viewId={view ?? null}
+        reference={ref}
         onNavigate={(nextWorkspaceId, nextViewId) =>
           void navigate({
             to: "/w/$workspaceId",

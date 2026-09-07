@@ -27,6 +27,13 @@
     "unnamed": "Untitled",
     "value": "Value"
   },
+  "reference": {
+    "copy": "Copy reference for agent",
+    "copyWorkspace": "Copy workspace reference",
+    "copyView": "Copy view reference",
+    "copied": "Agent reference copied",
+    "copyFailed": "Could not copy reference"
+  },
   "home": {
     "subtitle": "Model, document and share software architecture — locally, and with your AI client.",
     "recentWorkspaces": "Recent workspaces",
@@ -37,6 +44,8 @@
     "revision": "revision {{revision}}",
     "createTitle": "New workspace",
     "createHint": "A workspace holds one architecture model with any number of views.",
+    "editTitle": "Edit workspace",
+    "editHint": "Change the workspace name, description or validation mode.",
     "modeLabel": "Validation mode",
     "modeRelaxed": "Relaxed — warn about C4 rule violations",
     "modeStrict": "Strict — reject C4 rule violations",
@@ -44,6 +53,10 @@
     "importHint": "Paste a native JSON export, or pick a .json file.",
     "importFile": "Choose file",
     "imported": "Workspace imported",
+    "created": "Workspace created",
+    "updated": "Workspace updated",
+    "deleted": "Workspace deleted",
+    "workspaceActions": "Actions for workspace {{name}}",
     "deleteTitle": "Delete workspace?",
     "deleteHint": "This permanently deletes \"{{name}}\" and everything in it."
   },
@@ -204,7 +217,10 @@
     "mutating": "writes",
     "readOnlyTool": "reads",
     "howToTitle": "Connect a client",
-    "howToHint": "Point your MCP client at the Streamable HTTP endpoint above."
+    "howToHint": "Point your MCP client at the Streamable HTTP endpoint above.",
+    "codexConfig": "Codex project configuration",
+    "codexHint": "Add this to .codex/config.toml in a trusted project, then start a new Codex session.",
+    "genericConfig": "Generic configuration"
   },
   "settings": {
     "title": "Settings",

@@ -21,7 +21,7 @@ export function registerPrompts(server: McpServer): void {
     ({ workspaceId }) =>
       userMessage(
         [
-          `Read the model of workspace "${workspaceId}" via the \`model_get\` tool (format: "outline") and the resource architecture://workspace/${workspaceId}/model.`,
+          `Read workspace "${workspaceId}" with \`workspace_inspect\`. Use \`modeling_guide\` if any model rule is unclear.`,
           "",
           "Then review the architecture and report:",
           "1. What the system does, in two sentences.",
@@ -53,11 +53,14 @@ export function registerPrompts(server: McpServer): void {
           brief,
           "",
           "Rules:",
-          "- Apply the whole change with a single `model_apply_operations` call.",
+          "- Inspect the current workspace first; never infer that it is empty.",
+          "- Preview the whole change with `model_preview_operations`, then apply it with one `model_apply_operations` call.",
           "- Use `ref` aliases so relationships can point at elements created in the same batch.",
           "- Model people, systems, containers and external systems explicitly; set `technology` wherever you can.",
-          "- Create a system context view and a container view, then call `view_auto_layout` for each.",
+          "- Model each relationship only at the most specific level; views lift hidden child relationships automatically.",
+          "- Create a system context view and a container view, with `autoLayoutView` operations in the same batch.",
           "- Record every assumption and unknown as a presales record.",
+          "- Finish by calling `model_validate` and inspect both created views.",
         ].join("\n"),
       ),
   );

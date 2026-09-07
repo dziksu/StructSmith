@@ -3,6 +3,7 @@ import type {
   ArchitectureModel,
   ArchitectureOperation,
   ChangeSource,
+  PreviewOperationsResult,
   ValidationResult,
   WorkspaceDocument,
 } from "@structsmith/contracts";
@@ -17,6 +18,12 @@ export interface ApplyOperationsCommand {
   expectedRevision?: number;
   label?: string;
   operations: readonly ArchitectureOperation[];
+}
+
+class PreviewComplete extends Error {
+  constructor(readonly result: PreviewOperationsResult) {
+    super("Model operation preview complete");
+  }
 }
 
 export class ModelService {
@@ -53,6 +60,37 @@ export class ModelService {
 
   exportOutline(workspaceId: string): string {
     return toOutline(this.getDocument(workspaceId));
+  }
+
+  /**
+   * Runs the real operation engine and validator, then deliberately rolls the
+   * transaction back. Generated ids are illustrative and change on apply.
+   */
+  previewOperations(workspaceId: string, command: ApplyOperationsCommand): PreviewOperationsResult {
+    try {
+      this.ctx.store.transaction((repos) => {
+        const workspace = requireWorkspace(repos, workspaceId);
+        assertRevision(workspace, command.expectedRevision);
+        const { applied, warnings } = applyOperations(repos, workspace, command.operations);
+        const validation = validateDocument(captureDocument(repos, workspaceId));
+
+        throw new PreviewComplete({
+          success: true,
+          baseRevision: workspace.revision,
+          predictedRevision: workspace.revision + 1,
+          appliedOperations: applied,
+          warnings,
+          validation,
+          persisted: false,
+          note: "Preview only. Generated ids are not reserved and will differ when applied.",
+        });
+      });
+    } catch (error) {
+      if (error instanceof PreviewComplete) return error.result;
+      throw error;
+    }
+
+    throw new Error("Operation preview did not complete.");
   }
 
   /**

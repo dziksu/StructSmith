@@ -29,6 +29,7 @@ import { useApplyOperations } from "@/hooks/useApi";
 import { useDebouncedCallback } from "@/hooks/useDebouncedCallback";
 import { useEditorStore } from "@/store/editor";
 import { iconFor } from "../icons";
+import { CopyReferenceButton } from "../reference/CopyReferenceButton";
 import { PropertyEditor } from "./PropertyEditor";
 import { TagEditor } from "./TagEditor";
 
@@ -75,6 +76,8 @@ export function Inspector({ workspaceId, elements, relationships, records, view 
               element={element}
               elements={elements}
               records={records}
+              workspaceId={workspaceId}
+              viewId={view?.id}
               onPatch={(data, label) =>
                 applyOperations.mutate({
                   label,
@@ -89,6 +92,8 @@ export function Inspector({ workspaceId, elements, relationships, records, view 
               key={relationship.id}
               relationship={relationship}
               elements={elements}
+              workspaceId={workspaceId}
+              viewId={view?.id}
               onPatch={(data, label) =>
                 applyOperations.mutate({
                   label,
@@ -102,6 +107,7 @@ export function Inspector({ workspaceId, elements, relationships, records, view 
             <ViewInspector
               key={view.id}
               view={view}
+              workspaceId={workspaceId}
               onPatch={(settings) =>
                 applyOperations.mutate({
                   label: t("inspector.viewSettings"),
@@ -126,11 +132,15 @@ function ElementInspector({
   element,
   elements,
   records,
+  workspaceId,
+  viewId,
   onPatch,
 }: {
   element: ArchitectureElement;
   elements: readonly ArchitectureElement[];
   records: readonly ArchitectureRecord[];
+  workspaceId: string;
+  viewId?: string;
   onPatch: (data: UpdateElementInput, label: string) => void;
 }) {
   const { t } = useTranslation();
@@ -162,6 +172,16 @@ function ElementInspector({
         <Icon className="h-4 w-4 text-muted-foreground" />
         <Badge variant="primary">{t("inspector.element")}</Badge>
         <span className="truncate font-mono text-[10px] text-muted-foreground">{element.id}</span>
+        <CopyReferenceButton
+          className="ml-auto"
+          reference={{
+            type: "element",
+            workspaceId,
+            targetId: element.id,
+            label: element.name,
+            viewId,
+          }}
+        />
       </div>
 
       <Field label={t("common.name")}>
@@ -300,10 +320,14 @@ function ElementInspector({
 function RelationshipInspector({
   relationship,
   elements,
+  workspaceId,
+  viewId,
   onPatch,
 }: {
   relationship: ArchitectureRelationship;
   elements: readonly ArchitectureElement[];
+  workspaceId: string;
+  viewId?: string;
   onPatch: (data: UpdateRelationshipInput, label: string) => void;
 }) {
   const { t } = useTranslation();
@@ -329,6 +353,16 @@ function RelationshipInspector({
         <span className="truncate font-mono text-[10px] text-muted-foreground">
           {relationship.id}
         </span>
+        <CopyReferenceButton
+          className="ml-auto"
+          reference={{
+            type: "relationship",
+            workspaceId,
+            targetId: relationship.id,
+            label: `${nameOf(relationship.sourceElementId)} → ${nameOf(relationship.targetElementId)}`,
+            viewId,
+          }}
+        />
       </div>
 
       <div className="grid grid-cols-2 gap-2">
@@ -429,9 +463,11 @@ function RelationshipInspector({
 
 function ViewInspector({
   view,
+  workspaceId,
   onPatch,
 }: {
   view: ViewDetail;
+  workspaceId: string;
   onPatch: (settings: Partial<ViewDetail["settings"]>) => void;
 }) {
   const { t } = useTranslation();
@@ -441,6 +477,16 @@ function ViewInspector({
       <div className="flex items-center gap-2">
         <Badge variant="outline">{t("inspector.view")}</Badge>
         <span className="truncate text-[12px]">{view.name}</span>
+        <CopyReferenceButton
+          className="ml-auto"
+          reference={{
+            type: "view",
+            workspaceId,
+            targetId: view.id,
+            label: view.name,
+            viewId: view.id,
+          }}
+        />
       </div>
       <p className="text-xs text-muted-foreground">{t("inspector.nothingSelected")}</p>
 

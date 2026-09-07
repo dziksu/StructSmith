@@ -1,5 +1,5 @@
 import { ReactFlowProvider, useReactFlow } from "@xyflow/react";
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { Group, Panel, Separator } from "react-resizable-panels";
 import { toast } from "sonner";
@@ -24,12 +24,14 @@ import {
 } from "@/hooks/useApi";
 import { useHistory } from "@/hooks/useHistory";
 import { useWorkspaceEvents } from "@/hooks/useWorkspaceEvents";
+import { parseReferenceSearchValue } from "@/lib/agentReference";
 import { useEditorStore } from "@/store/editor";
 import { useHistoryStore } from "@/store/history";
 
 interface StudioPageProps {
   workspaceId: string;
   viewId: string | null;
+  reference?: string;
   onNavigate: (workspaceId: string, viewId: string | null) => void;
   onOpenMcp: () => void;
   onGoHome: () => void;
@@ -43,7 +45,14 @@ export function StudioPage(props: StudioPageProps) {
   );
 }
 
-function StudioContent({ workspaceId, viewId, onNavigate, onOpenMcp, onGoHome }: StudioPageProps) {
+function StudioContent({
+  workspaceId,
+  viewId,
+  reference,
+  onNavigate,
+  onOpenMcp,
+  onGoHome,
+}: StudioPageProps) {
   const { t } = useTranslation();
   const flow = useReactFlow();
 
@@ -62,7 +71,11 @@ function StudioContent({ workspaceId, viewId, onNavigate, onOpenMcp, onGoHome }:
   const resetHistory = useHistoryStore((state) => state.reset);
 
   const clearSelection = useEditorStore((state) => state.clearSelection);
+  const select = useEditorStore((state) => state.select);
+  const requestFocus = useEditorStore((state) => state.requestFocus);
+  const setExplorerTab = useEditorStore((state) => state.setExplorerTab);
   const setCommandOpen = useEditorStore((state) => state.setCommandOpen);
+  const handledReference = useRef<string | null>(null);
 
   useWorkspaceEvents(workspaceId);
 
@@ -77,6 +90,24 @@ function StudioContent({ workspaceId, viewId, onNavigate, onOpenMcp, onGoHome }:
   useEffect(() => {
     if (!viewId && activeViewId) onNavigate(workspaceId, activeViewId);
   }, [viewId, activeViewId, workspaceId, onNavigate]);
+
+  useEffect(() => {
+    if (!reference || handledReference.current === reference) return;
+    const parsed = parseReferenceSearchValue(reference);
+    if (!parsed) return;
+
+    handledReference.current = reference;
+    if (parsed.type === "workspace") return;
+    select({ type: parsed.type, id: parsed.targetId });
+    if (parsed.type === "element") {
+      setExplorerTab("model");
+      requestFocus(parsed.targetId);
+    } else if (parsed.type === "view") {
+      setExplorerTab("views");
+    } else if (parsed.type === "record") {
+      setExplorerTab("presales");
+    }
+  }, [reference, requestFocus, select, setExplorerTab]);
 
   const elements = useMemo(() => model.data?.elements ?? [], [model.data]);
   const relationships = useMemo(() => model.data?.relationships ?? [], [model.data]);

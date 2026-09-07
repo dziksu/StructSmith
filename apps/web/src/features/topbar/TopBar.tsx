@@ -30,6 +30,7 @@ import { Tooltip } from "@/components/ui/tooltip";
 import { supportedLanguages } from "@/i18n";
 import { type Theme, useTheme } from "@/lib/theme";
 import { useEditorStore } from "@/store/editor";
+import { useCopyAgentReference } from "../reference/useCopyAgentReference";
 import { ExportMenu } from "./ExportMenu";
 
 interface TopBarProps {
@@ -54,6 +55,7 @@ interface TopBarProps {
 export function TopBar(props: TopBarProps) {
   const { t, i18n } = useTranslation();
   const { theme, setTheme } = useTheme();
+  const copyReference = useCopyAgentReference();
   const setCommandOpen = useEditorStore((state) => state.setCommandOpen);
   const setPaletteOpen = useEditorStore((state) => state.setPaletteOpen);
   const setExplorerTab = useEditorStore((state) => state.setExplorerTab);
@@ -89,6 +91,18 @@ export function TopBar(props: TopBarProps) {
             </DropdownMenuItem>
           ))}
           <DropdownMenuSeparator />
+          <DropdownMenuItem
+            onSelect={() =>
+              void copyReference({
+                type: "workspace",
+                workspaceId: props.workspace.id,
+                targetId: props.workspace.id,
+                label: props.workspace.name,
+              })
+            }
+          >
+            {t("reference.copyWorkspace")}
+          </DropdownMenuItem>
           <DropdownMenuItem onSelect={props.onGoHome}>{t("topbar.backHome")}</DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
@@ -111,6 +125,21 @@ export function TopBar(props: TopBarProps) {
             </DropdownMenuItem>
           ))}
           <DropdownMenuSeparator />
+          {props.activeView && (
+            <DropdownMenuItem
+              onSelect={() =>
+                void copyReference({
+                  type: "view",
+                  workspaceId: props.workspace.id,
+                  targetId: props.activeView?.id ?? "",
+                  label: props.activeView?.name,
+                  viewId: props.activeView?.id,
+                })
+              }
+            >
+              {t("reference.copyView")}
+            </DropdownMenuItem>
+          )}
           <DropdownMenuItem onSelect={() => setExplorerTab("views")}>
             {t("topbar.newView")}
           </DropdownMenuItem>

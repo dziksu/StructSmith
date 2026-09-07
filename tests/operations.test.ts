@@ -3,6 +3,48 @@ import type { ArchitectureOperation } from "@structsmith/contracts";
 import { createTestContext, createWorkspace } from "./helpers";
 
 describe("batch operations", () => {
+  test("preview uses the real engine and always rolls changes back", () => {
+    const { services, close } = createTestContext();
+    const workspace = createWorkspace(services);
+
+    const preview = services.model.previewOperations(workspace.id, {
+      expectedRevision: workspace.revision,
+      operations: [
+        { op: "createElement", ref: "user", data: { kind: "person", name: "User" } },
+        {
+          op: "createElement",
+          ref: "system",
+          data: { kind: "softwareSystem", name: "System", description: "Test system" },
+        },
+        {
+          op: "createRelationship",
+          data: {
+            sourceElementId: "@user",
+            targetElementId: "@system",
+            description: "Uses",
+            interactionStyle: "sync",
+          },
+        },
+      ],
+    });
+
+    expect(preview).toMatchObject({
+      success: true,
+      persisted: false,
+      baseRevision: 1,
+      predictedRevision: 2,
+      validation: { valid: true, issues: [] },
+    });
+    expect(preview.appliedOperations).toHaveLength(3);
+    expect(services.model.get(workspace.id)).toMatchObject({
+      revision: 1,
+      elements: [],
+      relationships: [],
+    });
+    expect(services.snapshots.list(workspace.id)).toHaveLength(0);
+    close();
+  });
+
   test("a whole logical change is applied atomically with forward references", () => {
     const { services, close } = createTestContext();
     const workspace = createWorkspace(services);
