@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.5.0](https://github.com/dziksu/structsmith/compare/v1.4.0...v1.5.0) (2026-09-07)
+
+### Features
+
+* **mcp:** add AI client setup guides ([942911a](https://github.com/dziksu/structsmith/commit/942911afdabe1da86c7889f38fb52e3c4e9a1ec1))
+
 ## [1.4.0](https://github.com/dziksu/structsmith/compare/v1.3.0...v1.4.0) (2026-09-07)
 
 ### Features
