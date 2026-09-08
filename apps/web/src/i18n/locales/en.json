@@ -131,6 +131,8 @@
     "view": "View",
     "kind": "Kind",
     "role": "Role",
+    "ownership": "Ownership",
+    "internal": "Internal",
     "external": "External",
     "parent": "Parent",
     "source": "Source",
@@ -157,6 +159,7 @@
     "hint": "Presets create the right kind and role — you can change both later."
   },
   "canvas": {
+    "legend": "Ownership",
     "empty": "This view has no elements yet",
     "emptyHint": "Add elements from the palette, or drag them in from the model tree.",
     "hiddenElements": "{{count}} hidden"

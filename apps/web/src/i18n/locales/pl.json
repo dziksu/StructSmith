@@ -135,6 +135,8 @@
     "view": "Widok",
     "kind": "Rodzaj",
     "role": "Rola",
+    "ownership": "Własność",
+    "internal": "Wewnętrzny",
     "external": "Zewnętrzny",
     "parent": "Rodzic",
     "source": "Źródło",
@@ -161,6 +163,7 @@
     "hint": "Presety ustawiają rodzaj i rolę — oba można później zmienić."
   },
   "canvas": {
+    "legend": "Własność",
     "empty": "Ten widok nie zawiera jeszcze elementów",
     "emptyHint": "Dodaj elementy z palety lub przeciągnij je z drzewa modelu.",
     "hiddenElements": "ukryte: {{count}}"
