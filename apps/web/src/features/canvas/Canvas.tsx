@@ -599,6 +599,20 @@ export function Canvas({ workspaceId, view, elements, relationships, records }: 
         </div>
       )}
 
+      {graph.nodes.length > 0 && (
+        <div className="pointer-events-none absolute left-3 top-3 flex items-center gap-2 rounded-md border border-border bg-card/90 px-2.5 py-1.5 text-[10px] font-semibold uppercase tracking-wider shadow-sm backdrop-blur-sm">
+          <span className="text-muted-foreground">{t("canvas.legend")}</span>
+          <span className="flex items-center gap-1 text-ownership-internal">
+            <span className="h-2 w-2 rounded-sm bg-ownership-internal" />
+            {t("inspector.internal")}
+          </span>
+          <span className="flex items-center gap-1 text-ownership-external">
+            <span className="h-2 w-2 rounded-sm border border-dashed border-ownership-external bg-ownership-external/15" />
+            {t("inspector.external")}
+          </span>
+        </div>
+      )}
+
       {connectFrom && (
         <div className="pointer-events-none absolute left-1/2 top-3 -translate-x-1/2 rounded border border-primary/40 bg-primary/10 px-2.5 py-1 text-[11px] text-primary">
           {t("contextMenu.connect")}: {elementsById.get(connectFrom)?.name}

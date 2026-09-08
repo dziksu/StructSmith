@@ -162,7 +162,12 @@ export function ModelTree({ workspaceId, elements, view }: ModelTreeProps) {
             <span className="w-4" />
           )}
 
-          <Icon className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+          <Icon
+            className={cn(
+              "h-3.5 w-3.5 shrink-0",
+              element.external ? "text-ownership-external" : "text-ownership-internal",
+            )}
+          />
           <span
             className={cn("flex-1 truncate", !onView.has(element.id) && "text-muted-foreground")}
           >
@@ -238,7 +243,23 @@ export function ModelTree({ workspaceId, elements, view }: ModelTreeProps) {
             .filter((group) => group.elements.some(isVisible))
             .map((group) => (
               <div key={group.key} className="mb-1">
-                <div className="px-2 py-1 text-[10.5px] font-semibold uppercase tracking-wider text-muted-foreground">
+                <div
+                  className={cn(
+                    "flex items-center gap-1.5 px-2 py-1 text-[10.5px] font-semibold uppercase tracking-wider text-muted-foreground",
+                    group.key === "systems" && "text-ownership-internal",
+                    group.key === "external" && "text-ownership-external",
+                  )}
+                >
+                  {(group.key === "systems" || group.key === "external") && (
+                    <span
+                      className={cn(
+                        "h-1.5 w-1.5 rounded-sm",
+                        group.key === "systems"
+                          ? "bg-ownership-internal"
+                          : "border border-dashed border-ownership-external bg-ownership-external/15",
+                      )}
+                    />
+                  )}
                   {group.label}
                 </div>
                 {group.elements.map((element) => renderElement(element, 0))}

@@ -27,6 +27,7 @@ import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { useApplyOperations } from "@/hooks/useApi";
 import { useDebouncedCallback } from "@/hooks/useDebouncedCallback";
+import { cn } from "@/lib/utils";
 import { useEditorStore } from "@/store/editor";
 import { iconFor } from "../icons";
 import { CopyReferenceButton } from "../reference/CopyReferenceButton";
@@ -290,12 +291,38 @@ function ElementInspector({
         </Select>
       </Field>
 
-      <div className="flex items-center justify-between">
-        <Label>{t("inspector.external")}</Label>
-        <Switch
-          checked={element.external}
-          onCheckedChange={(checked) => onPatch({ external: checked }, "Changed external flag")}
-        />
+      <div className="space-y-1.5">
+        <Label>{t("inspector.ownership")}</Label>
+        <div className="grid grid-cols-2 gap-1 rounded-md border border-border bg-background p-1">
+          <button
+            type="button"
+            aria-pressed={!element.external}
+            onClick={() => onPatch({ external: false }, "Changed ownership to internal")}
+            className={cn(
+              "flex h-7 items-center justify-center gap-1.5 rounded text-[11px] font-semibold uppercase tracking-wide transition-colors",
+              !element.external
+                ? "bg-ownership-internal/15 text-ownership-internal ring-1 ring-inset ring-ownership-internal/45"
+                : "text-muted-foreground hover:bg-accent hover:text-foreground",
+            )}
+          >
+            <span className="h-2 w-2 rounded-sm bg-ownership-internal" />
+            {t("inspector.internal")}
+          </button>
+          <button
+            type="button"
+            aria-pressed={element.external}
+            onClick={() => onPatch({ external: true }, "Changed ownership to external")}
+            className={cn(
+              "flex h-7 items-center justify-center gap-1.5 rounded text-[11px] font-semibold uppercase tracking-wide transition-colors",
+              element.external
+                ? "bg-ownership-external/15 text-ownership-external ring-1 ring-inset ring-ownership-external/45"
+                : "text-muted-foreground hover:bg-accent hover:text-foreground",
+            )}
+          >
+            <span className="h-2 w-2 rounded-sm border border-dashed border-ownership-external bg-ownership-external/15" />
+            {t("inspector.external")}
+          </button>
+        </div>
       </div>
 
       <Field label={t("common.tags")}>

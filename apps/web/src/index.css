@@ -29,9 +29,15 @@
 
   --canvas: oklch(0.975 0.002 260);
   --canvas-dot: oklch(0.86 0.004 260);
+  --edge: oklch(0.48 0.012 260);
   --node: oklch(1 0 0);
-  --node-border: oklch(0.88 0.006 260);
-  --node-external: oklch(0.96 0.004 260);
+  --node-border: oklch(0.82 0.01 260);
+  --node-internal: oklch(0.975 0.018 258);
+  --node-internal-border: oklch(0.66 0.105 258);
+  --node-external: oklch(0.975 0.026 78);
+  --node-external-border: oklch(0.67 0.12 76);
+  --ownership-internal: oklch(0.49 0.18 258);
+  --ownership-external: oklch(0.53 0.15 70);
   --boundary: oklch(0.55 0.02 260);
 }
 
@@ -47,23 +53,29 @@
   --secondary: oklch(0.26 0.01 260);
   --secondary-foreground: oklch(0.93 0.004 260);
   --muted: oklch(0.25 0.009 260);
-  --muted-foreground: oklch(0.66 0.01 260);
+  --muted-foreground: oklch(0.73 0.012 260);
   --accent: oklch(0.28 0.012 260);
   --accent-foreground: oklch(0.95 0.004 260);
   --destructive: oklch(0.62 0.19 27);
   --destructive-foreground: oklch(0.98 0 0);
   --warning: oklch(0.76 0.14 70);
   --success: oklch(0.68 0.12 155);
-  --border: oklch(0.3 0.01 260);
-  --input: oklch(0.31 0.01 260);
+  --border: oklch(0.35 0.012 260);
+  --input: oklch(0.38 0.012 260);
   --ring: oklch(0.68 0.15 265);
 
-  --canvas: oklch(0.16 0.008 260);
-  --canvas-dot: oklch(0.3 0.01 260);
-  --node: oklch(0.23 0.01 260);
-  --node-border: oklch(0.33 0.012 260);
-  --node-external: oklch(0.2 0.009 260);
-  --boundary: oklch(0.7 0.02 260);
+  --canvas: oklch(0.145 0.008 260);
+  --canvas-dot: oklch(0.36 0.014 260);
+  --edge: oklch(0.65 0.018 260);
+  --node: oklch(0.245 0.012 260);
+  --node-border: oklch(0.43 0.018 260);
+  --node-internal: oklch(0.245 0.028 258);
+  --node-internal-border: oklch(0.53 0.115 258);
+  --node-external: oklch(0.25 0.032 73);
+  --node-external-border: oklch(0.62 0.13 72);
+  --ownership-internal: oklch(0.74 0.145 258);
+  --ownership-external: oklch(0.8 0.14 76);
+  --boundary: oklch(0.74 0.025 260);
 }
 
 @theme inline {
@@ -90,9 +102,15 @@
   --color-ring: var(--ring);
   --color-canvas: var(--canvas);
   --color-canvas-dot: var(--canvas-dot);
+  --color-edge: var(--edge);
   --color-node: var(--node);
   --color-node-border: var(--node-border);
+  --color-node-internal: var(--node-internal);
+  --color-node-internal-border: var(--node-internal-border);
   --color-node-external: var(--node-external);
+  --color-node-external-border: var(--node-external-border);
+  --color-ownership-internal: var(--ownership-internal);
+  --color-ownership-external: var(--ownership-external);
   --color-boundary: var(--boundary);
   --radius-sm: calc(var(--radius) - 2px);
   --radius-md: var(--radius);
