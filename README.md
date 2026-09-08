@@ -20,9 +20,9 @@
   <br>
   <sub>Dark-theme desktop view with consistent ownership colours across the canvas and model tree.</sub>
   <br><br>
-  <img src="public/screen_02.png" alt="StructSmith canvas close-up showing internal and external ownership cues" width="900">
+  <img src="public/screen_02.png" alt="StructSmith container view with the external Auth0 element selected in the ownership inspector" width="900">
   <br>
-  <sub>Canvas close-up: labels, colour, border style and the legend reinforce the same distinction.</sub>
+  <sub>Container view: the canvas, model tree and ownership inspector use the same visual language.</sub>
 </p>
 
 A local-first, open-source tool for modelling software architecture — a self-hosted
