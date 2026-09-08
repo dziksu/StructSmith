@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.6.2](https://github.com/dziksu/structsmith/compare/v1.6.1...v1.6.2) (2026-09-08)
+
+### Bug Fixes
+
+* **ui:** improve dark theme ownership cues ([#42](https://github.com/dziksu/structsmith/issues/42)) ([db7f16e](https://github.com/dziksu/structsmith/commit/db7f16ed975c0f0a7c85b5bc4c1a45f781a3ba27))
+
 ## [1.6.1](https://github.com/dziksu/structsmith/compare/v1.6.0...v1.6.1) (2026-09-07)
 
 ### Bug Fixes
