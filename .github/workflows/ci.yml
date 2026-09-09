@@ -131,11 +131,26 @@ jobs:
             Release: v${{ steps.release.outputs.version }}
             Updates: CHANGELOG.md and the application version in package.json
 
-      - name: Enable changelog pull request auto-merge
+      - name: Merge release metadata pull request
         if: steps.changelog-pr.outputs.pull-request-number != ''
-        run: gh pr merge --squash --auto "${{ steps.changelog-pr.outputs.pull-request-number }}"
         env:
           GH_TOKEN: ${{ secrets.RELEASE_PR_TOKEN }}
+          RELEASE_PR_NUMBER: ${{ steps.changelog-pr.outputs.pull-request-number }}
+        run: |
+          merge_state="$(gh pr view "$RELEASE_PR_NUMBER" --json mergeStateStatus --jq '.mergeStateStatus')"
+          if [ "$merge_state" = "CLEAN" ]; then
+            gh pr merge --squash "$RELEASE_PR_NUMBER"
+          elif ! gh pr merge --squash --auto "$RELEASE_PR_NUMBER"; then
+            # The PR can become immediately mergeable between the status read
+            # and the auto-merge request. GitHub rejects auto-merge in that state.
+            merge_state="$(gh pr view "$RELEASE_PR_NUMBER" --json mergeStateStatus --jq '.mergeStateStatus')"
+            if [ "$merge_state" = "CLEAN" ]; then
+              gh pr merge --squash "$RELEASE_PR_NUMBER"
+            else
+              echo "Could not merge release metadata PR; merge state is $merge_state"
+              exit 1
+            fi
+          fi
 
   publish:
     name: Publish release image
