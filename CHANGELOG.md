@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.8.1](https://github.com/dziksu/structsmith/compare/v1.8.0...v1.8.1) (2026-09-09)
+
+### Bug Fixes
+
+* **ci:** merge ready release metadata pull requests ([#48](https://github.com/dziksu/structsmith/issues/48)) ([901b081](https://github.com/dziksu/structsmith/commit/901b08105dc57fc3f46c50b3d4872d4107c44d62))
+
 ## [1.8.0](https://github.com/dziksu/structsmith/compare/v1.7.0...v1.8.0) (2026-09-09)
 
 ### Features
