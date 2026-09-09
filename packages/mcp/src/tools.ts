@@ -17,6 +17,7 @@ import {
   UpdateRelationshipSchema,
   UpdateViewSchema,
   UpdateWorkspaceSchema,
+  ViewRelationshipPatchSchema,
 } from "@structsmith/contracts";
 import type { Services } from "@structsmith/domain";
 import { z } from "zod";
@@ -36,6 +37,8 @@ const json = (value: unknown) => ({
 const plain = (value: string) => ({ content: [{ type: "text" as const, text: value }] });
 
 const workspaceId = z.string().describe("Workspace id.");
+const viewId = z.string().describe("View id.");
+const boundaryId = z.string().describe("Boundary id.");
 const expectedRevision = z
   .number()
   .int()
@@ -108,7 +111,9 @@ export function registerTools(
         includeLayouts: z
           .boolean()
           .default(false)
-          .describe("Include every saved node position and relationship routing entry."),
+          .describe(
+            "Include coordinates, sizes, locks, z-index, label positions and control points. View membership and boundaries are always included.",
+          ),
         includeHistory: z
           .boolean()
           .default(false)
@@ -306,7 +311,7 @@ export function registerTools(
     "boundary_list",
     {
       description: describe("boundary_list"),
-      inputSchema: { viewId: z.string() },
+      inputSchema: { viewId },
       annotations: readOnlyAnnotations,
     },
     ({ viewId }) => json(services.boundaries.list(viewId)),
@@ -334,7 +339,7 @@ export function registerTools(
 
   registerWrite(
     "boundary_update",
-    { workspaceId, boundaryId: z.string(), expectedRevision, data: UpdateBoundarySchema },
+    { workspaceId, boundaryId, expectedRevision, data: UpdateBoundarySchema },
     (args: unknown) => {
       const input = z
         .object({
@@ -355,7 +360,17 @@ export function registerTools(
 
   registerWrite(
     "boundary_delete",
-    { workspaceId, boundaryId: z.string(), expectedRevision, cascade: z.boolean().default(false) },
+    {
+      workspaceId,
+      boundaryId,
+      expectedRevision,
+      cascade: z
+        .boolean()
+        .default(false)
+        .describe(
+          "When true, delete nested boundaries too. When false, reparent direct children to the deleted boundary's parent.",
+        ),
+    },
     (args: unknown) => {
       const input = z
         .object({
@@ -456,7 +471,7 @@ export function registerTools(
     "view_get",
     {
       description: describe("view_get"),
-      inputSchema: { viewId: z.string() },
+      inputSchema: { viewId },
       annotations: readOnlyAnnotations,
     },
     ({ viewId }) => json(services.views.get(viewId)),
@@ -484,7 +499,7 @@ export function registerTools(
 
   registerWrite(
     "view_update",
-    { workspaceId, viewId: z.string(), expectedRevision, data: UpdateViewSchema },
+    { workspaceId, viewId, expectedRevision, data: UpdateViewSchema },
     (args: unknown) => {
       const input = z
         .object({
@@ -505,7 +520,7 @@ export function registerTools(
 
   registerWrite(
     "view_delete",
-    { workspaceId, viewId: z.string(), expectedRevision },
+    { workspaceId, viewId, expectedRevision },
     (args: unknown) => {
       const input = z
         .object({
@@ -528,9 +543,12 @@ export function registerTools(
     "view_set_elements",
     {
       workspaceId,
-      viewId: z.string(),
-      elementIds: z.array(z.string()),
-      mode: z.enum(["replace", "add", "remove"]).default("add"),
+      viewId,
+      elementIds: z.array(z.string()).describe("Reusable model elements to add, remove or retain."),
+      mode: z
+        .enum(["replace", "add", "remove"])
+        .default("add")
+        .describe("replace sets exact membership; add and remove change only the supplied ids."),
       expectedRevision,
     },
     (args: unknown) => {
@@ -554,21 +572,40 @@ export function registerTools(
 
   registerWrite(
     "view_set_layout",
-    { workspaceId, viewId: z.string(), entries: z.array(LayoutEntrySchema), expectedRevision },
+    {
+      workspaceId,
+      viewId,
+      entries: z
+        .array(LayoutEntrySchema)
+        .default([])
+        .describe("Element layout patches; omitted fields keep their current values."),
+      relationships: z
+        .array(ViewRelationshipPatchSchema)
+        .default([])
+        .describe("Per-view relationship presentation patches."),
+      expectedRevision,
+    },
     (args: unknown) => {
       const input = z
         .object({
           workspaceId: z.string(),
           viewId: z.string(),
-          entries: z.array(LayoutEntrySchema),
+          entries: z.array(LayoutEntrySchema).default([]),
+          relationships: z.array(ViewRelationshipPatchSchema).default([]),
           expectedRevision: z.number().int().optional(),
         })
         .parse(args);
       return json(
-        services.views.saveLayout(input.workspaceId, input.viewId, input.entries, [], {
-          expectedRevision: input.expectedRevision,
-          source: "mcp",
-        }),
+        services.views.saveLayout(
+          input.workspaceId,
+          input.viewId,
+          input.entries,
+          input.relationships,
+          {
+            expectedRevision: input.expectedRevision,
+            source: "mcp",
+          },
+        ),
       );
     },
   );
@@ -577,10 +614,17 @@ export function registerTools(
     "view_auto_layout",
     {
       workspaceId,
-      viewId: z.string(),
-      direction: LayoutDirectionSchema.default("LR"),
-      algorithm: LayoutAlgorithmSchema.default("dagre"),
-      rootElementId: z.string().optional(),
+      viewId,
+      direction: LayoutDirectionSchema.default("LR").describe(
+        "LR for left-to-right or TB for top-to-bottom; used by dagre.",
+      ),
+      algorithm: LayoutAlgorithmSchema.default("dagre").describe(
+        "dagre (hierarchical and boundary-aware), force, radial, or grid.",
+      ),
+      rootElementId: z
+        .string()
+        .optional()
+        .describe("Optional center element for radial layout; ignored by other algorithms."),
       expectedRevision,
     },
     (args: unknown) => {

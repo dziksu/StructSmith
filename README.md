@@ -212,12 +212,14 @@ top bar.
 
 ### What the AI can do
 
-Tools cover workspaces, the model, elements, relationships, views, presales records,
-snapshots and export. The preferred way to make a larger change is a single call to
+Tools cover workspaces, the model, elements, relationships, views, view-owned boundaries,
+presentation settings, saved layout, presales records, snapshots and export. The preferred way to make a larger change is a single call to
 `model_apply_operations`, which is atomic, revision-guarded and takes an automatic snapshot
 first:
 
 - Start with `workspace_list`, then `workspace_inspect` for one complete, validated context packet.
+  View membership, boundaries and settings are always included; request `includeLayouts` when
+  coordinates or relationship bend points are needed.
 - Call `modeling_guide` for allowed values, C4 rules, relationship lifting and the recommended
   workflow instead of reading StructSmith source code.
 - Run `model_preview_operations` before a large batch. It uses the real operation engine and
@@ -242,13 +244,18 @@ first:
       "data": { "sourceElementId": "@queue", "targetElementId": "@worker",
                 "description": "Delivers jobs to", "interactionStyle": "async" } },
     { "op": "setViewElements", "viewId": "containers-view-id", "elementIds": ["@queue", "@worker"] },
-    { "op": "autoLayoutView", "viewId": "containers-view-id", "direction": "LR" }
+    { "op": "autoLayoutView", "viewId": "containers-view-id",
+      "direction": "LR", "algorithm": "dagre" }
   ]
 }
 ```
 
 `ref` gives a new entity a local alias; later operations reference it as `@alias`. The whole
 batch runs in one SQLite transaction — it either lands completely or not at all.
+
+Boundaries are owned by a view and never become model elements or relationship endpoints. The
+same element can belong to different boundaries in different views or layers. An element with no
+boundary in the active layer remains an ordinary item in that view.
 
 Resources expose the model in an AI-friendly shape (no React internals, no CSS, no viewport
 data):
@@ -280,7 +287,8 @@ Workspace
  │                     deploymentNode · infrastructureNode · custom
  ├── Relationships     sync · async · event · data · dependency · custom
  ├── Views             landscape · systemContext · container · component ·
- │                     deployment · custom
+ │  │                  deployment · custom
+ │  └── Boundaries     deployment · security · compliance · ownership · custom
  ├── Records           assumption · risk · unknown · requirement · decision · note
  └── Snapshots
 ```

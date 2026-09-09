@@ -95,6 +95,10 @@ export const layoutAlgorithms = ["dagre", "force", "radial", "grid"] as const;
 export const LayoutAlgorithmSchema = z.enum(layoutAlgorithms);
 export type LayoutAlgorithm = z.infer<typeof LayoutAlgorithmSchema>;
 
+export const relationshipRoutings = ["orthogonal", "curved", "straight"] as const;
+export const RelationshipRoutingSchema = z.enum(relationshipRoutings);
+export type RelationshipRouting = z.infer<typeof RelationshipRoutingSchema>;
+
 export const boundaryKinds = [
   "environment",
   "region",

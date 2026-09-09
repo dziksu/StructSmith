@@ -17,11 +17,21 @@ export function workspaceInspection(
     nestedBoundaries.length > 0 ? nestedBoundaries.length : (document.boundaries ?? []).length;
   const views = options.includeLayouts
     ? document.views
-    : document.views.map(({ elements: _elements, relationships: _relationships, ...view }) => view);
+    : document.views.map(({ elements, relationships, ...view }) => ({
+        ...view,
+        // Membership is semantic view context, so keep it in the default
+        // packet while dropping the coordinates and routing geometry.
+        elements: elements.map(({ elementId, hidden }) => ({ elementId, hidden })),
+        relationships: relationships.map(({ relationshipId, hidden }) => ({
+          relationshipId,
+          hidden,
+        })),
+      }));
 
   return {
     workspace: document.workspace,
     revision: document.workspace.revision,
+    layoutsIncluded: options.includeLayouts ?? false,
     counts: {
       elements: document.elements.length,
       boundaries: boundaryCount,

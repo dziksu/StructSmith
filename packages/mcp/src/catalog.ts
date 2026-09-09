@@ -16,7 +16,7 @@ export const MCP_TOOLS: readonly McpToolInfo[] = [
   {
     name: "workspace_inspect",
     description:
-      "Read a complete AI-oriented workspace packet: model, views, records, validation and optional history.",
+      "Read a complete AI-oriented packet with model, view membership, view-owned boundaries, settings, validation and optional layout/history.",
     mutating: false,
   },
   {
@@ -28,7 +28,7 @@ export const MCP_TOOLS: readonly McpToolInfo[] = [
   { name: "workspace_create", description: "Create a workspace.", mutating: true },
   {
     name: "workspace_update",
-    description: "Rename a workspace or change its mode.",
+    description: "Update a workspace name, description or validation mode.",
     mutating: true,
   },
   {
@@ -39,7 +39,8 @@ export const MCP_TOOLS: readonly McpToolInfo[] = [
 
   {
     name: "model_get",
-    description: "Read the semantic model (elements + relationships).",
+    description:
+      "Read reusable semantic elements and relationships; view-owned boundaries are returned by view tools.",
     mutating: false,
   },
   {
@@ -66,27 +67,59 @@ export const MCP_TOOLS: readonly McpToolInfo[] = [
 
   {
     name: "boundary_list",
-    description: "List one view's boundaries and their members.",
+    description: "List one view's semantic boundary trees and element memberships.",
     mutating: false,
   },
-  { name: "boundary_create", description: "Create a semantic boundary.", mutating: true },
-  { name: "boundary_update", description: "Update a boundary or its members.", mutating: true },
-  { name: "boundary_delete", description: "Delete a semantic boundary.", mutating: true },
+  {
+    name: "boundary_create",
+    description: "Create a view-owned semantic boundary; it is not a model element.",
+    mutating: true,
+  },
+  {
+    name: "boundary_update",
+    description:
+      "Update a view-owned boundary, its nesting or members; assigning members moves them within the same view layer.",
+    mutating: true,
+  },
+  {
+    name: "boundary_delete",
+    description: "Delete a view-owned boundary, optionally with its nested boundaries.",
+    mutating: true,
+  },
 
   { name: "relationship_create", description: "Connect two elements.", mutating: true },
   { name: "relationship_update", description: "Update a relationship.", mutating: true },
   { name: "relationship_delete", description: "Delete a relationship.", mutating: true },
 
   { name: "view_list", description: "List the views of a workspace.", mutating: false },
-  { name: "view_get", description: "Read a view including its layout.", mutating: false },
+  {
+    name: "view_get",
+    description: "Read a view including settings, boundaries, memberships and saved layout.",
+    mutating: false,
+  },
   { name: "view_create", description: "Create a view.", mutating: true },
-  { name: "view_update", description: "Update a view.", mutating: true },
+  {
+    name: "view_update",
+    description: "Update view metadata or presentation and layout settings.",
+    mutating: true,
+  },
   { name: "view_delete", description: "Delete a view (the model is untouched).", mutating: true },
-  { name: "view_set_elements", description: "Add or remove elements on a view.", mutating: true },
-  { name: "view_set_layout", description: "Write element positions for a view.", mutating: true },
+  {
+    name: "view_set_elements",
+    description:
+      "Add or remove reusable model elements on a view; removing one also clears its boundary memberships in that view.",
+    mutating: true,
+  },
+  {
+    name: "view_set_layout",
+    description:
+      "Save element positions, sizes and locks plus per-view relationship visibility, labels or bend points.",
+    mutating: true,
+  },
   {
     name: "view_auto_layout",
-    description: "Arrange a view with hierarchical, force, radial, or grid layout.",
+    description:
+      "Persist an automatic dagre, force, radial or grid layout for a view while keeping locked elements fixed.",
     mutating: true,
   },
 
