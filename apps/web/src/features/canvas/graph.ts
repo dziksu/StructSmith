@@ -4,11 +4,17 @@ import type {
   ArchitectureRelationship,
   ViewDetail,
 } from "@structsmith/contracts";
-import { edgeLabel, resolveRelationshipsForView } from "@structsmith/domain";
+import {
+  DEFAULT_NODE_HEIGHT,
+  DEFAULT_NODE_WIDTH,
+  edgeLabel,
+  estimateElementSize,
+  resolveRelationshipsForView,
+} from "@structsmith/domain";
 import type { Edge, Node } from "@xyflow/react";
 
-export const NODE_WIDTH = 220;
-export const NODE_HEIGHT = 96;
+export const NODE_WIDTH = DEFAULT_NODE_WIDTH;
+export const NODE_HEIGHT = DEFAULT_NODE_HEIGHT;
 const BOUNDARY_PADDING = 28;
 const BOUNDARY_HEADER = 26;
 
@@ -16,6 +22,9 @@ export interface ElementNodeData extends Record<string, unknown> {
   element: ArchitectureElement;
   severity: "high" | "critical" | null;
   locked: boolean;
+  showFullTitles: boolean;
+  showDescriptions: boolean;
+  minimumHeight: number;
 }
 
 export interface BoundaryNodeData extends Record<string, unknown> {
@@ -79,15 +88,25 @@ export function buildGraph({ view, elements, relationships, records }: BuildInpu
   for (const entry of visible) {
     const element = byId.get(entry.elementId);
     if (!element) continue;
+    const size = estimateElementSize(element, view.settings, entry);
+    const expanded = view.settings.showFullTitles || view.settings.showDescriptions;
     nodes.push({
       id: element.id,
       type: "element",
       position: { x: entry.x, y: entry.y },
       draggable: !entry.locked,
-      data: { element, severity: severities.get(element.id) ?? null, locked: entry.locked },
+      data: {
+        element,
+        severity: severities.get(element.id) ?? null,
+        locked: entry.locked,
+        showFullTitles: view.settings.showFullTitles,
+        showDescriptions: view.settings.showDescriptions,
+        minimumHeight: size.height,
+      },
       zIndex: entry.zIndex,
-      width: entry.width ?? NODE_WIDTH,
-      height: entry.height ?? NODE_HEIGHT,
+      width: size.width,
+      height: expanded ? undefined : size.height,
+      style: expanded ? { minHeight: size.height } : undefined,
     });
   }
 

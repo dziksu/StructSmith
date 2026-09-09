@@ -139,6 +139,8 @@ export const ViewSettingsSchema = z.object({
   autoLayoutDirection: z.enum(["LR", "TB"]).default("LR"),
   relationshipRouting: z.enum(["orthogonal", "curved", "straight"]).default("orthogonal"),
   showRelationshipLabels: z.boolean().default(true),
+  showFullTitles: z.boolean().default(false),
+  showDescriptions: z.boolean().default(false),
 });
 export type ViewSettings = z.infer<typeof ViewSettingsSchema>;
 
@@ -150,6 +152,8 @@ const ViewSettingsPatchSchema = z.object({
   autoLayoutDirection: ViewSettingsSchema.shape.autoLayoutDirection.unwrap().optional(),
   relationshipRouting: ViewSettingsSchema.shape.relationshipRouting.unwrap().optional(),
   showRelationshipLabels: ViewSettingsSchema.shape.showRelationshipLabels.unwrap().optional(),
+  showFullTitles: ViewSettingsSchema.shape.showFullTitles.unwrap().optional(),
+  showDescriptions: ViewSettingsSchema.shape.showDescriptions.unwrap().optional(),
 });
 
 export const ViewElementSchema = z.object({

@@ -1,8 +1,55 @@
 import dagre from "@dagrejs/dagre";
-import type { LayoutDirection } from "@structsmith/contracts";
+import type { ArchitectureElement, LayoutDirection, ViewSettings } from "@structsmith/contracts";
 
 export const DEFAULT_NODE_WIDTH = 220;
 export const DEFAULT_NODE_HEIGHT = 96;
+
+/** Word wrapping estimate for layout without a browser; explicit line breaks are preserved. */
+function wrappedLines(text: string, width: number, characterWidth: number): number {
+  const columns = Math.max(1, Math.floor(width / characterWidth));
+  return text.split(/\r?\n/).reduce((total, paragraph) => {
+    let lines = 1;
+    let used = 0;
+    for (const word of paragraph.trim().split(/\s+/)) {
+      if (!word) continue;
+      if (used > 0 && used + 1 + word.length > columns) {
+        lines += 1;
+        used = 0;
+      }
+      if (used > 0) used += 1;
+      lines += Math.floor((word.length - 1) / columns);
+      used += ((word.length - 1) % columns) + 1;
+    }
+    return total + lines;
+  }, 0);
+}
+
+/**
+ * Reserve room for expanded cards in both server layout and the canvas. The UI
+ * can grow beyond this estimate for font differences; saved sizes stay intact.
+ */
+export function estimateElementSize(
+  element: Pick<ArchitectureElement, "name" | "description" | "technology"> | undefined,
+  settings: Pick<ViewSettings, "showFullTitles" | "showDescriptions">,
+  size: { width?: number | null; height?: number | null; locked?: boolean } = {},
+): { width: number; height: number } {
+  const width = size.width ?? DEFAULT_NODE_WIDTH;
+  const minimumHeight = size.height ?? DEFAULT_NODE_HEIGHT;
+  if (!element || (!settings.showFullTitles && !settings.showDescriptions)) {
+    return { width, height: minimumHeight };
+  }
+
+  // Horizontal padding, ownership stripe, icon and space for status indicators.
+  const titleWidth = width - 82 - (size.locked ? 20 : 0);
+  const titleLines = settings.showFullTitles
+    ? wrappedLines(element.name.replace(/\s+/g, " "), titleWidth, 7.5)
+    : 1;
+  const headerHeight = Math.max(24, titleLines * 16 + (element.technology ? 16 : 0));
+  const description = settings.showDescriptions ? element.description?.trim() : null;
+  const descriptionHeight = description ? 8 + wrappedLines(description, width - 30, 6) * 16 : 0;
+  // Vertical padding/borders (22), footer gap (8) and ownership badge (20).
+  return { width, height: Math.max(minimumHeight, 50 + headerHeight + descriptionHeight) };
+}
 
 /** Must match the edge label chip in the web UI. */
 const LABEL_MAX_WIDTH = 170;

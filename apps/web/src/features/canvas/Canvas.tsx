@@ -15,6 +15,7 @@ import {
   MiniMap,
   type NodeChange,
   type NodeMouseHandler,
+  type OnNodeDrag,
   type OnSelectionChangeParams,
   ReactFlow,
   useNodesInitialized,
@@ -77,6 +78,8 @@ export function Canvas({ workspaceId, view, elements, relationships, records }: 
   const connectFrom = useEditorStore((state) => state.connectFrom);
   const setConnectFrom = useEditorStore((state) => state.setConnectFrom);
   const focusRequest = useEditorStore((state) => state.focusRequest);
+  const beginSave = useEditorStore((state) => state.beginSave);
+  const endSave = useEditorStore((state) => state.endSave);
 
   const graph = useMemo(
     () => buildGraph({ view, elements, relationships, records }),
@@ -94,6 +97,8 @@ export function Canvas({ workspaceId, view, elements, relationships, records }: 
   const [menu, setMenu] = useState<{ x: number; y: number; items: ContextMenuItem[] } | null>(null);
   const pendingLayout = useRef(new Map<string, { x: number; y: number }>());
   const layoutTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const dragOrigins = useRef(new Map<string, { x: number; y: number }>());
+  const layoutSaveQueue = useRef<Promise<void>>(Promise.resolve());
 
   // A rebuild happens after every mutation; carry the current selection over so
   // the highlight does not blink off while the inspector still shows the item.
@@ -130,13 +135,6 @@ export function Canvas({ workspaceId, view, elements, relationships, records }: 
     fittedViewId.current = view.id;
     void flow.fitView({ padding: 0.25, maxZoom: 1, duration: 250 });
   }, [nodesInitialized, nodes.length, view.id, flow]);
-
-  useEffect(
-    () => () => {
-      if (layoutTimer.current) clearTimeout(layoutTimer.current);
-    },
-    [],
-  );
 
   /**
    * Selecting an element outside the canvas (model tree, command palette) has
@@ -178,33 +176,65 @@ export function Canvas({ workspaceId, view, elements, relationships, records }: 
 
   /* --------------------------- layout persistence --------------------------- */
 
+  const persistLayout = useCallback(
+    (
+      entries: { elementId: string; x: number; y: number }[],
+      previous: { elementId: string; x: number; y: number }[],
+    ) => {
+      if (entries.length === 0) return;
+      beginSave();
+      const request = layoutSaveQueue.current.then(() => api.saveLayout(view.id, { entries }));
+      // Keep gestures ordered. A slower earlier response must never overwrite a
+      // newer position when somebody drags the same card several times quickly.
+      layoutSaveQueue.current = request.then(
+        () => undefined,
+        () => undefined,
+      );
+      void request
+        .then(() => {
+          pushHistory({
+            kind: "layout",
+            viewId: view.id,
+            entries: previous,
+            label: t("toast.layoutSaved"),
+          });
+          invalidateWorkspace(workspaceId);
+        })
+        .catch(onError)
+        .finally(endSave);
+    },
+    [beginSave, endSave, onError, pushHistory, t, view.id, workspaceId],
+  );
+
   const flushLayout = useCallback(() => {
-    const entries = [...pendingLayout.current.entries()].map(([elementId, position]) => ({
+    const pending = [...pendingLayout.current.entries()];
+    pendingLayout.current.clear();
+    const entries = pending.map(([elementId, position]) => ({
       elementId,
       x: Math.round(position.x),
       y: Math.round(position.y),
     }));
-    pendingLayout.current.clear();
     if (entries.length === 0) return;
 
     const previous = entries.map(({ elementId }) => {
       const stored = view.elements.find((entry) => entry.elementId === elementId);
       return { elementId, x: stored?.x ?? 0, y: stored?.y ?? 0 };
     });
+    persistLayout(entries, previous);
+  }, [persistLayout, view.elements]);
 
-    api
-      .saveLayout(view.id, { entries })
-      .then(() => {
-        pushHistory({
-          kind: "layout",
-          viewId: view.id,
-          entries: previous,
-          label: t("toast.layoutSaved"),
-        });
-        invalidateWorkspace(workspaceId);
-      })
-      .catch(onError);
-  }, [onError, pushHistory, t, view.elements, view.id, workspaceId]);
+  const flushLayoutRef = useRef(flushLayout);
+  flushLayoutRef.current = flushLayout;
+
+  // A view switch unmounts this canvas. Commit a pending keyboard move rather
+  // than discarding it together with the debounce timer.
+  useEffect(
+    () => () => {
+      if (layoutTimer.current) clearTimeout(layoutTimer.current);
+      flushLayoutRef.current();
+    },
+    [],
+  );
 
   const scheduleLayoutSave = useCallback(() => {
     if (layoutTimer.current) clearTimeout(layoutTimer.current);
@@ -219,15 +249,67 @@ export function Canvas({ workspaceId, view, elements, relationships, records }: 
       setNodes((current) => applyNodeChanges(relevant, current) as FlowNode[]);
 
       for (const change of relevant) {
-        if (change.type === "position" && change.position && !change.dragging) {
+        if (
+          change.type === "position" &&
+          change.position &&
+          !change.dragging &&
+          !dragOrigins.current.has(change.id)
+        ) {
           pendingLayout.current.set(change.id, change.position);
         }
       }
-      if (relevant.some((change) => change.type === "position" && !change.dragging)) {
+      if (
+        relevant.some(
+          (change) =>
+            change.type === "position" && !change.dragging && !dragOrigins.current.has(change.id),
+        )
+      ) {
         scheduleLayoutSave();
       }
     },
     [scheduleLayoutSave],
+  );
+
+  const onNodeDragStart = useCallback<OnNodeDrag<FlowNode>>(
+    (_event, node, draggedNodes) => {
+      // Finish a preceding keyboard move before starting a separate gesture.
+      if (layoutTimer.current) clearTimeout(layoutTimer.current);
+      flushLayout();
+      dragOrigins.current.clear();
+      for (const dragged of draggedNodes.length > 0 ? draggedNodes : [node]) {
+        if (isBoundaryId(dragged.id)) continue;
+        dragOrigins.current.set(dragged.id, {
+          x: dragged.position.x,
+          y: dragged.position.y,
+        });
+      }
+    },
+    [flushLayout],
+  );
+
+  const onNodeDragStop = useCallback<OnNodeDrag<FlowNode>>(
+    (_event, node, draggedNodes) => {
+      const moved = (draggedNodes.length > 0 ? draggedNodes : [node]).filter(
+        (dragged) => !isBoundaryId(dragged.id),
+      );
+      const changes = moved.flatMap((dragged) => {
+        const before = dragOrigins.current.get(dragged.id);
+        const after = {
+          x: Math.round(dragged.position.x),
+          y: Math.round(dragged.position.y),
+        };
+        if (!before || (Math.round(before.x) === after.x && Math.round(before.y) === after.y)) {
+          return [];
+        }
+        return [{ elementId: dragged.id, before, after }];
+      });
+      dragOrigins.current.clear();
+      persistLayout(
+        changes.map(({ elementId, after }) => ({ elementId, ...after })),
+        changes.map(({ elementId, before }) => ({ elementId, ...before })),
+      );
+    },
+    [persistLayout],
   );
 
   const onEdgesChange = useCallback(
@@ -515,8 +597,8 @@ export function Canvas({ workspaceId, view, elements, relationships, records }: 
         id: node.id,
         x: node.position.x,
         y: node.position.y,
-        width: node.width ?? NODE_WIDTH,
-        height: node.height ?? NODE_HEIGHT,
+        width: node.measured?.width ?? node.width ?? NODE_WIDTH,
+        height: node.measured?.height ?? node.height ?? NODE_HEIGHT,
       }));
     // A parent shown as a boundary has no entry in `nodes`, so mirror the
     // selection onto it here.
@@ -544,6 +626,8 @@ export function Canvas({ workspaceId, view, elements, relationships, records }: 
         nodeTypes={nodeTypes}
         edgeTypes={edgeTypes}
         onNodesChange={onNodesChange}
+        onNodeDragStart={onNodeDragStart}
+        onNodeDragStop={onNodeDragStop}
         onEdgesChange={onEdgesChange}
         onConnect={onConnect}
         onSelectionChange={onSelectionChange}

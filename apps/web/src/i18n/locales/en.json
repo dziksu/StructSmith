@@ -140,6 +140,8 @@
     "interactionStyle": "Interaction style",
     "viewSettings": "View settings",
     "showBoundaries": "Show boundaries",
+    "showFullTitles": "Show full titles",
+    "showDescriptions": "Show descriptions",
     "snapToGrid": "Snap to grid",
     "layoutDirection": "Layout direction",
     "relationshipRouting": "Connector style",

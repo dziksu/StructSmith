@@ -144,6 +144,8 @@
     "interactionStyle": "Styl interakcji",
     "viewSettings": "Ustawienia widoku",
     "showBoundaries": "Pokaż granice",
+    "showFullTitles": "Pokaż pełne tytuły",
+    "showDescriptions": "Pokaż opisy",
     "snapToGrid": "Przyciągaj do siatki",
     "layoutDirection": "Kierunek układu",
     "relationshipRouting": "Styl połączeń",

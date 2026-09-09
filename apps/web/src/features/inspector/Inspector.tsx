@@ -533,6 +533,28 @@ function ViewInspector({
       <div className="space-y-3 border-t border-border pt-3">
         <Label>{t("inspector.viewSettings")}</Label>
 
+        <div className="flex items-center justify-between gap-3">
+          <label htmlFor="view-full-titles" className="cursor-pointer text-[12.5px]">
+            {t("inspector.showFullTitles")}
+          </label>
+          <Switch
+            id="view-full-titles"
+            checked={view.settings.showFullTitles}
+            onCheckedChange={(checked) => onPatch({ showFullTitles: checked })}
+          />
+        </div>
+
+        <div className="flex items-center justify-between gap-3">
+          <label htmlFor="view-descriptions" className="cursor-pointer text-[12.5px]">
+            {t("inspector.showDescriptions")}
+          </label>
+          <Switch
+            id="view-descriptions"
+            checked={view.settings.showDescriptions}
+            onCheckedChange={(checked) => onPatch({ showDescriptions: checked })}
+          />
+        </div>
+
         <div className="flex items-center justify-between">
           <span className="text-[12.5px]">{t("inspector.showBoundaries")}</span>
           <Switch

@@ -19,6 +19,8 @@ describe("Zod view settings", () => {
       autoLayoutDirection: "LR",
       relationshipRouting: "orthogonal",
       showRelationshipLabels: true,
+      showFullTitles: false,
+      showDescriptions: false,
     });
   });
 
@@ -35,6 +37,8 @@ describe("Zod view settings", () => {
           autoLayoutDirection: "TB",
           relationshipRouting: "straight",
           showRelationshipLabels: false,
+          showFullTitles: true,
+          showDescriptions: true,
         },
       }).result;
       services.views.update(
@@ -48,6 +52,8 @@ describe("Zod view settings", () => {
         autoLayoutDirection: "TB",
         relationshipRouting: "straight",
         showRelationshipLabels: false,
+        showFullTitles: true,
+        showDescriptions: true,
       });
     } finally {
       close();

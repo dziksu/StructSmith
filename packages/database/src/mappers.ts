@@ -142,6 +142,8 @@ const defaultSettings: ViewSettings = {
   autoLayoutDirection: "LR",
   relationshipRouting: "orthogonal",
   showRelationshipLabels: true,
+  showFullTitles: false,
+  showDescriptions: false,
 };
 
 export function toView(row: Row<typeof views>): ArchitectureView {
