@@ -22,7 +22,7 @@ export function parseReferenceSearchValue(
   const type = value.slice(0, separator);
   const targetId = value.slice(separator + 1);
   if (
-    !(["workspace", "view", "element", "relationship", "record"] as const).includes(
+    !(["workspace", "view", "element", "boundary", "relationship", "record"] as const).includes(
       type as ReferenceTargetKind,
     )
   ) {

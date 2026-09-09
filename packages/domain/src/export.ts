@@ -1,4 +1,5 @@
 import type {
+  ArchitectureBoundary,
   ArchitectureElement,
   ArchitectureRelationship,
   ViewDetail,
@@ -74,6 +75,7 @@ export function toMermaid(
   const visibleIds = new Set(elements.map((element) => element.id));
   const lines: string[] = [`flowchart ${direction}`];
   const rendered = new Set<string>();
+  const renderedBoundaries = new Set<string>();
 
   const childrenOf = (parentId: string | null): ArchitectureElement[] =>
     elements.filter((element) => (element.parentId ?? null) === parentId);
@@ -92,6 +94,35 @@ export function toMermaid(
       lines.push(`${indent}${nodeId(element.id)}${shape[0]}"${elementLabel(element)}"${shape[1]}`);
     }
   };
+
+  const activeBoundaries = (document.boundaries ?? []).filter(
+    (boundary) => boundary.layer === (view?.settings.boundaryLayer ?? "deployment"),
+  );
+  const boundaryIds = new Set(activeBoundaries.map((boundary) => boundary.id));
+  const renderBoundary = (boundary: ArchitectureBoundary, indent: string): void => {
+    if (renderedBoundaries.has(boundary.id)) return;
+    renderedBoundaries.add(boundary.id);
+    lines.push(
+      `${indent}subgraph ${nodeId(`boundary_${boundary.id}`)}["${escapeLabel(boundary.name)}"]`,
+    );
+    lines.push(`${indent}  direction ${direction}`);
+    for (const child of activeBoundaries.filter(
+      (candidate) => candidate.parentBoundaryId === boundary.id,
+    )) {
+      renderBoundary(child, `${indent}  `);
+    }
+    for (const elementId of boundary.elementIds) {
+      const element = elements.find((candidate) => candidate.id === elementId);
+      if (element) renderElement(element, `${indent}  `);
+    }
+    lines.push(`${indent}end`);
+  };
+
+  for (const boundary of activeBoundaries) {
+    if (!boundary.parentBoundaryId || !boundaryIds.has(boundary.parentBoundaryId)) {
+      renderBoundary(boundary, "  ");
+    }
+  }
 
   for (const element of elements) {
     const parentVisible = element.parentId ? visibleIds.has(element.parentId) : false;
@@ -136,6 +167,33 @@ export function toOutline(document: WorkspaceDocument): string {
 
   lines.push("", "## Elements");
   for (const element of childrenOf(null)) render(element, 0);
+
+  const boundaries = document.boundaries ?? [];
+  if (boundaries.length > 0) {
+    const elementsById = new Map(document.elements.map((element) => [element.id, element]));
+    const renderBoundary = (boundary: ArchitectureBoundary, depth: number): void => {
+      const indent = "  ".repeat(depth);
+      const classification = boundary.classification ? ` · ${boundary.classification}` : "";
+      lines.push(
+        `${indent}- ${boundary.name} (${boundary.kind} · ${boundary.layer}${classification}) [${boundary.id}]`,
+      );
+      for (const elementId of boundary.elementIds) {
+        lines.push(`${indent}  - member: ${elementsById.get(elementId)?.name ?? elementId}`);
+      }
+      for (const child of boundaries.filter(
+        (candidate) => candidate.parentBoundaryId === boundary.id,
+      )) {
+        renderBoundary(child, depth + 1);
+      }
+    };
+    const boundaryIds = new Set(boundaries.map((boundary) => boundary.id));
+    lines.push("", "## Boundaries");
+    for (const boundary of boundaries) {
+      if (!boundary.parentBoundaryId || !boundaryIds.has(boundary.parentBoundaryId)) {
+        renderBoundary(boundary, 0);
+      }
+    }
+  }
 
   lines.push("", "## Relationships");
   const byId = new Map(document.elements.map((element) => [element.id, element]));

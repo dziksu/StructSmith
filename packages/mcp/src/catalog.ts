@@ -64,6 +64,15 @@ export const MCP_TOOLS: readonly McpToolInfo[] = [
   { name: "element_update", description: "Update an element.", mutating: true },
   { name: "element_delete", description: "Delete an element from the model.", mutating: true },
 
+  {
+    name: "boundary_list",
+    description: "List semantic boundaries and their members.",
+    mutating: false,
+  },
+  { name: "boundary_create", description: "Create a semantic boundary.", mutating: true },
+  { name: "boundary_update", description: "Update a boundary or its members.", mutating: true },
+  { name: "boundary_delete", description: "Delete a semantic boundary.", mutating: true },
+
   { name: "relationship_create", description: "Connect two elements.", mutating: true },
   { name: "relationship_update", description: "Update a relationship.", mutating: true },
   { name: "relationship_delete", description: "Delete a relationship.", mutating: true },

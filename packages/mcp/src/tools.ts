@@ -1,6 +1,7 @@
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import {
   ApplyOperationsRequestSchema,
+  CreateBoundarySchema,
   CreateElementSchema,
   CreateRecordSchema,
   CreateRelationshipSchema,
@@ -10,6 +11,7 @@ import {
   LayoutDirectionSchema,
   LayoutEntrySchema,
   ReferenceTargetKindSchema,
+  UpdateBoundarySchema,
   UpdateElementSchema,
   UpdateRecordSchema,
   UpdateRelationshipSchema,
@@ -294,6 +296,80 @@ export function registerTools(
           expectedRevision: input.expectedRevision,
           cascade: input.cascade,
           source: "mcp",
+        }),
+      );
+    },
+    true,
+  );
+
+  server.registerTool(
+    "boundary_list",
+    {
+      description: describe("boundary_list"),
+      inputSchema: { workspaceId },
+      annotations: readOnlyAnnotations,
+    },
+    ({ workspaceId: id }) => json(services.boundaries.list(id)),
+  );
+
+  registerWrite(
+    "boundary_create",
+    { workspaceId, expectedRevision, data: CreateBoundarySchema },
+    (args: unknown) => {
+      const input = z
+        .object({
+          workspaceId: z.string(),
+          expectedRevision: z.number().int().optional(),
+          data: CreateBoundarySchema,
+        })
+        .parse(args);
+      return json(
+        services.boundaries.create(input.workspaceId, input.data, {
+          expectedRevision: input.expectedRevision,
+          source: "mcp",
+        }),
+      );
+    },
+  );
+
+  registerWrite(
+    "boundary_update",
+    { workspaceId, boundaryId: z.string(), expectedRevision, data: UpdateBoundarySchema },
+    (args: unknown) => {
+      const input = z
+        .object({
+          workspaceId: z.string(),
+          boundaryId: z.string(),
+          expectedRevision: z.number().int().optional(),
+          data: UpdateBoundarySchema,
+        })
+        .parse(args);
+      return json(
+        services.boundaries.update(input.workspaceId, input.boundaryId, input.data, {
+          expectedRevision: input.expectedRevision,
+          source: "mcp",
+        }),
+      );
+    },
+  );
+
+  registerWrite(
+    "boundary_delete",
+    { workspaceId, boundaryId: z.string(), expectedRevision, cascade: z.boolean().default(false) },
+    (args: unknown) => {
+      const input = z
+        .object({
+          workspaceId: z.string(),
+          boundaryId: z.string(),
+          expectedRevision: z.number().int().optional(),
+          cascade: z.boolean().default(false),
+        })
+        .parse(args);
+      return json(
+        services.boundaries.delete(input.workspaceId, input.boundaryId, {
+          expectedRevision: input.expectedRevision,
+          source: "mcp",
+          cascade: input.cascade,
         }),
       );
     },

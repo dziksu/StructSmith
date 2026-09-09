@@ -300,6 +300,7 @@
   "status": {
     "revision": "rev {{revision}}",
     "elements": "{{count}} elements",
+    "boundaries": "{{count}} boundaries",
     "relationships": "{{count}} relationships",
     "saving": "Saving…",
     "saved": "Saved",
@@ -315,6 +316,37 @@
     "nothingToRedo": "Nothing to redo",
     "conflict": "Someone else changed this workspace — reloading the latest version.",
     "layoutSaved": "Layout saved"
+  },
+  "boundaries": {
+    "title": "Boundaries",
+    "newName": "New boundary",
+    "created": "Created boundary",
+    "updated": "Updated boundary",
+    "deleted": "Deleted boundary",
+    "membership": "Boundary",
+    "membershipChanged": "Changed boundary membership",
+    "members": "members",
+    "kindLabel": "Boundary type",
+    "classificationLabel": "Exposure",
+    "parent": "Parent boundary",
+    "layerLabel": "Boundary layer",
+    "kind": {
+      "environment": "Environment",
+      "region": "Region",
+      "availabilityZone": "Availability zone",
+      "networkZone": "Network zone",
+      "trustZone": "Trust zone",
+      "complianceScope": "Compliance scope",
+      "custom": "Custom"
+    },
+    "classification": { "public": "Public", "restricted": "Restricted", "private": "Private" },
+    "layer": {
+      "deployment": "Deployment",
+      "security": "Security",
+      "compliance": "Compliance",
+      "ownership": "Ownership",
+      "custom": "Custom"
+    }
   },
   "kinds": {
     "person": "Person",

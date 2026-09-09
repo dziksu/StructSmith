@@ -1,4 +1,5 @@
 import type {
+  ArchitectureBoundary,
   ArchitectureElement,
   ArchitectureRecord,
   ArchitectureView,
@@ -14,6 +15,7 @@ import { ViewsPanel } from "./ViewsPanel";
 interface ExplorerProps {
   workspaceId: string;
   elements: readonly ArchitectureElement[];
+  boundaries: readonly ArchitectureBoundary[];
   views: readonly ArchitectureView[];
   records: readonly ArchitectureRecord[];
   view: ViewDetail | null;
@@ -39,7 +41,12 @@ export function Explorer(props: ExplorerProps) {
       </TabsList>
 
       <TabsContent value="model" className="min-h-0">
-        <ModelTree workspaceId={props.workspaceId} elements={props.elements} view={props.view} />
+        <ModelTree
+          workspaceId={props.workspaceId}
+          elements={props.elements}
+          boundaries={props.boundaries}
+          view={props.view}
+        />
       </TabsContent>
       <TabsContent value="views" className="min-h-0">
         <ViewsPanel

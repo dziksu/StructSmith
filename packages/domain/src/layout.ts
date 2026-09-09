@@ -74,6 +74,13 @@ export interface LayoutNode {
   locked?: boolean;
   /** Parent id — only honoured when the parent is part of the same layout. */
   parentId?: string | null;
+  /** Semantic boundary that contains the element for the active view layer. */
+  groupId?: string | null;
+}
+
+export interface LayoutGroup {
+  id: string;
+  parentId?: string | null;
 }
 
 export interface LayoutEdge {
@@ -120,6 +127,7 @@ export function computeLayout(
   direction: LayoutDirection = "LR",
   algorithm: LayoutAlgorithm = "dagre",
   rootElementId?: string,
+  groups: readonly LayoutGroup[] = [],
 ): LayoutPosition[] {
   if (nodes.length === 0) return [];
 
@@ -127,7 +135,9 @@ export function computeLayout(
   if (algorithm === "radial") return computeRadialLayout(nodes, edges, rootElementId);
   if (algorithm === "grid") return computeGridLayout(nodes);
 
-  return computeDagreLayout(nodes, edges, direction);
+  return groups.length > 0
+    ? computeCompoundDagreLayout(nodes, edges, direction, groups)
+    : computeDagreLayout(nodes, edges, direction, groups);
 }
 
 function dimensions(node: LayoutNode): { width: number; height: number } {
@@ -156,6 +166,7 @@ function computeDagreLayout(
   nodes: readonly LayoutNode[],
   edges: readonly LayoutEdge[],
   direction: LayoutDirection,
+  groups: readonly LayoutGroup[],
 ): LayoutPosition[] {
   const graph = new dagre.graphlib.Graph({ compound: true });
   graph.setGraph({
@@ -171,6 +182,7 @@ function computeDagreLayout(
   graph.setDefaultEdgeLabel(() => ({}));
 
   const present = new Set(nodes.map((node) => node.id));
+  const groupIds = new Set(groups.map((group) => group.id));
 
   // A parent that is not itself on the view is still drawn as a boundary around
   // its children, so it needs a cluster here too — otherwise dagre spreads the
@@ -188,10 +200,22 @@ function computeDagreLayout(
       height: node.height ?? DEFAULT_NODE_HEIGHT,
     });
   }
+  for (const group of groups) {
+    graph.setNode(clusterId(group.id), {});
+  }
+  for (const group of groups) {
+    if (group.parentId && groupIds.has(group.parentId)) {
+      graph.setParent(clusterId(group.id), clusterId(group.parentId));
+    }
+  }
   for (const parentId of detachedParents) {
     graph.setNode(clusterId(parentId), {});
   }
   for (const node of nodes) {
+    if (node.groupId && groupIds.has(node.groupId)) {
+      graph.setParent(node.id, clusterId(node.groupId));
+      continue;
+    }
     if (!node.parentId) continue;
     if (present.has(node.parentId)) {
       graph.setParent(node.id, node.parentId);
@@ -223,6 +247,129 @@ function computeDagreLayout(
       y: Math.round((laid?.y ?? 0) - height / 2),
     };
   });
+}
+
+interface ScopeLayout {
+  positions: Map<string, { x: number; y: number }>;
+  width: number;
+  height: number;
+}
+
+/**
+ * Dagre's compound mode can interleave nodes from sibling clusters. Build the
+ * hierarchy from the inside out instead: layout each boundary as one box, then
+ * place those boxes in its parent. The returned coordinates still belong only
+ * to real elements; boundary rectangles remain derived presentation data.
+ */
+function computeCompoundDagreLayout(
+  nodes: readonly LayoutNode[],
+  edges: readonly LayoutEdge[],
+  direction: LayoutDirection,
+  groups: readonly LayoutGroup[],
+): LayoutPosition[] {
+  const groupById = new Map(groups.map((group) => [group.id, group] as const));
+  const children = new Map<string | null, LayoutGroup[]>();
+  for (const group of groups) {
+    const parent = group.parentId && groupById.has(group.parentId) ? group.parentId : null;
+    const bucket = children.get(parent);
+    if (bucket) bucket.push(group);
+    else children.set(parent, [group]);
+  }
+
+  const assignedGroup = new Map(
+    nodes
+      .filter((node) => node.groupId && groupById.has(node.groupId))
+      .map((node) => [node.id, node.groupId as string] as const),
+  );
+
+  const immediateItem = (nodeId: string, scopeId: string | null): string | null => {
+    let groupId = assignedGroup.get(nodeId);
+    if (!groupId) return scopeId === null ? `node:${nodeId}` : null;
+    if (groupId === scopeId) return `node:${nodeId}`;
+    let group = groupById.get(groupId);
+    while (group) {
+      const parentId = group.parentId && groupById.has(group.parentId) ? group.parentId : null;
+      if (parentId === scopeId) return `group:${group.id}`;
+      groupId = parentId ?? "";
+      group = groupId ? groupById.get(groupId) : undefined;
+    }
+    return null;
+  };
+
+  const layoutScope = (scopeId: string | null, visiting = new Set<string>()): ScopeLayout => {
+    if (scopeId && visiting.has(scopeId)) return { positions: new Map(), width: 0, height: 0 };
+    if (scopeId) visiting.add(scopeId);
+
+    const childLayouts = new Map<string, ScopeLayout>();
+    for (const child of children.get(scopeId) ?? []) {
+      childLayouts.set(child.id, layoutScope(child.id, visiting));
+    }
+
+    const directNodes = nodes.filter((node) =>
+      scopeId === null ? !assignedGroup.has(node.id) : assignedGroup.get(node.id) === scopeId,
+    );
+    const items = [
+      ...[...childLayouts.entries()]
+        .filter(([, layout]) => layout.positions.size > 0)
+        .map(([id, layout]) => ({ id: `group:${id}`, width: layout.width, height: layout.height })),
+      ...directNodes.map((node) => ({ id: `node:${node.id}`, ...dimensions(node) })),
+    ];
+    if (scopeId) visiting.delete(scopeId);
+    if (items.length === 0) return { positions: new Map(), width: 0, height: 0 };
+
+    const graph = new dagre.graphlib.Graph();
+    graph.setGraph({
+      rankdir: direction,
+      nodesep: BASE_NODE_GAP,
+      ranksep: 116,
+      edgesep: 36,
+      marginx: scopeId ? 48 : 0,
+      marginy: scopeId ? 58 : 0,
+    });
+    graph.setDefaultEdgeLabel(() => ({}));
+    for (const item of items) graph.setNode(item.id, { width: item.width, height: item.height });
+    const itemIds = new Set(items.map((item) => item.id));
+    for (const edge of edges) {
+      const source = immediateItem(edge.source, scopeId);
+      const target = immediateItem(edge.target, scopeId);
+      if (!source || !target || source === target || !itemIds.has(source) || !itemIds.has(target)) {
+        continue;
+      }
+      graph.setEdge(source, target);
+    }
+    dagre.layout(graph);
+
+    const positions = new Map<string, { x: number; y: number }>();
+    let maxX = 0;
+    let maxY = 0;
+    for (const item of items) {
+      const laid = graph.node(item.id) as { x: number; y: number };
+      const x = laid.x - item.width / 2;
+      const y = laid.y - item.height / 2;
+      maxX = Math.max(maxX, x + item.width);
+      maxY = Math.max(maxY, y + item.height);
+      if (item.id.startsWith("node:")) {
+        positions.set(item.id.slice(5), { x, y });
+      } else {
+        const child = childLayouts.get(item.id.slice(6));
+        if (!child) continue;
+        for (const [nodeId, position] of child.positions) {
+          positions.set(nodeId, { x: x + position.x, y: y + position.y });
+        }
+      }
+    }
+    return { positions, width: maxX, height: maxY };
+  };
+
+  const result = layoutScope(null);
+  return normalizePositions(
+    nodes.map((node) => ({
+      id: node.id,
+      x: Math.round(result.positions.get(node.id)?.x ?? node.x ?? 0),
+      y: Math.round(result.positions.get(node.id)?.y ?? node.y ?? 0),
+    })),
+    nodes,
+  );
 }
 
 interface ForceNode {

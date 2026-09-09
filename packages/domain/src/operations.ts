@@ -75,6 +75,52 @@ export function applyOperations(
         applied.push({ op: operation.op, id: ids[0] });
         break;
       }
+      case "createBoundary": {
+        const boundary = engine.createBoundary(repos, workspace, {
+          ...operation.data,
+          parentBoundaryId: refs.resolve(operation.data.parentBoundaryId),
+          elementIds: operation.data.elementIds
+            ? refs.resolveAll(operation.data.elementIds)
+            : undefined,
+        });
+        refs.set(operation.ref, boundary.id);
+        applied.push({ op: operation.op, ref: operation.ref, id: boundary.id });
+        break;
+      }
+      case "updateBoundary": {
+        const boundary = engine.updateBoundary(
+          repos,
+          workspace,
+          refs.resolve(operation.boundaryId),
+          {
+            ...operation.data,
+            parentBoundaryId: refs.resolve(operation.data.parentBoundaryId),
+            elementIds: operation.data.elementIds
+              ? refs.resolveAll(operation.data.elementIds)
+              : undefined,
+          },
+        );
+        applied.push({ op: operation.op, id: boundary.id });
+        break;
+      }
+      case "deleteBoundary": {
+        const id = refs.resolve(operation.boundaryId);
+        engine.deleteBoundary(repos, workspace, id, operation.cascade);
+        applied.push({ op: operation.op, id });
+        break;
+      }
+      case "setBoundaryMembers": {
+        const id = refs.resolve(operation.boundaryId);
+        engine.setBoundaryMembers(
+          repos,
+          workspace,
+          id,
+          refs.resolveAll(operation.elementIds),
+          operation.mode,
+        );
+        applied.push({ op: operation.op, id });
+        break;
+      }
       case "createRelationship": {
         const relationship = engine.createRelationship(repos, workspace, {
           ...operation.data,

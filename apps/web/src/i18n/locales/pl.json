@@ -304,6 +304,7 @@
   "status": {
     "revision": "rew. {{revision}}",
     "elements": "elementy: {{count}}",
+    "boundaries": "strefy: {{count}}",
     "relationships": "relacje: {{count}}",
     "saving": "Zapisywanie…",
     "saved": "Zapisano",
@@ -319,6 +320,37 @@
     "nothingToRedo": "Nie ma czego ponowić",
     "conflict": "Ktoś inny zmienił tę przestrzeń — wczytuję najnowszą wersję.",
     "layoutSaved": "Układ zapisany"
+  },
+  "boundaries": {
+    "title": "Strefy",
+    "newName": "Nowa strefa",
+    "created": "Utworzono strefę",
+    "updated": "Zaktualizowano strefę",
+    "deleted": "Usunięto strefę",
+    "membership": "Strefa",
+    "membershipChanged": "Zmieniono przynależność do strefy",
+    "members": "elementów",
+    "kindLabel": "Rodzaj strefy",
+    "classificationLabel": "Ekspozycja",
+    "parent": "Strefa nadrzędna",
+    "layerLabel": "Warstwa stref",
+    "kind": {
+      "environment": "Środowisko",
+      "region": "Region",
+      "availabilityZone": "Strefa dostępności",
+      "networkZone": "Strefa sieciowa",
+      "trustZone": "Strefa zaufania",
+      "complianceScope": "Zakres zgodności",
+      "custom": "Własna"
+    },
+    "classification": { "public": "Publiczna", "restricted": "Ograniczona", "private": "Prywatna" },
+    "layer": {
+      "deployment": "Wdrożenie",
+      "security": "Bezpieczeństwo",
+      "compliance": "Zgodność",
+      "ownership": "Własność",
+      "custom": "Własna"
+    }
   },
   "kinds": {
     "person": "Osoba",

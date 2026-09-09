@@ -74,6 +74,7 @@ export function captureDocument(repos: Repositories, workspaceId: string): Works
     formatVersion: 1,
     workspace,
     elements: repos.elements.listByWorkspace(workspaceId),
+    boundaries: repos.boundaries.listByWorkspace(workspaceId),
     relationships: repos.relationships.listByWorkspace(workspaceId),
     views,
     records: repos.records.listByWorkspace(workspaceId),

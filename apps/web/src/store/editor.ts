@@ -3,6 +3,7 @@ import { create } from "zustand";
 export type Selection =
   | { type: "none" }
   | { type: "element"; id: string }
+  | { type: "boundary"; id: string }
   | { type: "relationship"; id: string }
   | { type: "view"; id: string }
   | { type: "record"; id: string };

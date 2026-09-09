@@ -66,6 +66,13 @@ export class ImportService {
           workspaceId: newId,
           parentId: element.parentId ? mapId(element.parentId) : null,
         })),
+        boundaries: (document.boundaries ?? []).map((boundary) => ({
+          ...boundary,
+          id: mapId(boundary.id),
+          workspaceId: newId,
+          parentBoundaryId: boundary.parentBoundaryId ? mapId(boundary.parentBoundaryId) : null,
+          elementIds: boundary.elementIds.map(mapId),
+        })),
         relationships: document.relationships.map((relationship) => ({
           ...relationship,
           id: mapId(relationship.id),

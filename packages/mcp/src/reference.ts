@@ -42,6 +42,21 @@ export function resolveReference(
     };
   }
 
+  if (type === "boundary") {
+    const boundaries = document.boundaries ?? [];
+    const target = boundaries.find((item) => item.id === targetId);
+    if (!target) throw new Error(`Boundary not found: ${targetId}`);
+    return {
+      reference,
+      target,
+      context: {
+        parent: boundaries.find((item) => item.id === target.parentBoundaryId) ?? null,
+        children: boundaries.filter((item) => item.parentBoundaryId === target.id),
+        members: document.elements.filter((item) => target.elementIds.includes(item.id)),
+      },
+    };
+  }
+
   if (type === "relationship") {
     const target = document.relationships.find((item) => item.id === targetId);
     if (!target) throw new Error(`Relationship not found: ${targetId}`);

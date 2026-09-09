@@ -1,11 +1,13 @@
 import {
   AutoLayoutRequestSchema,
+  CreateBoundarySchema,
   CreateElementSchema,
   CreateRecordSchema,
   CreateRelationshipSchema,
   CreateSnapshotRequestSchema,
   CreateViewSchema,
   ERROR_CODES,
+  UpdateBoundarySchema,
   UpdateElementSchema,
   UpdateLayoutRequestSchema,
   UpdateRecordSchema,
@@ -44,6 +46,18 @@ export function modelRoutes(services: Services): Router {
       );
     }
     return relationship.workspaceId;
+  };
+
+  const workspaceOfBoundary = (id: string): string => {
+    const boundary = store.boundaries.findById(id);
+    if (!boundary) {
+      throw new DomainError(
+        ERROR_CODES.BOUNDARY_NOT_FOUND,
+        `Boundary "${id}" does not exist.`,
+        404,
+      );
+    }
+    return boundary.workspaceId;
   };
 
   const workspaceOfView = (id: string): string => {
@@ -106,6 +120,56 @@ export function modelRoutes(services: Services): Router {
       const cascade = req.query.cascade !== "false";
       res.json(
         services.elements.delete(workspaceOfElement(id), id, { ...mutationOptions(req), cascade }),
+      );
+    }),
+  );
+
+  /* ------------------------------ boundaries ------------------------------ */
+
+  router.get(
+    "/workspaces/:id/boundaries",
+    handler((req, res) => res.json({ boundaries: services.boundaries.list(param(req, "id")) })),
+  );
+
+  router.post(
+    "/workspaces/:id/boundaries",
+    handler((req, res) =>
+      res
+        .status(201)
+        .json(
+          services.boundaries.create(
+            param(req, "id"),
+            CreateBoundarySchema.parse(req.body),
+            mutationOptions(req),
+          ),
+        ),
+    ),
+  );
+
+  router.patch(
+    "/boundaries/:id",
+    handler((req, res) => {
+      const id = param(req, "id");
+      res.json(
+        services.boundaries.update(
+          workspaceOfBoundary(id),
+          id,
+          UpdateBoundarySchema.parse(req.body),
+          mutationOptions(req),
+        ),
+      );
+    }),
+  );
+
+  router.delete(
+    "/boundaries/:id",
+    handler((req, res) => {
+      const id = param(req, "id");
+      res.json(
+        services.boundaries.delete(workspaceOfBoundary(id), id, {
+          ...mutationOptions(req),
+          cascade: req.query.cascade === "true",
+        }),
       );
     }),
   );

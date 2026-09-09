@@ -1,5 +1,8 @@
 import { z } from "zod";
 import {
+  BoundaryClassificationSchema,
+  BoundaryKindSchema,
+  BoundaryLayerSchema,
   ChangeSourceSchema,
   ElementKindSchema,
   ElementRoleSchema,
@@ -88,6 +91,44 @@ export const UpdateElementSchema = CreateElementSchema.omit({ id: true }).partia
 export type UpdateElementInput = z.infer<typeof UpdateElementSchema>;
 
 /* ------------------------------------------------------------------ */
+/* Boundaries                                                          */
+/* ------------------------------------------------------------------ */
+
+export const ArchitectureBoundarySchema = z.object({
+  id: IdSchema,
+  workspaceId: IdSchema,
+  parentBoundaryId: IdSchema.nullable(),
+  kind: BoundaryKindSchema,
+  layer: BoundaryLayerSchema,
+  classification: BoundaryClassificationSchema.nullable(),
+  name,
+  description: z.string().nullable(),
+  tags: TagsSchema,
+  properties: PropertiesSchema,
+  elementIds: z.array(IdSchema),
+  createdAt: z.string(),
+  updatedAt: z.string(),
+});
+export type ArchitectureBoundary = z.infer<typeof ArchitectureBoundarySchema>;
+
+export const CreateBoundarySchema = z.object({
+  id: IdSchema.optional(),
+  parentBoundaryId: IdSchema.nullable().optional(),
+  kind: BoundaryKindSchema,
+  layer: BoundaryLayerSchema.default("deployment"),
+  classification: BoundaryClassificationSchema.nullable().optional(),
+  name,
+  description: optionalText,
+  tags: TagsSchema.optional(),
+  properties: PropertiesSchema.optional(),
+  elementIds: z.array(IdSchema).optional(),
+});
+export type CreateBoundaryInput = z.input<typeof CreateBoundarySchema>;
+
+export const UpdateBoundarySchema = CreateBoundarySchema.omit({ id: true }).partial();
+export type UpdateBoundaryInput = z.infer<typeof UpdateBoundarySchema>;
+
+/* ------------------------------------------------------------------ */
 /* Relationship                                                        */
 /* ------------------------------------------------------------------ */
 
@@ -138,6 +179,7 @@ export const ViewSettingsSchema = z.object({
   snapToGrid: z.boolean().default(false),
   autoLayoutDirection: z.enum(["LR", "TB"]).default("LR"),
   autoLayoutAlgorithm: z.enum(["dagre", "force", "radial", "grid"]).default("dagre"),
+  boundaryLayer: BoundaryLayerSchema.default("deployment"),
   relationshipRouting: z.enum(["orthogonal", "curved", "straight"]).default("orthogonal"),
   showRelationshipLabels: z.boolean().default(true),
   showFullTitles: z.boolean().default(false),
@@ -152,6 +194,7 @@ const ViewSettingsPatchSchema = z.object({
   snapToGrid: ViewSettingsSchema.shape.snapToGrid.unwrap().optional(),
   autoLayoutDirection: ViewSettingsSchema.shape.autoLayoutDirection.unwrap().optional(),
   autoLayoutAlgorithm: ViewSettingsSchema.shape.autoLayoutAlgorithm.unwrap().optional(),
+  boundaryLayer: ViewSettingsSchema.shape.boundaryLayer.unwrap().optional(),
   relationshipRouting: ViewSettingsSchema.shape.relationshipRouting.unwrap().optional(),
   showRelationshipLabels: ViewSettingsSchema.shape.showRelationshipLabels.unwrap().optional(),
   showFullTitles: ViewSettingsSchema.shape.showFullTitles.unwrap().optional(),
@@ -316,6 +359,7 @@ export type ActivityEntry = z.infer<typeof ActivityEntrySchema>;
 export const ArchitectureModelSchema = z.object({
   workspace: WorkspaceSchema,
   elements: z.array(ArchitectureElementSchema),
+  boundaries: z.array(ArchitectureBoundarySchema),
   relationships: z.array(ArchitectureRelationshipSchema),
   revision: z.number().int(),
 });
@@ -326,6 +370,7 @@ export const WorkspaceDocumentSchema = z.object({
   formatVersion: z.literal(1),
   workspace: WorkspaceSchema,
   elements: z.array(ArchitectureElementSchema),
+  boundaries: z.array(ArchitectureBoundarySchema).optional(),
   relationships: z.array(ArchitectureRelationshipSchema),
   views: z.array(ViewDetailSchema),
   records: z.array(ArchitectureRecordSchema),
@@ -341,6 +386,7 @@ export const ValidationIssueSchema = z.object({
   code: z.string(),
   message: z.string(),
   elementId: IdSchema.optional(),
+  boundaryId: IdSchema.optional(),
   relationshipId: IdSchema.optional(),
   viewId: IdSchema.optional(),
 });

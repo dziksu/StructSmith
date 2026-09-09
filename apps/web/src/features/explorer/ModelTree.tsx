@@ -1,5 +1,5 @@
-import type { ArchitectureElement, ViewDetail } from "@structsmith/contracts";
-import { ChevronDown, ChevronRight, Plus, Trash2 } from "lucide-react";
+import type { ArchitectureBoundary, ArchitectureElement, ViewDetail } from "@structsmith/contracts";
+import { ChevronDown, ChevronRight, Plus, SquareDashed, Trash2 } from "lucide-react";
 import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
@@ -16,6 +16,7 @@ import { CopyReferenceButton } from "../reference/CopyReferenceButton";
 interface ModelTreeProps {
   workspaceId: string;
   elements: readonly ArchitectureElement[];
+  boundaries: readonly ArchitectureBoundary[];
   view: ViewDetail | null;
 }
 
@@ -25,7 +26,7 @@ interface Group {
   elements: ArchitectureElement[];
 }
 
-export function ModelTree({ workspaceId, elements, view }: ModelTreeProps) {
+export function ModelTree({ workspaceId, elements, boundaries, view }: ModelTreeProps) {
   const { t } = useTranslation();
   const [filter, setFilter] = useState("");
   const [collapsed, setCollapsed] = useState<Record<string, boolean>>({});
@@ -112,6 +113,63 @@ export function ModelTree({ workspaceId, elements, view }: ModelTreeProps) {
       label: `Deleted ${element.name}`,
       operations: [{ op: "deleteElement", elementId: element.id, cascade: true }],
     });
+
+  const createBoundary = (): void =>
+    applyOperations.mutate({
+      label: t("boundaries.created"),
+      operations: [
+        {
+          op: "createBoundary",
+          data: {
+            name: t("boundaries.newName"),
+            kind: "networkZone",
+            layer: view?.settings.boundaryLayer ?? "deployment",
+          },
+        },
+      ],
+    });
+
+  const renderBoundary = (boundary: ArchitectureBoundary, depth: number) => {
+    const children = boundaries.filter((candidate) => candidate.parentBoundaryId === boundary.id);
+    const active = selection.type === "boundary" && selection.id === boundary.id;
+    return (
+      <div key={boundary.id}>
+        <div
+          role="button"
+          tabIndex={0}
+          onClick={() => select({ type: "boundary", id: boundary.id })}
+          onKeyDown={(event) =>
+            event.key === "Enter" && select({ type: "boundary", id: boundary.id })
+          }
+          className={cn(
+            "group flex h-6 cursor-pointer items-center gap-1.5 rounded pr-1 text-[12.5px] hover:bg-accent",
+            active && "bg-accent text-accent-foreground",
+          )}
+          style={{ paddingLeft: 10 + depth * 12 }}
+        >
+          <SquareDashed className="h-3.5 w-3.5 text-muted-foreground" />
+          <span className="flex-1 truncate">{boundary.name}</span>
+          <span className="text-[9px] uppercase text-muted-foreground">
+            {boundary.elementIds.length}
+          </span>
+          <button
+            type="button"
+            className="hidden rounded p-0.5 text-muted-foreground hover:text-destructive group-hover:block"
+            onClick={(event) => {
+              event.stopPropagation();
+              applyOperations.mutate({
+                label: t("boundaries.deleted"),
+                operations: [{ op: "deleteBoundary", boundaryId: boundary.id, cascade: false }],
+              });
+            }}
+          >
+            <Trash2 className="h-3 w-3" />
+          </button>
+        </div>
+        {children.map((child) => renderBoundary(child, depth + 1))}
+      </div>
+    );
+  };
 
   const renderElement = (element: ArchitectureElement, depth: number) => {
     if (!isVisible(element)) return null;
@@ -265,6 +323,24 @@ export function ModelTree({ workspaceId, elements, view }: ModelTreeProps) {
                 {group.elements.map((element) => renderElement(element, 0))}
               </div>
             ))}
+          <div className="mb-1 mt-2">
+            <div className="flex items-center gap-1.5 px-2 py-1 text-[10.5px] font-semibold uppercase tracking-wider text-muted-foreground">
+              <span className="flex-1">{t("boundaries.title")}</span>
+              <button
+                type="button"
+                onClick={createBoundary}
+                className="rounded p-0.5 hover:text-foreground"
+              >
+                <Plus className="h-3 w-3" />
+              </button>
+            </div>
+            {boundaries
+              .filter(
+                (boundary) => boundary.layer === (view?.settings.boundaryLayer ?? "deployment"),
+              )
+              .filter((boundary) => !boundary.parentBoundaryId)
+              .map((boundary) => renderBoundary(boundary, 0))}
+          </div>
         </div>
       </ScrollArea>
     </div>

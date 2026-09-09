@@ -1,12 +1,14 @@
 import { z } from "zod";
 import { LayoutAlgorithmSchema, LayoutDirectionSchema } from "./enums";
 import {
+  CreateBoundarySchema,
   CreateElementSchema,
   CreateRecordSchema,
   CreateRelationshipSchema,
   CreateViewSchema,
   IdSchema,
   LayoutEntrySchema,
+  UpdateBoundarySchema,
   UpdateElementSchema,
   UpdateRecordSchema,
   UpdateRelationshipSchema,
@@ -47,6 +49,31 @@ export const DeleteElementOpSchema = z.object({
   elementId: IdSchema,
   /** Also delete descendants; otherwise children are re-parented to the grandparent. */
   cascade: z.boolean().default(true),
+});
+
+export const CreateBoundaryOpSchema = z.object({
+  op: z.literal("createBoundary"),
+  ref,
+  data: CreateBoundarySchema,
+});
+
+export const UpdateBoundaryOpSchema = z.object({
+  op: z.literal("updateBoundary"),
+  boundaryId: IdSchema,
+  data: UpdateBoundarySchema,
+});
+
+export const DeleteBoundaryOpSchema = z.object({
+  op: z.literal("deleteBoundary"),
+  boundaryId: IdSchema,
+  cascade: z.boolean().default(false),
+});
+
+export const SetBoundaryMembersOpSchema = z.object({
+  op: z.literal("setBoundaryMembers"),
+  boundaryId: IdSchema,
+  elementIds: z.array(IdSchema),
+  mode: z.enum(["replace", "add", "remove"]).default("replace"),
 });
 
 export const CreateRelationshipOpSchema = z.object({
@@ -133,6 +160,10 @@ export const ArchitectureOperationSchema = z.discriminatedUnion("op", [
   CreateElementOpSchema,
   UpdateElementOpSchema,
   DeleteElementOpSchema,
+  CreateBoundaryOpSchema,
+  UpdateBoundaryOpSchema,
+  DeleteBoundaryOpSchema,
+  SetBoundaryMembersOpSchema,
   CreateRelationshipOpSchema,
   UpdateRelationshipOpSchema,
   DeleteRelationshipOpSchema,

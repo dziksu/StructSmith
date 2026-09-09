@@ -1,9 +1,13 @@
 import type {
   ActivityEntry,
+  ArchitectureBoundary,
   ArchitectureElement,
   ArchitectureRecord,
   ArchitectureRelationship,
   ArchitectureView,
+  BoundaryClassification,
+  BoundaryKind,
+  BoundaryLayer,
   ChangeSource,
   ElementKind,
   ElementRole,
@@ -20,6 +24,7 @@ import type {
 } from "@structsmith/contracts";
 import type {
   activity,
+  boundaries,
   elements,
   records,
   relationships,
@@ -102,6 +107,44 @@ export function fromElement(element: ArchitectureElement): Row<typeof elements> 
   };
 }
 
+export function toBoundary(
+  row: Row<typeof boundaries>,
+  elementIds: string[] = [],
+): ArchitectureBoundary {
+  return {
+    id: row.id,
+    workspaceId: row.workspaceId,
+    parentBoundaryId: row.parentBoundaryId,
+    kind: row.kind as BoundaryKind,
+    layer: row.layer as BoundaryLayer,
+    classification: (row.classification as BoundaryClassification | null) ?? null,
+    name: row.name,
+    description: row.description,
+    tags: parseJson<string[]>(row.tagsJson, []),
+    properties: parseJson<Record<string, string>>(row.propertiesJson, {}),
+    elementIds,
+    createdAt: row.createdAt,
+    updatedAt: row.updatedAt,
+  };
+}
+
+export function fromBoundary(boundary: ArchitectureBoundary): Row<typeof boundaries> {
+  return {
+    id: boundary.id,
+    workspaceId: boundary.workspaceId,
+    parentBoundaryId: boundary.parentBoundaryId,
+    kind: boundary.kind,
+    layer: boundary.layer,
+    classification: boundary.classification,
+    name: boundary.name,
+    description: boundary.description,
+    tagsJson: JSON.stringify(boundary.tags),
+    propertiesJson: JSON.stringify(boundary.properties),
+    createdAt: boundary.createdAt,
+    updatedAt: boundary.updatedAt,
+  };
+}
+
 export function toRelationship(row: Row<typeof relationships>): ArchitectureRelationship {
   return {
     id: row.id,
@@ -141,6 +184,7 @@ const defaultSettings: ViewSettings = {
   snapToGrid: false,
   autoLayoutDirection: "LR",
   autoLayoutAlgorithm: "dagre",
+  boundaryLayer: "deployment",
   relationshipRouting: "orthogonal",
   showRelationshipLabels: true,
   showFullTitles: false,

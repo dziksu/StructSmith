@@ -1,6 +1,7 @@
 import { type DomainConfig, defaultDomainConfig, type ServiceContext } from "../context";
 import type { EventBus, Store } from "../ports";
 import { ActivityService } from "./activity.service";
+import { BoundaryService } from "./boundary.service";
 import { ElementService } from "./element.service";
 import { ImportService } from "./import.service";
 import { ModelService } from "./model.service";
@@ -14,6 +15,7 @@ export interface Services {
   context: ServiceContext;
   workspaces: WorkspaceService;
   elements: ElementService;
+  boundaries: BoundaryService;
   relationships: RelationshipService;
   views: ViewService;
   records: RecordService;
@@ -38,6 +40,7 @@ export function createServices(
     context,
     workspaces: new WorkspaceService(context),
     elements: new ElementService(context),
+    boundaries: new BoundaryService(context),
     relationships: new RelationshipService(context),
     views: new ViewService(context),
     records: new RecordService(context),
@@ -50,6 +53,7 @@ export function createServices(
 
 export {
   ActivityService,
+  BoundaryService,
   ElementService,
   ImportService,
   ModelService,

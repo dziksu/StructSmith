@@ -21,11 +21,13 @@ export function workspaceInspection(
     revision: document.workspace.revision,
     counts: {
       elements: document.elements.length,
+      boundaries: (document.boundaries ?? []).length,
       relationships: document.relationships.length,
       views: document.views.length,
       records: document.records.length,
     },
     elements: document.elements,
+    boundaries: document.boundaries ?? [],
     relationships: document.relationships,
     views,
     records: document.records,
