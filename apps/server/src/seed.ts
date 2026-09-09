@@ -259,9 +259,9 @@ export function seedExampleWorkspace(services: Services): string {
         elementIds: ["@api", "@queue", "@worker", "@storage", "@erp"],
       },
     },
-    { op: "autoLayoutView", viewId: "@context", direction: "LR" },
-    { op: "autoLayoutView", viewId: "@containers", direction: "LR" },
-    { op: "autoLayoutView", viewId: "@invoices", direction: "LR" },
+    { op: "autoLayoutView", viewId: "@context", direction: "LR", algorithm: "dagre" },
+    { op: "autoLayoutView", viewId: "@containers", direction: "LR", algorithm: "dagre" },
+    { op: "autoLayoutView", viewId: "@invoices", direction: "LR", algorithm: "dagre" },
 
     {
       op: "createRecord",

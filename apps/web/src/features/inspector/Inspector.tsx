@@ -111,17 +111,22 @@ export function Inspector({ workspaceId, elements, relationships, records, view 
               workspaceId={workspaceId}
               onPatch={(settings) =>
                 applyOperations.mutate({
-                  label: settings.autoLayoutDirection
-                    ? t("inspector.layoutDirection")
-                    : t("inspector.viewSettings"),
+                  label: settings.autoLayoutAlgorithm
+                    ? t("inspector.layoutAlgorithm")
+                    : settings.autoLayoutDirection
+                      ? t("inspector.layoutDirection")
+                      : t("inspector.viewSettings"),
                   operations: [
                     { op: "updateView", viewId: view.id, data: { settings } },
-                    ...(settings.autoLayoutDirection
+                    ...(settings.autoLayoutDirection || settings.autoLayoutAlgorithm
                       ? [
                           {
                             op: "autoLayoutView" as const,
                             viewId: view.id,
-                            direction: settings.autoLayoutDirection,
+                            direction:
+                              settings.autoLayoutDirection ?? view.settings.autoLayoutDirection,
+                            algorithm:
+                              settings.autoLayoutAlgorithm ?? view.settings.autoLayoutAlgorithm,
                           },
                         ]
                       : []),
@@ -533,6 +538,28 @@ function ViewInspector({
       <div className="space-y-3 border-t border-border pt-3">
         <Label>{t("inspector.viewSettings")}</Label>
 
+        <div className="flex items-center justify-between gap-3">
+          <label htmlFor="view-full-titles" className="cursor-pointer text-[12.5px]">
+            {t("inspector.showFullTitles")}
+          </label>
+          <Switch
+            id="view-full-titles"
+            checked={view.settings.showFullTitles}
+            onCheckedChange={(checked) => onPatch({ showFullTitles: checked })}
+          />
+        </div>
+
+        <div className="flex items-center justify-between gap-3">
+          <label htmlFor="view-descriptions" className="cursor-pointer text-[12.5px]">
+            {t("inspector.showDescriptions")}
+          </label>
+          <Switch
+            id="view-descriptions"
+            checked={view.settings.showDescriptions}
+            onCheckedChange={(checked) => onPatch({ showDescriptions: checked })}
+          />
+        </div>
+
         <div className="flex items-center justify-between">
           <span className="text-[12.5px]">{t("inspector.showBoundaries")}</span>
           <Switch
@@ -560,6 +587,28 @@ function ViewInspector({
             <SelectContent>
               <SelectItem value="LR">Left → Right</SelectItem>
               <SelectItem value="TB">Top → Bottom</SelectItem>
+            </SelectContent>
+          </Select>
+        </Field>
+
+        <Field label={t("inspector.layoutAlgorithm")}>
+          <Select
+            value={view.settings.autoLayoutAlgorithm}
+            onValueChange={(value) =>
+              onPatch({
+                autoLayoutAlgorithm: value as ViewDetail["settings"]["autoLayoutAlgorithm"],
+              })
+            }
+          >
+            <SelectTrigger>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {(["dagre", "force", "radial", "grid"] as const).map((algorithm) => (
+                <SelectItem key={algorithm} value={algorithm}>
+                  {t(`layoutAlgorithms.${algorithm}`)}
+                </SelectItem>
+              ))}
             </SelectContent>
           </Select>
         </Field>

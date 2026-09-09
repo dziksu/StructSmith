@@ -7,6 +7,7 @@ import type {
   CreateRecordInput,
   CreateRelationshipInput,
   CreateViewInput,
+  LayoutAlgorithm,
   LayoutDirection,
   LayoutEntry,
   UpdateElementInput,
@@ -24,7 +25,7 @@ import { ERROR_CODES } from "@structsmith/contracts";
 import { badRequest, DomainError, ruleViolation } from "./errors";
 import { createId, nowIso, uniqueKey } from "./ids";
 import { edgeLabel, resolveRelationshipsForView } from "./implied";
-import { computeLayout, DEFAULT_NODE_HEIGHT, DEFAULT_NODE_WIDTH } from "./layout";
+import { computeLayout, estimateElementSize } from "./layout";
 import type { Repositories } from "./ports";
 import { checkParent, descendantsOf, wouldCreateCycle } from "./rules";
 
@@ -36,8 +37,11 @@ export const defaultViewSettings: ViewSettings = {
   showBoundaries: true,
   snapToGrid: false,
   autoLayoutDirection: "LR",
+  autoLayoutAlgorithm: "dagre",
   relationshipRouting: "orthogonal",
   showRelationshipLabels: true,
+  showFullTitles: false,
+  showDescriptions: false,
 };
 
 const GRID_COLUMNS = 4;
@@ -470,8 +474,10 @@ export function autoLayoutView(
   workspace: Workspace,
   viewId: string,
   direction: LayoutDirection = "LR",
+  algorithm: LayoutAlgorithm = "dagre",
+  rootElementId?: string,
 ): ViewElement[] {
-  requireView(repos, viewId, workspace.id);
+  const view = requireView(repos, viewId, workspace.id);
   const entries = repos.views.listElements(viewId).filter((entry) => !entry.hidden);
   if (entries.length === 0) return [];
 
@@ -480,12 +486,17 @@ export function autoLayoutView(
   const visible = new Set(entries.map((entry) => entry.elementId));
 
   const positions = computeLayout(
-    entries.map((entry) => ({
-      id: entry.elementId,
-      width: entry.width ?? DEFAULT_NODE_WIDTH,
-      height: entry.height ?? DEFAULT_NODE_HEIGHT,
-      parentId: elements.get(entry.elementId)?.parentId ?? null,
-    })),
+    entries.map((entry) => {
+      const element = elements.get(entry.elementId);
+      return {
+        id: entry.elementId,
+        ...estimateElementSize(element, view.settings, entry),
+        x: entry.x,
+        y: entry.y,
+        locked: entry.locked,
+        parentId: element?.parentId ?? null,
+      };
+    }),
     resolveRelationshipsForView(
       allElements,
       repos.relationships.listByWorkspace(workspace.id),
@@ -496,6 +507,8 @@ export function autoLayoutView(
       label: edgeLabel(edge),
     })),
     direction,
+    algorithm,
+    rootElementId,
   );
 
   const byId = new Map(entries.map((entry) => [entry.elementId, entry] as const));

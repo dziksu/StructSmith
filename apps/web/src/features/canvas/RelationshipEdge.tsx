@@ -7,7 +7,22 @@ import {
   getStraightPath,
 } from "@xyflow/react";
 import { memo } from "react";
+import { cn } from "@/lib/utils";
+import { useEditorStore } from "@/store/editor";
 import type { RelationshipEdgeData } from "./graph";
+
+export type RelationshipFocus = "normal" | "connected" | "dimmed";
+
+export function relationshipFocus(
+  activeElementId: string | null,
+  sourceElementId: string,
+  targetElementId: string,
+): RelationshipFocus {
+  if (!activeElementId) return "normal";
+  return activeElementId === sourceElementId || activeElementId === targetElementId
+    ? "connected"
+    : "dimmed";
+}
 
 /**
  * Interaction style drives the line style; colour is purely presentation and
@@ -15,6 +30,7 @@ import type { RelationshipEdgeData } from "./graph";
  */
 function RelationshipEdgeComponent({
   id,
+  source,
   sourceX,
   sourceY,
   targetX,
@@ -23,8 +39,13 @@ function RelationshipEdgeComponent({
   targetPosition,
   markerEnd,
   selected,
+  target,
   data,
 }: EdgeProps & { data?: RelationshipEdgeData }) {
+  const activeElementId = useEditorStore((state) =>
+    state.selection.type === "element" ? state.selection.id : null,
+  );
+  const focus = relationshipFocus(activeElementId, source, target);
   const pathOptions = {
     sourceX,
     sourceY,
@@ -57,17 +78,26 @@ function RelationshipEdgeComponent({
         path={path}
         markerEnd={markerEnd}
         style={{
-          strokeWidth: selected ? 2 : data?.implied ? 1.1 : 1.4,
+          strokeWidth: selected ? 2 : focus === "connected" ? 2.4 : data?.implied ? 1.1 : 1.4,
           strokeDasharray: dashed ? "5 4" : undefined,
-          stroke: selected ? "var(--primary)" : "var(--edge)",
+          stroke: selected || focus === "connected" ? "var(--primary)" : "var(--edge)",
+          opacity: focus === "dimmed" ? 0.7 : 1,
+          filter: focus === "connected" ? "drop-shadow(0 0 3px var(--primary))" : undefined,
+          transition: "stroke 150ms, stroke-width 150ms, opacity 150ms, filter 150ms",
         }}
       />
       {label && (data?.showLabel !== false || selected) && (
         <EdgeLabelRenderer>
           <div
-            className="pointer-events-none absolute max-w-[170px] rounded border border-border bg-card/95 px-1.5 py-0.5 text-center text-[10px] font-medium leading-[1.3] text-foreground shadow-sm"
+            className={cn(
+              "pointer-events-none absolute max-w-[170px] rounded border bg-card/95 px-1.5 py-0.5 text-center text-[10px] font-medium leading-[1.3] shadow-sm transition-[border-color,background-color,opacity] duration-150",
+              focus === "connected"
+                ? "border-primary/70 bg-primary/10 text-foreground"
+                : "border-border text-foreground",
+            )}
             style={{
               transform: `translate(-50%, -50%) translate(${labelX}px, ${labelY}px)`,
+              opacity: focus === "dimmed" ? 0.75 : 1,
               // Wrap to at most three lines — the layout reserves exactly this box.
               display: "-webkit-box",
               WebkitLineClamp: 3,

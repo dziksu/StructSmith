@@ -9,7 +9,7 @@ import type { ElementNodeData } from "./graph";
 /** Custom node (spec §33) — icon, name, technology and a small kind/role badge. */
 function ElementNodeComponent({ data, selected }: NodeProps & { data: ElementNodeData }) {
   const { t } = useTranslation();
-  const { element, severity, locked } = data;
+  const { element, severity, locked, showFullTitles, showDescriptions, minimumHeight } = data;
   const Icon = iconFor(element.kind, element.role);
 
   const badge = [t(`kinds.${element.kind}`), element.role ? t(`roles.${element.role}`) : null]
@@ -18,6 +18,7 @@ function ElementNodeComponent({ data, selected }: NodeProps & { data: ElementNod
 
   return (
     <div
+      style={{ minHeight: minimumHeight }}
       className={cn(
         "as-node group relative flex h-full w-full overflow-hidden rounded-md border shadow-sm transition-[border-color,background-color,box-shadow]",
         element.external
@@ -49,7 +50,15 @@ function ElementNodeComponent({ data, selected }: NodeProps & { data: ElementNod
             <Icon className="h-3.5 w-3.5" />
           </span>
           <div className="min-w-0 flex-1">
-            <div className="truncate text-[13px] font-semibold leading-tight">{element.name}</div>
+            <div
+              title={element.name}
+              className={cn(
+                "text-[13px] font-semibold leading-4",
+                showFullTitles ? "whitespace-normal [overflow-wrap:anywhere]" : "truncate",
+              )}
+            >
+              {element.name}
+            </div>
             {element.technology && (
               <div className="mt-0.5 truncate font-mono text-[10.5px] text-muted-foreground">
                 {element.technology}
@@ -66,6 +75,12 @@ function ElementNodeComponent({ data, selected }: NodeProps & { data: ElementNod
           )}
           {locked && <Lock className="h-3 w-3 shrink-0 text-muted-foreground" />}
         </div>
+
+        {showDescriptions && element.description?.trim() && (
+          <p className="mt-2 whitespace-pre-line text-[11px] leading-4 text-muted-foreground [overflow-wrap:anywhere]">
+            {element.description.trim()}
+          </p>
+        )}
 
         <div className="mt-2 flex min-w-0 items-center gap-1.5">
           <span

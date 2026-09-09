@@ -1,5 +1,6 @@
-import type { ArchitectureView, Workspace } from "@structsmith/contracts";
+import type { ArchitectureView, LayoutAlgorithm, Workspace } from "@structsmith/contracts";
 import {
+  Check,
   ChevronDown,
   Languages,
   LayoutGrid,
@@ -44,7 +45,7 @@ interface TopBarProps {
   mcpReadOnly: boolean;
   onSelectWorkspace: (workspaceId: string) => void;
   onSelectView: (viewId: string) => void;
-  onAutoLayout: () => void;
+  onAutoLayout: (algorithm?: LayoutAlgorithm) => void;
   onFitView: () => void;
   onUndo: () => void;
   onRedo: () => void;
@@ -153,11 +154,45 @@ export function TopBar(props: TopBarProps) {
         {t("topbar.add")}
       </Button>
 
-      <Tooltip label={t("topbar.autoLayout")}>
-        <Button variant="ghost" size="iconSm" onClick={props.onAutoLayout}>
-          <LayoutGrid className="h-3.5 w-3.5" />
-        </Button>
-      </Tooltip>
+      <div className="flex items-center">
+        <Tooltip label={t("topbar.autoLayout")}>
+          <Button
+            variant="ghost"
+            size="iconSm"
+            className="rounded-r-none"
+            onClick={() => props.onAutoLayout()}
+          >
+            <LayoutGrid className="h-3.5 w-3.5" />
+          </Button>
+        </Tooltip>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button
+              variant="ghost"
+              size="iconSm"
+              className="-ml-px w-4 rounded-l-none px-0"
+              aria-label={t("topbar.chooseLayout")}
+            >
+              <ChevronDown className="h-3 w-3" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="start">
+            <DropdownMenuLabel>{t("topbar.layoutAlgorithm")}</DropdownMenuLabel>
+            {(["dagre", "force", "radial", "grid"] as const).map((algorithm) => (
+              <DropdownMenuItem key={algorithm} onSelect={() => props.onAutoLayout(algorithm)}>
+                <Check
+                  className={
+                    props.activeView?.settings.autoLayoutAlgorithm === algorithm
+                      ? "h-3.5 w-3.5"
+                      : "h-3.5 w-3.5 opacity-0"
+                  }
+                />
+                {t(`layoutAlgorithms.${algorithm}`)}
+              </DropdownMenuItem>
+            ))}
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </div>
 
       <Tooltip label={`${t("topbar.fitView")} (F)`}>
         <Button variant="ghost" size="iconSm" onClick={props.onFitView}>

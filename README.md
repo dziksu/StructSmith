@@ -449,9 +449,12 @@ bun run mcp:stdio   # MCP over stdio
 
 ## Roadmap
 
-Not in this MVP, but the model is designed for it: Structurizr DSL import/export,
-architecture diff between snapshots, AI change preview before apply, optional vendor icon
-packs, and importers for OpenAPI / Terraform / Kubernetes.
+The next improvements focus on C4 navigation, dependency exploration, and visual
+overlays. Later milestones add message flows, offline presentations, visual change
+review, and saved proposals.
+
+See [the product roadmap](ROADMAP.md) for priorities, scope, completion criteria,
+and follow-up work including documentation, interoperability, and collaboration.
 
 ## Contributing
 

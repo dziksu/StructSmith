@@ -71,6 +71,7 @@ function StudioContent({
   const resetHistory = useHistoryStore((state) => state.reset);
 
   const clearSelection = useEditorStore((state) => state.clearSelection);
+  const selection = useEditorStore((state) => state.selection);
   const select = useEditorStore((state) => state.select);
   const requestFocus = useEditorStore((state) => state.requestFocus);
   const setExplorerTab = useEditorStore((state) => state.setExplorerTab);
@@ -117,15 +118,31 @@ function StudioContent({
 
   const selectView = (nextViewId: string): void => onNavigate(workspaceId, nextViewId);
 
-  const autoLayout = (): void => {
+  const autoLayout = (
+    algorithm: "dagre" | "force" | "radial" | "grid" = view.data?.settings.autoLayoutAlgorithm ??
+      "dagre",
+  ): void => {
     if (!view.data) return;
+    const rootElementId = selection.type === "element" ? selection.id : undefined;
+    const settingsChanged = algorithm !== view.data.settings.autoLayoutAlgorithm;
     applyOperations.mutate({
       label: t("topbar.autoLayout"),
       operations: [
+        ...(settingsChanged
+          ? [
+              {
+                op: "updateView" as const,
+                viewId: view.data.id,
+                data: { settings: { autoLayoutAlgorithm: algorithm } },
+              },
+            ]
+          : []),
         {
           op: "autoLayoutView",
           viewId: view.data.id,
           direction: view.data.settings.autoLayoutDirection,
+          algorithm,
+          rootElementId,
         },
       ],
     });

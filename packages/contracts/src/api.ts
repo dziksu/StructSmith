@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { ChangeSourceSchema, LayoutDirectionSchema } from "./enums";
+import { ChangeSourceSchema, LayoutAlgorithmSchema, LayoutDirectionSchema } from "./enums";
 import {
   IdSchema,
   LayoutEntrySchema,
@@ -49,6 +49,8 @@ export type UpdateLayoutRequest = z.input<typeof UpdateLayoutRequestSchema>;
 
 export const AutoLayoutRequestSchema = z.object({
   direction: LayoutDirectionSchema.default("LR"),
+  algorithm: LayoutAlgorithmSchema.default("dagre"),
+  rootElementId: z.string().optional(),
 });
 
 export const CreateSnapshotRequestSchema = z.object({

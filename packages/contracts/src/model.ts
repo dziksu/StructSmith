@@ -137,8 +137,11 @@ export const ViewSettingsSchema = z.object({
   showBoundaries: z.boolean().default(true),
   snapToGrid: z.boolean().default(false),
   autoLayoutDirection: z.enum(["LR", "TB"]).default("LR"),
+  autoLayoutAlgorithm: z.enum(["dagre", "force", "radial", "grid"]).default("dagre"),
   relationshipRouting: z.enum(["orthogonal", "curved", "straight"]).default("orthogonal"),
   showRelationshipLabels: z.boolean().default(true),
+  showFullTitles: z.boolean().default(false),
+  showDescriptions: z.boolean().default(false),
 });
 export type ViewSettings = z.infer<typeof ViewSettingsSchema>;
 
@@ -148,8 +151,11 @@ const ViewSettingsPatchSchema = z.object({
   showBoundaries: ViewSettingsSchema.shape.showBoundaries.unwrap().optional(),
   snapToGrid: ViewSettingsSchema.shape.snapToGrid.unwrap().optional(),
   autoLayoutDirection: ViewSettingsSchema.shape.autoLayoutDirection.unwrap().optional(),
+  autoLayoutAlgorithm: ViewSettingsSchema.shape.autoLayoutAlgorithm.unwrap().optional(),
   relationshipRouting: ViewSettingsSchema.shape.relationshipRouting.unwrap().optional(),
   showRelationshipLabels: ViewSettingsSchema.shape.showRelationshipLabels.unwrap().optional(),
+  showFullTitles: ViewSettingsSchema.shape.showFullTitles.unwrap().optional(),
+  showDescriptions: ViewSettingsSchema.shape.showDescriptions.unwrap().optional(),
 });
 
 export const ViewElementSchema = z.object({

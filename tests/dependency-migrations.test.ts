@@ -17,8 +17,11 @@ describe("Zod view settings", () => {
       showBoundaries: true,
       snapToGrid: false,
       autoLayoutDirection: "LR",
+      autoLayoutAlgorithm: "dagre",
       relationshipRouting: "orthogonal",
       showRelationshipLabels: true,
+      showFullTitles: false,
+      showDescriptions: false,
     });
   });
 
@@ -33,8 +36,11 @@ describe("Zod view settings", () => {
           showBoundaries: false,
           snapToGrid: false,
           autoLayoutDirection: "TB",
+          autoLayoutAlgorithm: "dagre",
           relationshipRouting: "straight",
           showRelationshipLabels: false,
+          showFullTitles: true,
+          showDescriptions: true,
         },
       }).result;
       services.views.update(
@@ -46,8 +52,11 @@ describe("Zod view settings", () => {
         showBoundaries: false,
         snapToGrid: true,
         autoLayoutDirection: "TB",
+        autoLayoutAlgorithm: "dagre",
         relationshipRouting: "straight",
         showRelationshipLabels: false,
+        showFullTitles: true,
+        showDescriptions: true,
       });
     } finally {
       close();
