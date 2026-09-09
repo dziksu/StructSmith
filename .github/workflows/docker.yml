@@ -58,5 +58,7 @@ jobs:
             APP_VERSION=${{ inputs.version }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+          cache-from: type=gha,scope=release-image
+          # Publishing the image is authoritative; exporting its build cache
+          # is best-effort and must not turn a successful push into a failure.
+          cache-to: type=gha,mode=max,scope=release-image,ignore-error=true,timeout=2m

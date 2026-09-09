@@ -46,6 +46,7 @@ jobs:
 
   docker:
     name: Docker image builds
+    if: ${{ github.event_name != 'pull_request' || !startsWith(github.head_ref, 'automation/changelog-v') }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
@@ -59,8 +60,10 @@ jobs:
           push: false
           load: true
           tags: structsmith:ci
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+          cache-from: type=gha,scope=ci
+          # Cache uploads are an optimization. A full or temporarily
+          # unavailable GitHub cache must not fail an otherwise valid build.
+          cache-to: type=gha,mode=min,scope=ci,ignore-error=true,timeout=2m
 
       - name: Smoke test the image
         run: |
@@ -130,6 +133,28 @@ jobs:
 
             Release: v${{ steps.release.outputs.version }}
             Updates: CHANGELOG.md and the application version in package.json
+
+      - name: Wait for release metadata verification
+        if: steps.changelog-pr.outputs.pull-request-number != ''
+        env:
+          GH_TOKEN: ${{ secrets.RELEASE_PR_TOKEN }}
+          RELEASE_PR_NUMBER: ${{ steps.changelog-pr.outputs.pull-request-number }}
+        run: |
+          for attempt in $(seq 1 120); do
+            check_bucket="$(
+              gh pr checks "$RELEASE_PR_NUMBER" \
+                --json name,bucket \
+                --jq '.[] | select(.name == "Lint, types, tests, build") | .bucket' \
+                2>/dev/null || true
+            )"
+            case "$check_bucket" in
+              pass|skipping) exit 0 ;;
+              fail|cancel) echo "Release metadata verification failed"; exit 1 ;;
+            esac
+            sleep 5
+          done
+          echo "Timed out waiting for release metadata verification"
+          exit 1
 
       - name: Merge release metadata pull request
         if: steps.changelog-pr.outputs.pull-request-number != ''
