@@ -34,6 +34,10 @@ test("parses supported deep-link targets and rejects invalid values", () => {
     type: "relationship",
     targetId: "rel-1",
   });
+  expect(parseReferenceSearchValue("boundary:private-zone")).toEqual({
+    type: "boundary",
+    targetId: "private-zone",
+  });
   expect(parseReferenceSearchValue("unknown:item-1")).toBeNull();
   expect(parseReferenceSearchValue("element:")).toBeNull();
 });

@@ -1,4 +1,5 @@
 import type {
+  ArchitectureBoundary,
   ArchitectureElement,
   ArchitectureRelationship,
   ViewDetail,
@@ -74,6 +75,7 @@ export function toMermaid(
   const visibleIds = new Set(elements.map((element) => element.id));
   const lines: string[] = [`flowchart ${direction}`];
   const rendered = new Set<string>();
+  const renderedBoundaries = new Set<string>();
 
   const childrenOf = (parentId: string | null): ArchitectureElement[] =>
     elements.filter((element) => (element.parentId ?? null) === parentId);
@@ -92,6 +94,40 @@ export function toMermaid(
       lines.push(`${indent}${nodeId(element.id)}${shape[0]}"${elementLabel(element)}"${shape[1]}`);
     }
   };
+
+  const nestedBoundaries = document.views.flatMap((candidate) => candidate.boundaries);
+  const allBoundaries =
+    nestedBoundaries.length > 0 ? nestedBoundaries : (document.boundaries ?? []);
+  const activeBoundaries = view
+    ? allBoundaries.filter(
+        (boundary) => boundary.viewId === view.id && boundary.layer === view.settings.boundaryLayer,
+      )
+    : [];
+  const boundaryIds = new Set(activeBoundaries.map((boundary) => boundary.id));
+  const renderBoundary = (boundary: ArchitectureBoundary, indent: string): void => {
+    if (renderedBoundaries.has(boundary.id)) return;
+    renderedBoundaries.add(boundary.id);
+    lines.push(
+      `${indent}subgraph ${nodeId(`boundary_${boundary.id}`)}["${escapeLabel(boundary.name)}"]`,
+    );
+    lines.push(`${indent}  direction ${direction}`);
+    for (const child of activeBoundaries.filter(
+      (candidate) => candidate.parentBoundaryId === boundary.id,
+    )) {
+      renderBoundary(child, `${indent}  `);
+    }
+    for (const elementId of boundary.elementIds) {
+      const element = elements.find((candidate) => candidate.id === elementId);
+      if (element) renderElement(element, `${indent}  `);
+    }
+    lines.push(`${indent}end`);
+  };
+
+  for (const boundary of activeBoundaries) {
+    if (!boundary.parentBoundaryId || !boundaryIds.has(boundary.parentBoundaryId)) {
+      renderBoundary(boundary, "  ");
+    }
+  }
 
   for (const element of elements) {
     const parentVisible = element.parentId ? visibleIds.has(element.parentId) : false;
@@ -137,6 +173,29 @@ export function toOutline(document: WorkspaceDocument): string {
   lines.push("", "## Elements");
   for (const element of childrenOf(null)) render(element, 0);
 
+  const nestedBoundaries = document.views.flatMap((view) => view.boundaries);
+  const boundaries = nestedBoundaries.length > 0 ? nestedBoundaries : (document.boundaries ?? []);
+  const elementsById = new Map(document.elements.map((element) => [element.id, element]));
+  const renderBoundary = (
+    boundary: ArchitectureBoundary,
+    candidates: readonly ArchitectureBoundary[],
+    depth: number,
+  ): void => {
+    const indent = "  ".repeat(depth);
+    const classification = boundary.classification ? ` · ${boundary.classification}` : "";
+    lines.push(
+      `${indent}- ${boundary.name} (${boundary.kind} · ${boundary.layer}${classification}) [${boundary.id}]`,
+    );
+    for (const elementId of boundary.elementIds) {
+      lines.push(`${indent}  - member: ${elementsById.get(elementId)?.name ?? elementId}`);
+    }
+    for (const child of candidates.filter(
+      (candidate) => candidate.parentBoundaryId === boundary.id,
+    )) {
+      renderBoundary(child, candidates, depth + 1);
+    }
+  };
+
   lines.push("", "## Relationships");
   const byId = new Map(document.elements.map((element) => [element.id, element]));
   for (const relationship of document.relationships) {
@@ -153,6 +212,13 @@ export function toOutline(document: WorkspaceDocument): string {
   lines.push("", "## Views");
   for (const view of document.views) {
     lines.push(`- ${view.name} (${view.kind}, key=${view.key}) — ${view.elements.length} elements`);
+    const viewBoundaries = boundaries.filter((boundary) => boundary.viewId === view.id);
+    const boundaryIds = new Set(viewBoundaries.map((boundary) => boundary.id));
+    for (const boundary of viewBoundaries) {
+      if (!boundary.parentBoundaryId || !boundaryIds.has(boundary.parentBoundaryId)) {
+        renderBoundary(boundary, viewBoundaries, 1);
+      }
+    }
   }
 
   if (document.records.length > 0) {

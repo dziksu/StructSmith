@@ -27,6 +27,9 @@ export class DrizzleStore implements Store {
   get relationships() {
     return this.repos.relationships;
   }
+  get boundaries() {
+    return this.repos.boundaries;
+  }
   get views() {
     return this.repos.views;
   }

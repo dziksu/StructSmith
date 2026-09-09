@@ -58,7 +58,7 @@ export function TopBar(props: TopBarProps) {
   const { theme, setTheme } = useTheme();
   const copyReference = useCopyAgentReference();
   const setCommandOpen = useEditorStore((state) => state.setCommandOpen);
-  const setPaletteOpen = useEditorStore((state) => state.setPaletteOpen);
+  const openElementPalette = useEditorStore((state) => state.openElementPalette);
   const setExplorerTab = useEditorStore((state) => state.setExplorerTab);
 
   const ThemeIcon = theme === "dark" ? Moon : theme === "light" ? Sun : Monitor;
@@ -149,7 +149,7 @@ export function TopBar(props: TopBarProps) {
 
       <Separator orientation="vertical" className="mx-1 h-4" />
 
-      <Button variant="secondary" size="sm" onClick={() => setPaletteOpen(true)}>
+      <Button variant="secondary" size="sm" onClick={() => openElementPalette()}>
         <Plus className="h-3.5 w-3.5" />
         {t("topbar.add")}
       </Button>

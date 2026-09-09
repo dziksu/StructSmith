@@ -100,9 +100,9 @@ function StudioContent({
     handledReference.current = reference;
     if (parsed.type === "workspace") return;
     select({ type: parsed.type, id: parsed.targetId });
-    if (parsed.type === "element") {
+    if (parsed.type === "element" || parsed.type === "boundary") {
       setExplorerTab("model");
-      requestFocus(parsed.targetId);
+      if (parsed.type === "element") requestFocus(parsed.targetId);
     } else if (parsed.type === "view") {
       setExplorerTab("views");
     } else if (parsed.type === "record") {
@@ -111,6 +111,7 @@ function StudioContent({
   }, [reference, requestFocus, select, setExplorerTab]);
 
   const elements = useMemo(() => model.data?.elements ?? [], [model.data]);
+  const boundaries = useMemo(() => view.data?.boundaries ?? [], [view.data]);
   const relationships = useMemo(() => model.data?.relationships ?? [], [model.data]);
   const recordList = useMemo(() => records.data ?? [], [records.data]);
   const viewList = useMemo(() => views.data ?? [], [views.data]);
@@ -220,6 +221,7 @@ function StudioContent({
             <Explorer
               workspaceId={workspaceId}
               elements={elements}
+              boundaries={boundaries}
               views={viewList}
               records={recordList}
               view={view.data ?? null}
@@ -238,6 +240,7 @@ function StudioContent({
                     workspaceId={workspaceId}
                     view={view.data}
                     elements={elements}
+                    boundaries={boundaries}
                     relationships={relationships}
                     records={recordList}
                   />
@@ -259,6 +262,7 @@ function StudioContent({
             <Inspector
               workspaceId={workspaceId}
               elements={elements}
+              boundaries={boundaries}
               relationships={relationships}
               records={recordList}
               view={view.data ?? null}
@@ -270,6 +274,7 @@ function StudioContent({
       <StatusBar
         revision={model.data.revision}
         elementCount={elements.length}
+        boundaryCount={boundaries.length}
         relationshipCount={relationships.length}
         validation={validation.data}
         mcpReady

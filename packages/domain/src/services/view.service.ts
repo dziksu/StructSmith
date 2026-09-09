@@ -21,6 +21,7 @@ function readDetail(repos: Repositories, viewId: string): ViewDetail {
   }
   return {
     ...view,
+    boundaries: repos.boundaries.listByView(viewId),
     elements: repos.views.listElements(viewId),
     relationships: repos.views.listRelationships(viewId),
   };

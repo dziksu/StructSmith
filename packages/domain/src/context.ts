@@ -67,6 +67,7 @@ export function captureDocument(repos: Repositories, workspaceId: string): Works
   const workspace = requireWorkspace(repos, workspaceId);
   const views = repos.views.listByWorkspace(workspaceId).map((view) => ({
     ...view,
+    boundaries: repos.boundaries.listByView(view.id),
     elements: repos.views.listElements(view.id),
     relationships: repos.views.listRelationships(view.id),
   }));

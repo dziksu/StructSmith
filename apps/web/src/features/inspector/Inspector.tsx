@@ -1,10 +1,12 @@
 import type {
+  ArchitectureBoundary,
   ArchitectureElement,
   ArchitectureRecord,
   ArchitectureRelationship,
   ElementKind,
   ElementRole,
   InteractionStyle,
+  UpdateBoundaryInput,
   UpdateElementInput,
   UpdateRelationshipInput,
   ViewDetail,
@@ -37,6 +39,7 @@ import { TagEditor } from "./TagEditor";
 interface InspectorProps {
   workspaceId: string;
   elements: readonly ArchitectureElement[];
+  boundaries: readonly ArchitectureBoundary[];
   relationships: readonly ArchitectureRelationship[];
   records: readonly ArchitectureRecord[];
   view: ViewDetail | null;
@@ -49,7 +52,14 @@ const Field = ({ label, children }: { label: string; children: React.ReactNode }
   </div>
 );
 
-export function Inspector({ workspaceId, elements, relationships, records, view }: InspectorProps) {
+export function Inspector({
+  workspaceId,
+  elements,
+  boundaries,
+  relationships,
+  records,
+  view,
+}: InspectorProps) {
   const { t } = useTranslation();
   const selection = useEditorStore((state) => state.selection);
   const applyOperations = useApplyOperations(workspaceId);
@@ -60,6 +70,8 @@ export function Inspector({ workspaceId, elements, relationships, records, view 
     selection.type === "relationship"
       ? relationships.find((item) => item.id === selection.id)
       : undefined;
+  const boundary =
+    selection.type === "boundary" ? boundaries.find((item) => item.id === selection.id) : undefined;
 
   return (
     <div className="flex h-full min-h-0 flex-col bg-card">
@@ -76,6 +88,8 @@ export function Inspector({ workspaceId, elements, relationships, records, view 
               key={element.id}
               element={element}
               elements={elements}
+              boundaries={boundaries}
+              boundaryLayer={view?.settings.boundaryLayer ?? "deployment"}
               records={records}
               workspaceId={workspaceId}
               viewId={view?.id}
@@ -85,6 +99,51 @@ export function Inspector({ workspaceId, elements, relationships, records, view 
                   operations: [{ op: "updateElement", elementId: element.id, data }],
                 })
               }
+              onBoundaryChange={(nextBoundaryId) => {
+                const layer = view?.settings.boundaryLayer ?? "deployment";
+                const current = boundaries.find(
+                  (candidate) =>
+                    candidate.layer === layer && candidate.elementIds.includes(element.id),
+                );
+                if (!nextBoundaryId && !current) return;
+                applyOperations.mutate({
+                  label: t("boundaries.membershipChanged"),
+                  operations: nextBoundaryId
+                    ? [
+                        ...(view && !view.elements.some((entry) => entry.elementId === element.id)
+                          ? [
+                              {
+                                op: "setViewElements" as const,
+                                viewId: view.id,
+                                elementIds: [element.id],
+                                mode: "add" as const,
+                              },
+                              {
+                                op: "setLayout" as const,
+                                viewId: view.id,
+                                entries: [{ elementId: element.id, hidden: false }],
+                              },
+                            ]
+                          : []),
+                        {
+                          op: "setBoundaryMembers",
+                          boundaryId: nextBoundaryId,
+                          elementIds: [element.id],
+                          mode: "add",
+                        },
+                      ]
+                    : current
+                      ? [
+                          {
+                            op: "setBoundaryMembers",
+                            boundaryId: current.id,
+                            elementIds: [element.id],
+                            mode: "remove",
+                          },
+                        ]
+                      : [],
+                });
+              }}
             />
           )}
 
@@ -92,7 +151,9 @@ export function Inspector({ workspaceId, elements, relationships, records, view 
             <RelationshipInspector
               key={relationship.id}
               relationship={relationship}
-              elements={elements}
+              elements={elements.filter((element) =>
+                view?.elements.some((entry) => entry.elementId === element.id),
+              )}
               workspaceId={workspaceId}
               viewId={view?.id}
               onPatch={(data, label) =>
@@ -104,7 +165,37 @@ export function Inspector({ workspaceId, elements, relationships, records, view 
             />
           )}
 
-          {!element && !relationship && view && (
+          {boundary && (
+            <BoundaryInspector
+              key={boundary.id}
+              boundary={boundary}
+              boundaries={boundaries}
+              elements={elements}
+              workspaceId={workspaceId}
+              viewId={view?.id}
+              onPatch={(data) =>
+                applyOperations.mutate({
+                  label: t("boundaries.updated"),
+                  operations: [{ op: "updateBoundary", boundaryId: boundary.id, data }],
+                })
+              }
+              onMemberChange={(elementId, member) =>
+                applyOperations.mutate({
+                  label: t("boundaries.membershipChanged"),
+                  operations: [
+                    {
+                      op: "setBoundaryMembers",
+                      boundaryId: boundary.id,
+                      elementIds: [elementId],
+                      mode: member ? "add" : "remove",
+                    },
+                  ],
+                })
+              }
+            />
+          )}
+
+          {!element && !relationship && !boundary && view && (
             <ViewInspector
               key={view.id}
               view={view}
@@ -136,11 +227,235 @@ export function Inspector({ workspaceId, elements, relationships, records, view 
             />
           )}
 
-          {!element && !relationship && !view && (
+          {!element && !relationship && !boundary && !view && (
             <p className="text-xs text-muted-foreground">{t("inspector.nothingSelected")}</p>
           )}
         </div>
       </ScrollArea>
+    </div>
+  );
+}
+
+function BoundaryInspector({
+  boundary,
+  boundaries,
+  elements,
+  workspaceId,
+  viewId,
+  onPatch,
+  onMemberChange,
+}: {
+  boundary: ArchitectureBoundary;
+  boundaries: readonly ArchitectureBoundary[];
+  elements: readonly ArchitectureElement[];
+  workspaceId: string;
+  viewId?: string;
+  onPatch: (data: UpdateBoundaryInput) => void;
+  onMemberChange: (elementId: string, member: boolean) => void;
+}) {
+  const { t } = useTranslation();
+  const [name, setName] = useState(boundary.name);
+  const [description, setDescription] = useState(boundary.description ?? "");
+  const [memberFilter, setMemberFilter] = useState("");
+  const memberIds = new Set(boundary.elementIds);
+  const visibleElements = elements
+    .filter((element) => element.name.toLowerCase().includes(memberFilter.trim().toLowerCase()))
+    .sort((left, right) => {
+      const membershipDifference = Number(memberIds.has(right.id)) - Number(memberIds.has(left.id));
+      return membershipDifference || left.name.localeCompare(right.name);
+    });
+  const commitName = () => {
+    const value = name.trim();
+    if (value && value !== boundary.name) onPatch({ name: value });
+  };
+  const commitDescription = () => {
+    const value = description.trim() || null;
+    if (value !== boundary.description) onPatch({ description: value });
+  };
+
+  return (
+    <div className="space-y-4">
+      <div>
+        <div className="flex items-center gap-2">
+          <Badge variant="outline">{t("boundaries.title")}</Badge>
+          <CopyReferenceButton
+            className="ml-auto"
+            reference={{
+              type: "boundary",
+              workspaceId,
+              targetId: boundary.id,
+              label: boundary.name,
+              viewId,
+            }}
+          />
+        </div>
+        <p className="mt-2 text-[11px] text-muted-foreground">
+          {boundary.elementIds.length} {t("boundaries.members")}
+        </p>
+      </div>
+      <Field label={t("common.name")}>
+        <Input
+          value={name}
+          onChange={(event) => setName(event.target.value)}
+          onBlur={commitName}
+          onKeyDown={(event) => event.key === "Enter" && commitName()}
+        />
+      </Field>
+      <Field label={t("common.description")}>
+        <Textarea
+          value={description}
+          rows={3}
+          onChange={(event) => setDescription(event.target.value)}
+          onBlur={commitDescription}
+        />
+      </Field>
+      <Field label={t("boundaries.kindLabel")}>
+        <Select
+          value={boundary.kind}
+          onValueChange={(kind) => onPatch({ kind: kind as ArchitectureBoundary["kind"] })}
+        >
+          <SelectTrigger>
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            {(
+              [
+                "environment",
+                "region",
+                "availabilityZone",
+                "networkZone",
+                "trustZone",
+                "complianceScope",
+                "custom",
+              ] as const
+            ).map((kind) => (
+              <SelectItem key={kind} value={kind}>
+                {t(`boundaries.kind.${kind}`)}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </Field>
+      <Field label={t("boundaries.classificationLabel")}>
+        <Select
+          value={boundary.classification ?? "none"}
+          onValueChange={(classification) =>
+            onPatch({
+              classification:
+                classification === "none"
+                  ? null
+                  : (classification as ArchitectureBoundary["classification"]),
+            })
+          }
+        >
+          <SelectTrigger>
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="none">{t("common.none")}</SelectItem>
+            {(["public", "restricted", "private"] as const).map((classification) => (
+              <SelectItem key={classification} value={classification}>
+                {t(`boundaries.classification.${classification}`)}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </Field>
+      <Field label={t("boundaries.layerLabel")}>
+        <Select
+          value={boundary.layer}
+          onValueChange={(layer) =>
+            onPatch({
+              layer: layer as ArchitectureBoundary["layer"],
+              parentBoundaryId:
+                boundary.parentBoundaryId &&
+                boundaries.find((candidate) => candidate.id === boundary.parentBoundaryId)
+                  ?.layer === layer
+                  ? boundary.parentBoundaryId
+                  : null,
+            })
+          }
+        >
+          <SelectTrigger>
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            {(["deployment", "security", "compliance", "ownership", "custom"] as const).map(
+              (layer) => (
+                <SelectItem key={layer} value={layer}>
+                  {t(`boundaries.layer.${layer}`)}
+                </SelectItem>
+              ),
+            )}
+          </SelectContent>
+        </Select>
+      </Field>
+      <Field label={t("boundaries.parent")}>
+        <Select
+          value={boundary.parentBoundaryId ?? "none"}
+          onValueChange={(parentBoundaryId) =>
+            onPatch({ parentBoundaryId: parentBoundaryId === "none" ? null : parentBoundaryId })
+          }
+        >
+          <SelectTrigger>
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="none">{t("common.none")}</SelectItem>
+            {boundaries
+              .filter(
+                (candidate) => candidate.id !== boundary.id && candidate.layer === boundary.layer,
+              )
+              .map((candidate) => (
+                <SelectItem key={candidate.id} value={candidate.id}>
+                  {candidate.name}
+                </SelectItem>
+              ))}
+          </SelectContent>
+        </Select>
+      </Field>
+      <Field label={t("boundaries.memberElements")}>
+        <p className="text-[11px] leading-relaxed text-muted-foreground">
+          {t("boundaries.membershipHint")}
+        </p>
+        <Input
+          value={memberFilter}
+          onChange={(event) => setMemberFilter(event.target.value)}
+          placeholder={t("boundaries.filterElements")}
+          className="h-7"
+        />
+        <div className="max-h-72 space-y-1 overflow-y-auto rounded-md border border-border bg-background p-1">
+          {visibleElements.map((element) => {
+            const member = memberIds.has(element.id);
+            const assignedElsewhere = boundaries.find(
+              (candidate) =>
+                candidate.id !== boundary.id &&
+                candidate.layer === boundary.layer &&
+                candidate.elementIds.includes(element.id),
+            );
+            return (
+              <div
+                key={element.id}
+                className="flex items-center gap-2 rounded px-2 py-1.5 hover:bg-accent"
+              >
+                <Switch
+                  checked={member}
+                  onCheckedChange={(checked) => onMemberChange(element.id, checked)}
+                  aria-label={`${member ? t("boundaries.removeMember") : t("boundaries.addMember")} ${element.name}`}
+                />
+                <span className="min-w-0 flex-1">
+                  <span className="block truncate text-xs">{element.name}</span>
+                  {assignedElsewhere && (
+                    <span className="block truncate text-[10px] text-muted-foreground">
+                      {assignedElsewhere.name}
+                    </span>
+                  )}
+                </span>
+              </div>
+            );
+          })}
+        </div>
+      </Field>
     </div>
   );
 }
@@ -150,17 +465,23 @@ export function Inspector({ workspaceId, elements, relationships, records, view 
 function ElementInspector({
   element,
   elements,
+  boundaries,
+  boundaryLayer,
   records,
   workspaceId,
   viewId,
   onPatch,
+  onBoundaryChange,
 }: {
   element: ArchitectureElement;
   elements: readonly ArchitectureElement[];
+  boundaries: readonly ArchitectureBoundary[];
+  boundaryLayer: ArchitectureBoundary["layer"];
   records: readonly ArchitectureRecord[];
   workspaceId: string;
   viewId?: string;
   onPatch: (data: UpdateElementInput, label: string) => void;
+  onBoundaryChange: (boundaryId: string | null) => void;
 }) {
   const { t } = useTranslation();
   const [name, setName] = useState(element.name);
@@ -184,6 +505,10 @@ function ElementInspector({
     [records, element.id],
   );
   const parents = elements.filter((candidate) => candidate.id !== element.id);
+  const layerBoundaries = boundaries.filter((boundary) => boundary.layer === boundaryLayer);
+  const currentBoundary = layerBoundaries.find((boundary) =>
+    boundary.elementIds.includes(element.id),
+  );
 
   return (
     <div className="space-y-4">
@@ -295,6 +620,27 @@ function ElementInspector({
           </SelectContent>
         </Select>
       </Field>
+
+      {layerBoundaries.length > 0 && (
+        <Field label={t("boundaries.membership")}>
+          <Select
+            value={currentBoundary?.id ?? "none"}
+            onValueChange={(value) => onBoundaryChange(value === "none" ? null : value)}
+          >
+            <SelectTrigger>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="none">{t("common.none")}</SelectItem>
+              {layerBoundaries.map((boundary) => (
+                <SelectItem key={boundary.id} value={boundary.id}>
+                  {boundary.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </Field>
+      )}
 
       <div className="space-y-1.5">
         <Label>{t("inspector.ownership")}</Label>
@@ -609,6 +955,28 @@ function ViewInspector({
                   {t(`layoutAlgorithms.${algorithm}`)}
                 </SelectItem>
               ))}
+            </SelectContent>
+          </Select>
+        </Field>
+
+        <Field label={t("boundaries.layerLabel")}>
+          <Select
+            value={view.settings.boundaryLayer}
+            onValueChange={(value) =>
+              onPatch({ boundaryLayer: value as ViewDetail["settings"]["boundaryLayer"] })
+            }
+          >
+            <SelectTrigger>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {(["deployment", "security", "compliance", "ownership", "custom"] as const).map(
+                (layer) => (
+                  <SelectItem key={layer} value={layer}>
+                    {t(`boundaries.layer.${layer}`)}
+                  </SelectItem>
+                ),
+              )}
             </SelectContent>
           </Select>
         </Field>

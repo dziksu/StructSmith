@@ -186,9 +186,8 @@ export function App({ baseUrl = "/" }: AppProps) {
             </h2>
           </div>
           <p>
-            Every element, relationship, boundary and view remains structured. Change the model in
-            the editor, through REST, or with an AI assistant — the architecture stays consistent
-            everywhere.
+            Elements and relationships form the reusable model. Each view keeps its own structure,
+            boundaries and layout. Change them in the editor, through REST, or with an AI assistant.
           </p>
         </div>
 
@@ -243,8 +242,8 @@ export function App({ baseUrl = "/" }: AppProps) {
             <div>
               <h3>Model systems, not slides</h3>
               <p>
-                C4-inspired elements, typed relationships, boundaries, views and presets live in one
-                validated workspace.
+                C4-inspired elements and typed relationships live in one validated workspace. Views
+                arrange them into purpose-specific diagrams and boundaries.
               </p>
             </div>
             <div className="mini-stack" aria-hidden="true">

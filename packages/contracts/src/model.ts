@@ -1,5 +1,8 @@
 import { z } from "zod";
 import {
+  BoundaryClassificationSchema,
+  BoundaryKindSchema,
+  BoundaryLayerSchema,
   ChangeSourceSchema,
   ElementKindSchema,
   ElementRoleSchema,
@@ -7,6 +10,7 @@ import {
   IssueLevelSchema,
   RecordKindSchema,
   RecordStatusSchema,
+  RelationshipRoutingSchema,
   SeveritySchema,
   ViewKindSchema,
   WorkspaceModeSchema,
@@ -88,6 +92,57 @@ export const UpdateElementSchema = CreateElementSchema.omit({ id: true }).partia
 export type UpdateElementInput = z.infer<typeof UpdateElementSchema>;
 
 /* ------------------------------------------------------------------ */
+/* Boundaries                                                          */
+/* ------------------------------------------------------------------ */
+
+export const ArchitectureBoundarySchema = z.object({
+  id: IdSchema,
+  workspaceId: IdSchema,
+  viewId: IdSchema,
+  parentBoundaryId: IdSchema.nullable(),
+  kind: BoundaryKindSchema,
+  layer: BoundaryLayerSchema,
+  classification: BoundaryClassificationSchema.nullable(),
+  name,
+  description: z.string().nullable(),
+  tags: TagsSchema,
+  properties: PropertiesSchema,
+  elementIds: z.array(IdSchema),
+  createdAt: z.string(),
+  updatedAt: z.string(),
+});
+export type ArchitectureBoundary = z.infer<typeof ArchitectureBoundarySchema>;
+
+export const CreateBoundarySchema = z.object({
+  id: IdSchema.optional(),
+  viewId: IdSchema.describe("View that owns this boundary."),
+  parentBoundaryId: IdSchema.nullable()
+    .optional()
+    .describe("Parent boundary in the same view and layer, or null for a root boundary."),
+  kind: BoundaryKindSchema.describe("Semantic purpose of the boundary."),
+  layer: BoundaryLayerSchema.default("deployment").describe(
+    "Independent grouping layer. Only the view's active boundaryLayer is rendered.",
+  ),
+  classification: BoundaryClassificationSchema.nullable()
+    .optional()
+    .describe("Optional public, restricted, or private visual classification."),
+  name: name.describe("Human-readable boundary name."),
+  description: optionalText,
+  tags: TagsSchema.optional(),
+  properties: PropertiesSchema.optional(),
+  elementIds: z
+    .array(IdSchema)
+    .optional()
+    .describe(
+      "Model elements already present in the owning view. Assigning an element moves it from another boundary in the same view and layer.",
+    ),
+});
+export type CreateBoundaryInput = z.input<typeof CreateBoundarySchema>;
+
+export const UpdateBoundarySchema = CreateBoundarySchema.omit({ id: true, viewId: true }).partial();
+export type UpdateBoundaryInput = z.infer<typeof UpdateBoundarySchema>;
+
+/* ------------------------------------------------------------------ */
 /* Relationship                                                        */
 /* ------------------------------------------------------------------ */
 
@@ -134,14 +189,40 @@ export type UpdateRelationshipInput = z.infer<typeof UpdateRelationshipSchema>;
 /* ------------------------------------------------------------------ */
 
 export const ViewSettingsSchema = z.object({
-  showBoundaries: z.boolean().default(true),
-  snapToGrid: z.boolean().default(false),
-  autoLayoutDirection: z.enum(["LR", "TB"]).default("LR"),
-  autoLayoutAlgorithm: z.enum(["dagre", "force", "radial", "grid"]).default("dagre"),
-  relationshipRouting: z.enum(["orthogonal", "curved", "straight"]).default("orthogonal"),
-  showRelationshipLabels: z.boolean().default(true),
-  showFullTitles: z.boolean().default(false),
-  showDescriptions: z.boolean().default(false),
+  showBoundaries: z
+    .boolean()
+    .describe("Render boundaries from the active boundaryLayer without changing membership.")
+    .default(true),
+  snapToGrid: z
+    .boolean()
+    .describe("Snap manual element movement to the canvas grid.")
+    .default(false),
+  autoLayoutDirection: z
+    .enum(["LR", "TB"])
+    .describe("Saved direction used by automatic layout: left-to-right or top-to-bottom.")
+    .default("LR"),
+  autoLayoutAlgorithm: z
+    .enum(["dagre", "force", "radial", "grid"])
+    .describe("Saved automatic layout choice for the view.")
+    .default("dagre"),
+  boundaryLayer: BoundaryLayerSchema.describe(
+    "Boundary layer currently rendered and used for boundary-aware automatic layout.",
+  ).default("deployment"),
+  relationshipRouting: RelationshipRoutingSchema.describe(
+    "How relationship paths are drawn on this view.",
+  ).default("orthogonal"),
+  showRelationshipLabels: z
+    .boolean()
+    .describe("Show relationship description and technology labels.")
+    .default(true),
+  showFullTitles: z
+    .boolean()
+    .describe("Wrap full element titles instead of truncating them.")
+    .default(false),
+  showDescriptions: z
+    .boolean()
+    .describe("Show element descriptions inside cards and reserve layout space for them.")
+    .default(false),
 });
 export type ViewSettings = z.infer<typeof ViewSettingsSchema>;
 
@@ -152,6 +233,7 @@ const ViewSettingsPatchSchema = z.object({
   snapToGrid: ViewSettingsSchema.shape.snapToGrid.unwrap().optional(),
   autoLayoutDirection: ViewSettingsSchema.shape.autoLayoutDirection.unwrap().optional(),
   autoLayoutAlgorithm: ViewSettingsSchema.shape.autoLayoutAlgorithm.unwrap().optional(),
+  boundaryLayer: ViewSettingsSchema.shape.boundaryLayer.unwrap().optional(),
   relationshipRouting: ViewSettingsSchema.shape.relationshipRouting.unwrap().optional(),
   showRelationshipLabels: ViewSettingsSchema.shape.showRelationshipLabels.unwrap().optional(),
   showFullTitles: ViewSettingsSchema.shape.showFullTitles.unwrap().optional(),
@@ -171,7 +253,10 @@ export const ViewElementSchema = z.object({
 });
 export type ViewElement = z.infer<typeof ViewElementSchema>;
 
-export const ControlPointSchema = z.object({ x: z.number(), y: z.number() });
+export const ControlPointSchema = z.object({
+  x: z.number().describe("Canvas x coordinate."),
+  y: z.number().describe("Canvas y coordinate."),
+});
 export type ControlPoint = z.infer<typeof ControlPointSchema>;
 
 export const ViewRelationshipSchema = z.object({
@@ -199,6 +284,7 @@ export type ArchitectureView = z.infer<typeof ArchitectureViewSchema>;
 
 /** A view together with its layout rows. */
 export const ViewDetailSchema = ArchitectureViewSchema.extend({
+  boundaries: z.array(ArchitectureBoundarySchema).default([]),
   elements: z.array(ViewElementSchema),
   relationships: z.array(ViewRelationshipSchema),
 });
@@ -211,9 +297,14 @@ export const CreateViewSchema = z.object({
   description: optionalText,
   kind: ViewKindSchema,
   scopeElementId: IdSchema.nullable().optional(),
-  settings: ViewSettingsPatchSchema.optional(),
+  settings: ViewSettingsPatchSchema.optional().describe(
+    "Per-view presentation and layout defaults.",
+  ),
   /** Optionally seed the view with these elements. */
-  elementIds: z.array(IdSchema).optional(),
+  elementIds: z
+    .array(IdSchema)
+    .optional()
+    .describe("Model elements to place in the new view without copying them."),
 });
 export type CreateViewInput = z.infer<typeof CreateViewSchema>;
 
@@ -223,27 +314,39 @@ export const UpdateViewSchema = z.object({
   description: optionalText,
   kind: ViewKindSchema.optional(),
   scopeElementId: IdSchema.nullable().optional(),
-  settings: ViewSettingsPatchSchema.optional(),
+  settings: ViewSettingsPatchSchema.optional().describe(
+    "Patch only the supplied presentation and layout settings; omitted settings stay unchanged.",
+  ),
 });
 export type UpdateViewInput = z.infer<typeof UpdateViewSchema>;
 
 export const LayoutEntrySchema = z.object({
-  elementId: IdSchema,
-  x: z.number().optional(),
-  y: z.number().optional(),
-  width: z.number().nullable().optional(),
-  height: z.number().nullable().optional(),
-  hidden: z.boolean().optional(),
-  locked: z.boolean().optional(),
-  zIndex: z.number().int().optional(),
+  elementId: IdSchema.describe("Element already present in the view."),
+  x: z.number().optional().describe("Saved canvas x coordinate."),
+  y: z.number().optional().describe("Saved canvas y coordinate."),
+  width: z.number().nullable().optional().describe("Optional saved card width."),
+  height: z.number().nullable().optional().describe("Optional saved card height."),
+  hidden: z
+    .boolean()
+    .optional()
+    .describe("Hide this view placement without deleting the model element."),
+  locked: z.boolean().optional().describe("Keep this element fixed during automatic layout."),
+  zIndex: z.number().int().optional().describe("Saved stacking order within the view."),
 });
 export type LayoutEntry = z.infer<typeof LayoutEntrySchema>;
 
 export const ViewRelationshipPatchSchema = z.object({
-  relationshipId: IdSchema,
-  hidden: z.boolean().optional(),
-  labelPosition: z.number().nullable().optional(),
-  controlPoints: z.array(ControlPointSchema).optional(),
+  relationshipId: IdSchema.describe("Semantic relationship customized on this view."),
+  hidden: z.boolean().optional().describe("Hide this relationship only on this view."),
+  labelPosition: z
+    .number()
+    .nullable()
+    .optional()
+    .describe("Optional normalized label position along the relationship path."),
+  controlPoints: z
+    .array(ControlPointSchema)
+    .optional()
+    .describe("Saved manual bend points for this relationship on the view."),
 });
 export type ViewRelationshipPatch = z.infer<typeof ViewRelationshipPatchSchema>;
 
@@ -326,6 +429,7 @@ export const WorkspaceDocumentSchema = z.object({
   formatVersion: z.literal(1),
   workspace: WorkspaceSchema,
   elements: z.array(ArchitectureElementSchema),
+  boundaries: z.array(ArchitectureBoundarySchema).optional(),
   relationships: z.array(ArchitectureRelationshipSchema),
   views: z.array(ViewDetailSchema),
   records: z.array(ArchitectureRecordSchema),
@@ -341,6 +445,7 @@ export const ValidationIssueSchema = z.object({
   code: z.string(),
   message: z.string(),
   elementId: IdSchema.optional(),
+  boundaryId: IdSchema.optional(),
   relationshipId: IdSchema.optional(),
   viewId: IdSchema.optional(),
 });

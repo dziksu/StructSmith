@@ -4,38 +4,52 @@ import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/utils";
 import type { BoundaryNodeData } from "./graph";
 
-/**
- * A boundary is not a domain object — it is the visual footprint of a parent
- * element whose children are on the view (spec §34).
- */
+/** A semantic boundary rendered from the live footprint of its visible members. */
 function BoundaryNodeComponent({ data, selected }: NodeProps & { data: BoundaryNodeData }) {
   const { t } = useTranslation();
+  const accent =
+    data.classification === "public"
+      ? "var(--ownership-external)"
+      : data.classification === "private"
+        ? "var(--ownership-internal)"
+        : "var(--boundary)";
 
   return (
     <div
       className={cn(
-        "as-node h-full w-full rounded-lg border border-dashed",
-        data.element.external
-          ? "border-node-external-border/70 bg-ownership-external/[0.05]"
-          : "border-node-internal-border/70 bg-ownership-internal/[0.05]",
+        "as-node h-full w-full overflow-hidden rounded-lg shadow-lg",
+        selected && "ring-2 ring-primary ring-offset-2 ring-offset-canvas",
       )}
-      style={selected ? { borderColor: "var(--primary)" } : undefined}
+      style={{
+        outline: selected ? "3px solid var(--primary)" : undefined,
+        outlineOffset: selected ? 2 : undefined,
+      }}
     >
-      <div className="flex items-center gap-2 px-3 py-1.5 text-[10.5px] font-semibold uppercase tracking-wider">
+      <div
+        className="flex min-h-9 items-center gap-2 border-b px-3 py-2 text-xs font-bold uppercase tracking-wider backdrop-blur-sm"
+        style={{
+          borderColor: `color-mix(in oklch, ${accent} 45%, var(--canvas))`,
+          backgroundColor: `color-mix(in oklch, ${accent} 34%, var(--canvas))`,
+        }}
+      >
         <span
           className={cn(
             "h-2 w-2 rounded-sm",
-            data.element.external ? "bg-ownership-external" : "bg-ownership-internal",
+            data.classification === "public" ? "bg-ownership-external" : "bg-ownership-internal",
           )}
         />
-        <span className="text-foreground">{data.element.name}</span>
+        <span className="text-foreground drop-shadow-sm">{data.name}</span>
         <span
           className={cn(
             "font-medium",
-            data.element.external ? "text-ownership-external" : "text-ownership-internal",
+            data.classification === "public"
+              ? "text-ownership-external"
+              : "text-ownership-internal",
           )}
         >
-          {data.element.external ? t("inspector.external") : t("inspector.internal")}
+          {data.classification
+            ? t(`boundaries.classification.${data.classification}`)
+            : t(`boundaries.layer.${data.layer}`)}
         </span>
       </div>
     </div>

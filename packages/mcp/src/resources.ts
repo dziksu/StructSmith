@@ -72,7 +72,8 @@ export function registerResources(server: McpServer, services: Services): void {
     }),
     {
       title: "Workspace inspection packet",
-      description: "Complete model, views, records and validation in one AI-oriented resource.",
+      description:
+        "Complete model, view membership, view-owned boundaries, settings, records and validation without layout coordinates.",
       mimeType: "application/json",
     },
     (uri, variables) =>
@@ -93,7 +94,7 @@ export function registerResources(server: McpServer, services: Services): void {
     }),
     {
       title: "View",
-      description: "A single view including its layout.",
+      description: "A single view including settings, boundaries, memberships and saved layout.",
       mimeType: "application/json",
     },
     (uri, variables) => jsonResource(uri.href, services.views.get(first(variables.viewId))),

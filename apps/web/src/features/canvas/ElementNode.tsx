@@ -20,7 +20,7 @@ function ElementNodeComponent({ data, selected }: NodeProps & { data: ElementNod
     <div
       style={{ minHeight: minimumHeight }}
       className={cn(
-        "as-node group relative flex h-full w-full overflow-hidden rounded-md border shadow-sm transition-[border-color,background-color,box-shadow]",
+        "as-node group relative flex h-full w-full overflow-visible rounded-md border shadow-sm transition-[border-color,background-color,box-shadow]",
         element.external
           ? "border-dashed border-node-external-border bg-node-external shadow-ownership-external/5"
           : "border-node-internal-border bg-node-internal shadow-ownership-internal/5",
@@ -30,7 +30,7 @@ function ElementNodeComponent({ data, selected }: NodeProps & { data: ElementNod
       <span
         aria-hidden="true"
         className={cn(
-          "w-1 shrink-0",
+          "w-1 shrink-0 rounded-l-[5px]",
           element.external ? "bg-ownership-external" : "bg-ownership-internal",
         )}
       />

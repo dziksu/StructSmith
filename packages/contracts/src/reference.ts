@@ -4,6 +4,7 @@ export const referenceTargetKinds = [
   "workspace",
   "view",
   "element",
+  "boundary",
   "relationship",
   "record",
 ] as const;

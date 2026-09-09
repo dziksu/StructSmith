@@ -1,5 +1,5 @@
 import type { ReferenceTargetKind } from "@structsmith/contracts";
-import type { Services } from "@structsmith/domain";
+import { resolveRelationshipsForView, type Services } from "@structsmith/domain";
 
 export function resolveReference(
   services: Services,
@@ -37,7 +37,42 @@ export function resolveReference(
         ),
         views: document.views
           .filter((view) => view.elements.some((entry) => entry.elementId === target.id))
-          .map(({ id, name, kind }) => ({ id, name, kind })),
+          .map((view) => ({
+            id: view.id,
+            name: view.name,
+            kind: view.kind,
+            hidden: view.elements.find((entry) => entry.elementId === target.id)?.hidden ?? false,
+            boundaryMemberships: view.boundaries
+              .filter((boundary) => boundary.elementIds.includes(target.id))
+              .map(({ id, name, layer, classification }) => ({
+                id,
+                name,
+                layer,
+                classification,
+              })),
+          })),
+      },
+    };
+  }
+
+  if (type === "boundary") {
+    const nestedBoundaries = document.views.flatMap((view) => view.boundaries);
+    const boundaries = nestedBoundaries.length > 0 ? nestedBoundaries : (document.boundaries ?? []);
+    const target = boundaries.find((item) => item.id === targetId);
+    if (!target) throw new Error(`Boundary not found: ${targetId}`);
+    return {
+      reference,
+      target,
+      context: {
+        view: document.views.find((item) => item.id === target.viewId) ?? null,
+        parent:
+          boundaries.find(
+            (item) => item.viewId === target.viewId && item.id === target.parentBoundaryId,
+          ) ?? null,
+        children: boundaries.filter(
+          (item) => item.viewId === target.viewId && item.parentBoundaryId === target.id,
+        ),
+        members: document.elements.filter((item) => target.elementIds.includes(item.id)),
       },
     };
   }
@@ -51,9 +86,31 @@ export function resolveReference(
       context: {
         source: document.elements.find((item) => item.id === target.sourceElementId) ?? null,
         target: document.elements.find((item) => item.id === target.targetElementId) ?? null,
-        views: document.views
-          .filter((view) => view.relationships.some((entry) => entry.relationshipId === target.id))
-          .map(({ id, name, kind }) => ({ id, name, kind })),
+        views: document.views.flatMap((view) => {
+          const explicit = view.relationships.find((entry) => entry.relationshipId === target.id);
+          if (explicit?.hidden) return [];
+          const visibleIds = new Set(
+            view.elements.filter((entry) => !entry.hidden).map((entry) => entry.elementId),
+          );
+          const representation = resolveRelationshipsForView(
+            document.elements,
+            [target],
+            visibleIds,
+          )[0];
+          if (!representation) return [];
+          return [
+            {
+              id: view.id,
+              name: view.name,
+              kind: view.kind,
+              representedAs: {
+                sourceElementId: representation.sourceElementId,
+                targetElementId: representation.targetElementId,
+                implied: representation.implied,
+              },
+            },
+          ];
+        }),
       },
     };
   }

@@ -1,8 +1,10 @@
 import type {
+  ArchitectureBoundary,
   ArchitectureElement,
   ArchitectureRecord,
   ArchitectureRelationship,
   ArchitectureView,
+  CreateBoundaryInput,
   CreateElementInput,
   CreateRecordInput,
   CreateRelationshipInput,
@@ -10,6 +12,7 @@ import type {
   LayoutAlgorithm,
   LayoutDirection,
   LayoutEntry,
+  UpdateBoundaryInput,
   UpdateElementInput,
   UpdateRecordInput,
   UpdateRelationshipInput,
@@ -38,6 +41,7 @@ export const defaultViewSettings: ViewSettings = {
   snapToGrid: false,
   autoLayoutDirection: "LR",
   autoLayoutAlgorithm: "dagre",
+  boundaryLayer: "deployment",
   relationshipRouting: "orthogonal",
   showRelationshipLabels: true,
   showFullTitles: false,
@@ -54,6 +58,18 @@ function requireElement(repos: Repositories, id: string, workspaceId: string): A
     throw new DomainError(ERROR_CODES.ELEMENT_NOT_FOUND, `Element "${id}" does not exist.`, 404);
   }
   return element;
+}
+
+function requireBoundary(
+  repos: Repositories,
+  id: string,
+  workspaceId: string,
+): ArchitectureBoundary {
+  const boundary = repos.boundaries.findById(id);
+  if (!boundary || boundary.workspaceId !== workspaceId) {
+    throw new DomainError(ERROR_CODES.BOUNDARY_NOT_FOUND, `Boundary "${id}" does not exist.`, 404);
+  }
+  return boundary;
 }
 
 function requireView(repos: Repositories, id: string, workspaceId: string): ArchitectureView {
@@ -188,9 +204,183 @@ export function deleteElement(
     }
     repos.views.removeElementEverywhere(target.id);
     repos.records.removeElementLinks(target.id);
+    repos.boundaries.removeElementMemberships(target.id);
     repos.elements.delete(target.id);
   }
 
+  return targets.map((target) => target.id);
+}
+
+/* ------------------------------------------------------------------ */
+/* Boundaries                                                          */
+/* ------------------------------------------------------------------ */
+
+function validateBoundaryParent(
+  repos: Repositories,
+  workspace: Workspace,
+  boundaryId: string,
+  viewId: string,
+  parentBoundaryId: string | null,
+  layer: ArchitectureBoundary["layer"],
+): void {
+  if (!parentBoundaryId) return;
+  if (parentBoundaryId === boundaryId) throw badRequest("A boundary cannot contain itself.");
+  const parent = requireBoundary(repos, parentBoundaryId, workspace.id);
+  if (parent.viewId !== viewId) throw ruleViolation("Nested boundaries must use the same view.");
+  if (parent.layer !== layer) throw ruleViolation("Nested boundaries must use the same layer.");
+  let current: ArchitectureBoundary | undefined = parent;
+  while (current) {
+    if (current.id === boundaryId)
+      throw ruleViolation("That change would create a boundary cycle.");
+    current = current.parentBoundaryId
+      ? repos.boundaries.findById(current.parentBoundaryId)
+      : undefined;
+  }
+}
+
+function validateBoundaryElements(
+  repos: Repositories,
+  workspaceId: string,
+  viewId: string,
+  elementIds: readonly string[],
+): void {
+  const viewElementIds = new Set(repos.views.listElements(viewId).map((entry) => entry.elementId));
+  for (const elementId of new Set(elementIds)) {
+    requireElement(repos, elementId, workspaceId);
+    if (!viewElementIds.has(elementId)) {
+      throw ruleViolation(`Element "${elementId}" must be added to the view before its boundary.`);
+    }
+  }
+}
+
+function claimBoundaryMembers(
+  repos: Repositories,
+  boundary: ArchitectureBoundary,
+): ArchitectureBoundary {
+  const claimed = new Set(boundary.elementIds);
+  for (const other of repos.boundaries.listByView(boundary.viewId)) {
+    if (other.id === boundary.id || other.layer !== boundary.layer) continue;
+    const remaining = other.elementIds.filter((id) => !claimed.has(id));
+    if (remaining.length !== other.elementIds.length) {
+      repos.boundaries.update({ ...other, elementIds: remaining, updatedAt: nowIso() });
+    }
+  }
+  return { ...boundary, elementIds: [...claimed] };
+}
+
+export function createBoundary(
+  repos: Repositories,
+  workspace: Workspace,
+  input: CreateBoundaryInput,
+): ArchitectureBoundary {
+  const id = input.id ?? createId(input.name);
+  if (repos.boundaries.findById(id)) throw badRequest(`Boundary id "${id}" is already taken.`);
+  requireView(repos, input.viewId, workspace.id);
+  const layer = input.layer ?? "deployment";
+  validateBoundaryParent(repos, workspace, id, input.viewId, input.parentBoundaryId ?? null, layer);
+  validateBoundaryElements(repos, workspace.id, input.viewId, input.elementIds ?? []);
+  const timestamp = nowIso();
+  const boundary = claimBoundaryMembers(repos, {
+    id,
+    workspaceId: workspace.id,
+    viewId: input.viewId,
+    parentBoundaryId: input.parentBoundaryId ?? null,
+    kind: input.kind,
+    layer,
+    classification: input.classification ?? null,
+    name: input.name,
+    description: input.description ?? null,
+    tags: input.tags ?? [],
+    properties: input.properties ?? {},
+    elementIds: input.elementIds ?? [],
+    createdAt: timestamp,
+    updatedAt: timestamp,
+  });
+  repos.boundaries.insert(boundary);
+  return boundary;
+}
+
+export function updateBoundary(
+  repos: Repositories,
+  workspace: Workspace,
+  boundaryId: string,
+  input: UpdateBoundaryInput,
+): ArchitectureBoundary {
+  const current = requireBoundary(repos, boundaryId, workspace.id);
+  const layer = input.layer ?? current.layer;
+  const parentBoundaryId =
+    input.parentBoundaryId !== undefined ? input.parentBoundaryId : current.parentBoundaryId;
+  validateBoundaryParent(
+    repos,
+    workspace,
+    boundaryId,
+    current.viewId,
+    parentBoundaryId ?? null,
+    layer,
+  );
+  const elementIds = input.elementIds ?? current.elementIds;
+  validateBoundaryElements(repos, workspace.id, current.viewId, elementIds);
+  const next = claimBoundaryMembers(repos, {
+    ...current,
+    parentBoundaryId: parentBoundaryId ?? null,
+    kind: input.kind ?? current.kind,
+    layer,
+    classification:
+      input.classification !== undefined ? input.classification : current.classification,
+    name: input.name ?? current.name,
+    description: input.description !== undefined ? input.description : current.description,
+    tags: input.tags ?? current.tags,
+    properties: input.properties ?? current.properties,
+    elementIds,
+    updatedAt: nowIso(),
+  });
+  repos.boundaries.update(next);
+  return next;
+}
+
+export function setBoundaryMembers(
+  repos: Repositories,
+  workspace: Workspace,
+  boundaryId: string,
+  elementIds: readonly string[],
+  mode: "replace" | "add" | "remove" = "replace",
+): ArchitectureBoundary {
+  const current = requireBoundary(repos, boundaryId, workspace.id);
+  validateBoundaryElements(repos, workspace.id, current.viewId, elementIds);
+  const requested = new Set(elementIds);
+  const nextIds =
+    mode === "replace"
+      ? [...requested]
+      : mode === "add"
+        ? [...new Set([...current.elementIds, ...requested])]
+        : current.elementIds.filter((id) => !requested.has(id));
+  return updateBoundary(repos, workspace, boundaryId, { elementIds: nextIds });
+}
+
+export function deleteBoundary(
+  repos: Repositories,
+  workspace: Workspace,
+  boundaryId: string,
+  cascade = false,
+): string[] {
+  const boundary = requireBoundary(repos, boundaryId, workspace.id);
+  const all = repos.boundaries.listByWorkspace(workspace.id);
+  const targets = [boundary];
+  if (cascade) {
+    for (let index = 0; index < targets.length; index += 1) {
+      const current = targets[index];
+      if (current) targets.push(...all.filter((item) => item.parentBoundaryId === current.id));
+    }
+  } else {
+    for (const child of all.filter((item) => item.parentBoundaryId === boundaryId)) {
+      repos.boundaries.update({
+        ...child,
+        parentBoundaryId: boundary.parentBoundaryId,
+        updatedAt: nowIso(),
+      });
+    }
+  }
+  for (const target of [...targets].reverse()) repos.boundaries.delete(target.id);
   return targets.map((target) => target.id);
 }
 
@@ -365,13 +555,19 @@ export function setViewElements(
   const existingIds = new Set(existing.map((entry) => entry.elementId));
 
   if (mode === "remove") {
-    for (const elementId of wanted) repos.views.removeElement(viewId, elementId);
+    for (const elementId of wanted) {
+      repos.boundaries.removeViewElementMembership(viewId, elementId);
+      repos.views.removeElement(viewId, elementId);
+    }
     return repos.views.listElements(viewId);
   }
 
   if (mode === "replace") {
     for (const entry of existing) {
       if (!wanted.has(entry.elementId)) repos.views.removeElement(viewId, entry.elementId);
+      if (!wanted.has(entry.elementId)) {
+        repos.boundaries.removeViewElementMembership(viewId, entry.elementId);
+      }
     }
   }
 
@@ -484,6 +680,14 @@ export function autoLayoutView(
   const allElements = repos.elements.listByWorkspace(workspace.id);
   const elements = new Map(allElements.map((element) => [element.id, element] as const));
   const visible = new Set(entries.map((entry) => entry.elementId));
+  const activeBoundaries = repos.boundaries
+    .listByView(viewId)
+    .filter((boundary) => boundary.layer === view.settings.boundaryLayer);
+  const boundaryByElement = new Map(
+    activeBoundaries.flatMap((boundary) =>
+      boundary.elementIds.map((elementId) => [elementId, boundary.id] as const),
+    ),
+  );
 
   const positions = computeLayout(
     entries.map((entry) => {
@@ -495,6 +699,7 @@ export function autoLayoutView(
         y: entry.y,
         locked: entry.locked,
         parentId: element?.parentId ?? null,
+        groupId: boundaryByElement.get(entry.elementId) ?? null,
       };
     }),
     resolveRelationshipsForView(
@@ -509,6 +714,10 @@ export function autoLayoutView(
     direction,
     algorithm,
     rootElementId,
+    activeBoundaries.map((boundary) => ({
+      id: boundary.id,
+      parentId: boundary.parentBoundaryId,
+    })),
   );
 
   const byId = new Map(entries.map((entry) => [entry.elementId, entry] as const));

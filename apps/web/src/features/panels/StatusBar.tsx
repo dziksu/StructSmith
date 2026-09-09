@@ -7,6 +7,7 @@ import { useEditorStore } from "@/store/editor";
 interface StatusBarProps {
   revision: number;
   elementCount: number;
+  boundaryCount: number;
   relationshipCount: number;
   validation?: ValidationResult;
   mcpReady: boolean;
@@ -16,6 +17,7 @@ interface StatusBarProps {
 export function StatusBar({
   revision,
   elementCount,
+  boundaryCount,
   relationshipCount,
   validation,
   mcpReady,
@@ -80,6 +82,8 @@ export function StatusBar({
       )}
 
       <span>{t("status.elements", { count: elementCount })}</span>
+      <span>·</span>
+      <span>{t("status.boundaries", { count: boundaryCount })}</span>
       <span>·</span>
       <span>{t("status.relationships", { count: relationshipCount })}</span>
       <span>·</span>

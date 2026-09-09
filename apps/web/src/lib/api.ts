@@ -2,15 +2,18 @@ import type {
   ActivityEntry,
   ApplyOperationsRequest,
   ApplyOperationsResult,
+  ArchitectureBoundary,
   ArchitectureElement,
   ArchitectureModel,
   ArchitectureRecord,
   ArchitectureRelationship,
+  CreateBoundaryInput,
   CreateRecordInput,
   CreateViewInput,
   CreateWorkspaceInput,
   McpInfo,
   SnapshotSummary,
+  UpdateBoundaryInput,
   UpdateLayoutRequest,
   UpdateRecordInput,
   UpdateViewInput,
@@ -115,6 +118,22 @@ export const api = {
     request<{ elements: ArchitectureElement[] }>(`/workspaces/${id}/elements`).then(
       (r) => r.elements,
     ),
+  listBoundaries: (viewId: string) =>
+    request<{ boundaries: ArchitectureBoundary[] }>(`/views/${viewId}/boundaries`).then(
+      (r) => r.boundaries,
+    ),
+  createBoundary: (viewId: string, input: Omit<CreateBoundaryInput, "viewId">) =>
+    request<{ result: ArchitectureBoundary; revision: number }>(`/views/${viewId}/boundaries`, {
+      method: "POST",
+      ...body(input),
+    }),
+  updateBoundary: (id: string, input: UpdateBoundaryInput) =>
+    request<{ result: ArchitectureBoundary; revision: number }>(`/boundaries/${id}`, {
+      method: "PATCH",
+      ...body(input),
+    }),
+  deleteBoundary: (id: string) =>
+    request<{ result: string[]; revision: number }>(`/boundaries/${id}`, { method: "DELETE" }),
   listRelationships: (id: string) =>
     request<{ relationships: ArchitectureRelationship[] }>(`/workspaces/${id}/relationships`).then(
       (r) => r.relationships,

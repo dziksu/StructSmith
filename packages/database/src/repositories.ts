@@ -1,5 +1,6 @@
 import type {
   ActivityEntry,
+  ArchitectureBoundary,
   ArchitectureElement,
   ArchitectureRecord,
   ArchitectureRelationship,
@@ -12,6 +13,7 @@ import type {
 } from "@structsmith/contracts";
 import type {
   ActivityRepository,
+  BoundaryRepository,
   ElementRepository,
   RecordRepository,
   RelationshipRepository,
@@ -24,6 +26,7 @@ import type {
 import { and, asc, desc, eq, inArray, lt, or, sql } from "drizzle-orm";
 import type { Db } from "./client";
 import {
+  fromBoundary,
   fromElement,
   fromRecord,
   fromRelationship,
@@ -32,6 +35,7 @@ import {
   fromViewRelationship,
   fromWorkspace,
   toActivity,
+  toBoundary,
   toElement,
   toRecord,
   toRelationship,
@@ -138,6 +142,91 @@ function relationshipRepository(db: Executor): RelationshipRepository {
         db.delete(t.relationships).where(inArray(t.relationships.id, ids)).run();
       }
       return ids;
+    },
+  };
+}
+
+function boundaryRepository(db: Executor): BoundaryRepository {
+  const membersFor = (boundaryIds: string[]): Map<string, string[]> => {
+    const result = new Map<string, string[]>();
+    if (boundaryIds.length === 0) return result;
+    for (const row of db
+      .select()
+      .from(t.boundaryMembers)
+      .where(inArray(t.boundaryMembers.boundaryId, boundaryIds))
+      .all()) {
+      const current = result.get(row.boundaryId);
+      if (current) current.push(row.elementId);
+      else result.set(row.boundaryId, [row.elementId]);
+    }
+    return result;
+  };
+
+  const writeMembers = (boundary: ArchitectureBoundary): void => {
+    db.delete(t.boundaryMembers).where(eq(t.boundaryMembers.boundaryId, boundary.id)).run();
+    for (const elementId of boundary.elementIds) {
+      db.insert(t.boundaryMembers).values({ boundaryId: boundary.id, elementId }).run();
+    }
+  };
+
+  return {
+    listByWorkspace: (workspaceId) => {
+      const rows = db
+        .select()
+        .from(t.boundaries)
+        .where(eq(t.boundaries.workspaceId, workspaceId))
+        .orderBy(asc(t.boundaries.createdAt), asc(t.boundaries.id))
+        .all();
+      const members = membersFor(rows.map((row) => row.id));
+      return rows.map((row) => toBoundary(row, members.get(row.id) ?? []));
+    },
+    listByView: (viewId) => {
+      const rows = db
+        .select()
+        .from(t.boundaries)
+        .where(eq(t.boundaries.viewId, viewId))
+        .orderBy(asc(t.boundaries.createdAt), asc(t.boundaries.id))
+        .all();
+      const members = membersFor(rows.map((row) => row.id));
+      return rows.map((row) => toBoundary(row, members.get(row.id) ?? []));
+    },
+    findById: (id) => {
+      const row = db.select().from(t.boundaries).where(eq(t.boundaries.id, id)).get();
+      return row ? toBoundary(row, membersFor([id]).get(id) ?? []) : undefined;
+    },
+    insert: (boundary) => {
+      db.insert(t.boundaries).values(fromBoundary(boundary)).run();
+      writeMembers(boundary);
+    },
+    update: (boundary) => {
+      db.update(t.boundaries)
+        .set(fromBoundary(boundary))
+        .where(eq(t.boundaries.id, boundary.id))
+        .run();
+      writeMembers(boundary);
+    },
+    delete: (id) => {
+      db.delete(t.boundaries).where(eq(t.boundaries.id, id)).run();
+    },
+    removeElementMemberships: (elementId) => {
+      db.delete(t.boundaryMembers).where(eq(t.boundaryMembers.elementId, elementId)).run();
+    },
+    removeViewElementMembership: (viewId, elementId) => {
+      const boundaryIds = db
+        .select({ id: t.boundaries.id })
+        .from(t.boundaries)
+        .where(eq(t.boundaries.viewId, viewId))
+        .all()
+        .map((row) => row.id);
+      if (boundaryIds.length === 0) return;
+      db.delete(t.boundaryMembers)
+        .where(
+          and(
+            eq(t.boundaryMembers.elementId, elementId),
+            inArray(t.boundaryMembers.boundaryId, boundaryIds),
+          ),
+        )
+        .run();
     },
   };
 }
@@ -385,6 +474,7 @@ export function createRepositories(db: Executor): Repositories {
     workspaces: workspaceRepository(db),
     elements: elementRepository(db),
     relationships: relationshipRepository(db),
+    boundaries: boundaryRepository(db),
     views: viewRepository(db),
     records: recordRepository(db),
     snapshots: snapshotRepository(db),

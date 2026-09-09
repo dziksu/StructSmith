@@ -8,11 +8,102 @@ import { checkParent, wouldCreateCycle } from "./rules";
 export function validateDocument(document: WorkspaceDocument): ValidationResult {
   const issues: ValidationIssue[] = [];
   const { elements, relationships, views } = document;
+  const nestedBoundaries = views.flatMap((view) => view.boundaries);
+  const boundaries = nestedBoundaries.length > 0 ? nestedBoundaries : (document.boundaries ?? []);
   const byId = new Map(elements.map((element) => [element.id, element]));
+  const viewsById = new Map(views.map((view) => [view.id, view] as const));
 
   const elementsInViews = new Set<string>();
   for (const view of views) {
     for (const entry of view.elements) if (!entry.hidden) elementsInViews.add(entry.elementId);
+  }
+
+  const boundaryById = new Map(boundaries.map((boundary) => [boundary.id, boundary] as const));
+  const memberships = new Map<string, string>();
+  for (const boundary of boundaries) {
+    const boundaryView = viewsById.get(boundary.viewId);
+    if (!boundaryView) {
+      issues.push({
+        level: "error",
+        code: "BOUNDARY_VIEW_MISSING",
+        message: `Boundary "${boundary.name}" references a view that does not exist.`,
+        boundaryId: boundary.id,
+        viewId: boundary.viewId,
+      });
+    }
+    const parent = boundary.parentBoundaryId
+      ? boundaryById.get(boundary.parentBoundaryId)
+      : undefined;
+    if (boundary.parentBoundaryId && !parent) {
+      issues.push({
+        level: "error",
+        code: "BOUNDARY_PARENT_MISSING",
+        message: `Boundary "${boundary.name}" references a parent that does not exist.`,
+        boundaryId: boundary.id,
+      });
+    } else if (parent && parent.viewId !== boundary.viewId) {
+      issues.push({
+        level: "error",
+        code: "BOUNDARY_VIEW_MISMATCH",
+        message: `Boundary "${boundary.name}" is nested in a different view.`,
+        boundaryId: boundary.id,
+        viewId: boundary.viewId,
+      });
+    } else if (parent && parent.layer !== boundary.layer) {
+      issues.push({
+        level: "error",
+        code: "BOUNDARY_LAYER_MISMATCH",
+        message: `Boundary "${boundary.name}" is nested in a different layer.`,
+        boundaryId: boundary.id,
+      });
+    }
+    const visited = new Set<string>([boundary.id]);
+    let current = parent;
+    while (current) {
+      if (visited.has(current.id)) {
+        issues.push({
+          level: "error",
+          code: "BOUNDARY_CYCLE",
+          message: `Boundary "${boundary.name}" is part of a containment cycle.`,
+          boundaryId: boundary.id,
+        });
+        break;
+      }
+      visited.add(current.id);
+      current = current.parentBoundaryId ? boundaryById.get(current.parentBoundaryId) : undefined;
+    }
+    for (const elementId of boundary.elementIds) {
+      if (!byId.has(elementId)) {
+        issues.push({
+          level: "error",
+          code: "BOUNDARY_MEMBER_MISSING",
+          message: `Boundary "${boundary.name}" contains a missing element.`,
+          boundaryId: boundary.id,
+        });
+      }
+      if (boundaryView && !boundaryView.elements.some((entry) => entry.elementId === elementId)) {
+        issues.push({
+          level: "error",
+          code: "BOUNDARY_MEMBER_NOT_IN_VIEW",
+          message: `Boundary "${boundary.name}" contains an element outside its view.`,
+          elementId,
+          boundaryId: boundary.id,
+          viewId: boundary.viewId,
+        });
+      }
+      const key = `${boundary.viewId}:${boundary.layer}:${elementId}`;
+      const previous = memberships.get(key);
+      if (previous && previous !== boundary.id) {
+        issues.push({
+          level: "error",
+          code: "BOUNDARY_MEMBER_DUPLICATE",
+          message: `An element belongs to two boundaries in the ${boundary.layer} layer of one view.`,
+          elementId,
+          boundaryId: boundary.id,
+        });
+      }
+      memberships.set(key, boundary.id);
+    }
   }
 
   const seenViewKeys = new Set<string>();

@@ -1,4 +1,5 @@
 import type {
+  ArchitectureBoundary,
   ArchitectureElement,
   ChangeSource,
   SnapshotSummary,
@@ -35,6 +36,29 @@ function inParentOrder(elements: readonly ArchitectureElement[]): ArchitectureEl
   return ordered;
 }
 
+function boundariesInParentOrder(
+  boundaries: readonly ArchitectureBoundary[],
+): ArchitectureBoundary[] {
+  const remaining = [...boundaries];
+  const inserted = new Set<string>();
+  const ordered: ArchitectureBoundary[] = [];
+  while (remaining.length > 0) {
+    const index = remaining.findIndex(
+      (boundary) => !boundary.parentBoundaryId || inserted.has(boundary.parentBoundaryId),
+    );
+    if (index < 0) {
+      ordered.push(...remaining.map((boundary) => ({ ...boundary, parentBoundaryId: null })));
+      break;
+    }
+    const [boundary] = remaining.splice(index, 1);
+    if (boundary) {
+      ordered.push(boundary);
+      inserted.add(boundary.id);
+    }
+  }
+  return ordered;
+}
+
 export function writeSnapshot(
   repos: Repositories,
   workspaceId: string,
@@ -66,6 +90,9 @@ export function restoreDocument(repos: Repositories, document: WorkspaceDocument
   for (const relationship of repos.relationships.listByWorkspace(workspaceId)) {
     repos.relationships.delete(relationship.id);
   }
+  for (const boundary of repos.boundaries.listByWorkspace(workspaceId).reverse()) {
+    repos.boundaries.delete(boundary.id);
+  }
   for (const element of repos.elements.listByWorkspace(workspaceId)) {
     repos.elements.update({ ...element, parentId: null });
   }
@@ -74,10 +101,28 @@ export function restoreDocument(repos: Repositories, document: WorkspaceDocument
   }
 
   for (const element of inParentOrder(document.elements)) repos.elements.insert(element);
+  for (const view of document.views) {
+    const { boundaries: _boundaries, elements, relationships, ...rest } = view;
+    repos.views.insert(rest);
+  }
+  const fallbackViewId = document.views[0]?.id;
+  const nestedBoundaries = document.views.flatMap((view) =>
+    view.boundaries.map((boundary) => ({ ...boundary, viewId: view.id })),
+  );
+  const legacyBoundaries = (document.boundaries ?? []).map((boundary) => ({
+    ...boundary,
+    // Compatibility with snapshots written before boundaries were view-owned.
+    viewId: boundary.viewId ?? fallbackViewId,
+  }));
+  const boundaries = nestedBoundaries.length > 0 ? nestedBoundaries : legacyBoundaries;
+  for (const boundary of boundariesInParentOrder(
+    boundaries.filter((boundary) => Boolean(boundary.viewId)) as ArchitectureBoundary[],
+  )) {
+    repos.boundaries.insert(boundary);
+  }
   for (const relationship of document.relationships) repos.relationships.insert(relationship);
   for (const view of document.views) {
-    const { elements, relationships, ...rest } = view;
-    repos.views.insert(rest);
+    const { elements, relationships } = view;
     for (const entry of elements) repos.views.upsertElement(entry);
     for (const entry of relationships) repos.views.upsertRelationship(entry);
   }

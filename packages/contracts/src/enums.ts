@@ -94,3 +94,33 @@ export type LayoutDirection = z.infer<typeof LayoutDirectionSchema>;
 export const layoutAlgorithms = ["dagre", "force", "radial", "grid"] as const;
 export const LayoutAlgorithmSchema = z.enum(layoutAlgorithms);
 export type LayoutAlgorithm = z.infer<typeof LayoutAlgorithmSchema>;
+
+export const relationshipRoutings = ["orthogonal", "curved", "straight"] as const;
+export const RelationshipRoutingSchema = z.enum(relationshipRoutings);
+export type RelationshipRouting = z.infer<typeof RelationshipRoutingSchema>;
+
+export const boundaryKinds = [
+  "environment",
+  "region",
+  "availabilityZone",
+  "networkZone",
+  "trustZone",
+  "complianceScope",
+  "custom",
+] as const;
+export const BoundaryKindSchema = z.enum(boundaryKinds);
+export type BoundaryKind = z.infer<typeof BoundaryKindSchema>;
+
+export const boundaryLayers = [
+  "deployment",
+  "security",
+  "compliance",
+  "ownership",
+  "custom",
+] as const;
+export const BoundaryLayerSchema = z.enum(boundaryLayers);
+export type BoundaryLayer = z.infer<typeof BoundaryLayerSchema>;
+
+export const boundaryClassifications = ["public", "restricted", "private"] as const;
+export const BoundaryClassificationSchema = z.enum(boundaryClassifications);
+export type BoundaryClassification = z.infer<typeof BoundaryClassificationSchema>;

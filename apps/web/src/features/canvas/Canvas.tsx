@@ -1,4 +1,5 @@
 import type {
+  ArchitectureBoundary,
   ArchitectureElement,
   ArchitectureRecord,
   ArchitectureRelationship,
@@ -36,6 +37,7 @@ import {
   boundaryElementId,
   buildGraph,
   computeBoundaries,
+  computeSemanticBoundaries,
   type FlowEdge,
   type FlowNode,
   isBoundaryId,
@@ -60,11 +62,19 @@ interface CanvasProps {
   workspaceId: string;
   view: ViewDetail;
   elements: readonly ArchitectureElement[];
+  boundaries: readonly ArchitectureBoundary[];
   relationships: readonly ArchitectureRelationship[];
   records: readonly ArchitectureRecord[];
 }
 
-export function Canvas({ workspaceId, view, elements, relationships, records }: CanvasProps) {
+export function Canvas({
+  workspaceId,
+  view,
+  elements,
+  boundaries,
+  relationships,
+  records,
+}: CanvasProps) {
   const { t } = useTranslation();
   const flow = useReactFlow();
   const onError = useApiErrorHandler();
@@ -351,10 +361,14 @@ export function Canvas({ workspaceId, view, elements, relationships, records }: 
       const node = selectedNodes[0];
       const edge = selectedEdges[0];
       if (node) {
-        select({
-          type: "element",
-          id: isBoundaryId(node.id) ? boundaryElementId(node.id) : node.id,
-        });
+        if (node.type === "boundary" && node.data?.boundaryId) {
+          select({ type: "boundary", id: String(node.data.boundaryId) });
+        } else {
+          select({
+            type: "element",
+            id: isBoundaryId(node.id) ? boundaryElementId(node.id) : node.id,
+          });
+        }
       } else if (edge) {
         select({ type: "relationship", id: relationshipIdOf(edge) });
       }
@@ -457,6 +471,10 @@ export function Canvas({ workspaceId, view, elements, relationships, records }: 
   const onNodeContextMenu = useCallback<NodeMouseHandler>(
     (event, node) => {
       event.preventDefault();
+      if (node.type === "boundary" && node.data?.boundaryId) {
+        select({ type: "boundary", id: String(node.data.boundaryId) });
+        return;
+      }
       const elementId = isBoundaryId(node.id) ? boundaryElementId(node.id) : node.id;
       select({ type: "element", id: elementId });
       setMenu({
@@ -561,31 +579,57 @@ export function Canvas({ workspaceId, view, elements, relationships, records }: 
       event.preventDefault();
       const elementId = event.dataTransfer.getData(DRAG_MIME);
       if (!elementId) return;
-      if (view.elements.some((entry) => entry.elementId === elementId && !entry.hidden)) {
+      const targetNode = (event.target as Element | null)?.closest<HTMLElement>(
+        ".react-flow__node-boundary",
+      );
+      const candidateBoundaryId = targetNode?.dataset.id?.startsWith("boundary:")
+        ? boundaryElementId(targetNode.dataset.id)
+        : null;
+      const targetBoundaryId = boundaries.some((boundary) => boundary.id === candidateBoundaryId)
+        ? candidateBoundaryId
+        : null;
+      const alreadyVisible = view.elements.some(
+        (entry) => entry.elementId === elementId && !entry.hidden,
+      );
+      if (alreadyVisible && !targetBoundaryId) {
         toast.message(t("explorer.inView"));
         return;
       }
       const position = flow.screenToFlowPosition({ x: event.clientX, y: event.clientY });
       applyOperations.mutate({
-        label: t("explorer.addToView"),
+        label: targetBoundaryId ? t("boundaries.membershipChanged") : t("explorer.addToView"),
         operations: [
           { op: "setViewElements", viewId: view.id, elementIds: [elementId], mode: "add" },
-          {
-            op: "setLayout",
-            viewId: view.id,
-            entries: [
-              {
-                elementId,
-                x: Math.round(position.x - NODE_WIDTH / 2),
-                y: Math.round(position.y - NODE_HEIGHT / 2),
-                hidden: false,
-              },
-            ],
-          },
+          ...(!alreadyVisible
+            ? [
+                {
+                  op: "setLayout" as const,
+                  viewId: view.id,
+                  entries: [
+                    {
+                      elementId,
+                      x: Math.round(position.x - NODE_WIDTH / 2),
+                      y: Math.round(position.y - NODE_HEIGHT / 2),
+                      hidden: false,
+                    },
+                  ],
+                },
+              ]
+            : []),
+          ...(targetBoundaryId
+            ? [
+                {
+                  op: "setBoundaryMembers" as const,
+                  boundaryId: targetBoundaryId,
+                  elementIds: [elementId],
+                  mode: "add" as const,
+                },
+              ]
+            : []),
         ],
       });
     },
-    [applyOperations, flow, t, view.elements, view.id],
+    [applyOperations, boundaries, flow, t, view.elements, view.id],
   );
 
   /* --------------------------------- render --------------------------------- */
@@ -602,14 +646,32 @@ export function Canvas({ workspaceId, view, elements, relationships, records }: 
       }));
     // A parent shown as a boundary has no entry in `nodes`, so mirror the
     // selection onto it here.
-    const boundaries = computeBoundaries(sources, elementsById, view.settings.showBoundaries).map(
-      (boundary) => ({
-        ...boundary,
-        selected: selection.type === "element" && selection.id === boundaryElementId(boundary.id),
-      }),
-    );
-    return [...boundaries, ...nodes];
-  }, [nodes, elementsById, view.settings.showBoundaries, selection]);
+    const legacyBoundaries = computeBoundaries(
+      sources,
+      elementsById,
+      view.settings.showBoundaries,
+    ).map((boundary) => ({
+      ...boundary,
+      selected: selection.type === "element" && selection.id === boundaryElementId(boundary.id),
+    }));
+    const semanticBoundaries = computeSemanticBoundaries(
+      sources,
+      boundaries,
+      view.settings.boundaryLayer,
+      view.settings.showBoundaries,
+    ).map((boundary) => ({
+      ...boundary,
+      selected: selection.type === "boundary" && selection.id === boundary.data.boundaryId,
+    }));
+    return [...semanticBoundaries, ...legacyBoundaries, ...nodes];
+  }, [
+    nodes,
+    elementsById,
+    boundaries,
+    view.settings.showBoundaries,
+    view.settings.boundaryLayer,
+    selection,
+  ]);
 
   return (
     <div

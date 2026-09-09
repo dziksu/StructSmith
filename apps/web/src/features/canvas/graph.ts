@@ -1,4 +1,5 @@
 import type {
+  ArchitectureBoundary,
   ArchitectureElement,
   ArchitectureRecord,
   ArchitectureRelationship,
@@ -28,7 +29,11 @@ export interface ElementNodeData extends Record<string, unknown> {
 }
 
 export interface BoundaryNodeData extends Record<string, unknown> {
-  element: ArchitectureElement;
+  name: string;
+  layer: string;
+  classification: "public" | "restricted" | "private" | null;
+  boundaryId?: string;
+  elementId?: string;
 }
 
 export interface RelationshipEdgeData extends Record<string, unknown> {
@@ -103,7 +108,9 @@ export function buildGraph({ view, elements, relationships, records }: BuildInpu
         showDescriptions: view.settings.showDescriptions,
         minimumHeight: size.height,
       },
-      zIndex: entry.zIndex,
+      // Keep semantic boundaries above the canvas background, relationship
+      // paths above their fills, and cards above both.
+      zIndex: 20 + entry.zIndex,
       width: size.width,
       height: expanded ? undefined : size.height,
       style: expanded ? { minHeight: size.height } : undefined,
@@ -134,6 +141,7 @@ export function buildGraph({ view, elements, relationships, records }: BuildInpu
       targetHandle: view.settings.autoLayoutDirection === "TB" ? "t" : undefined,
       selectable: unambiguous,
       deletable: unambiguous,
+      zIndex: 10,
       data: {
         relationship: first,
         implied: edge.implied,
@@ -154,6 +162,26 @@ export interface BoundarySource {
   y: number;
   width: number;
   height: number;
+}
+
+function boundaryStyle(
+  classification: ArchitectureBoundary["classification"],
+  width: number,
+  height: number,
+): Record<string, string | number> {
+  const accent =
+    classification === "public"
+      ? "var(--ownership-external)"
+      : classification === "private"
+        ? "var(--ownership-internal)"
+        : "var(--boundary)";
+  return {
+    width,
+    height,
+    border: `1px solid color-mix(in oklch, ${accent} 45%, var(--canvas))`,
+    borderRadius: 12,
+    backgroundColor: `color-mix(in srgb, ${accent} 8%, transparent)`,
+  };
 }
 
 /**
@@ -193,19 +221,111 @@ export function computeBoundaries(
       id: `boundary:${parentId}`,
       type: "boundary",
       position: { x: minX - BOUNDARY_PADDING, y: minY - BOUNDARY_PADDING - BOUNDARY_HEADER },
-      data: { element: parent },
+      width: maxX - minX + BOUNDARY_PADDING * 2,
+      height: maxY - minY + BOUNDARY_PADDING * 2 + BOUNDARY_HEADER,
+      data: {
+        name: parent.name,
+        layer: "deployment",
+        classification: parent.external ? "public" : null,
+        elementId: parent.id,
+      },
       draggable: false,
       selectable: true,
       connectable: false,
       deletable: false,
-      zIndex: -1,
-      style: {
-        width: maxX - minX + BOUNDARY_PADDING * 2,
-        height: maxY - minY + BOUNDARY_PADDING * 2 + BOUNDARY_HEADER,
-      },
+      zIndex: 0,
+      style: boundaryStyle(
+        parent.external ? "public" : null,
+        maxX - minX + BOUNDARY_PADDING * 2,
+        maxY - minY + BOUNDARY_PADDING * 2 + BOUNDARY_HEADER,
+      ),
     });
   }
   return nodes;
+}
+
+/** Build nested semantic boundary rectangles from visible member footprints. */
+export function computeSemanticBoundaries(
+  sources: readonly BoundarySource[],
+  boundaries: readonly ArchitectureBoundary[],
+  layer: ArchitectureBoundary["layer"],
+  enabled: boolean,
+): FlowNode[] {
+  if (!enabled) return [];
+  const active = boundaries.filter((boundary) => boundary.layer === layer);
+  const byId = new Map(active.map((boundary) => [boundary.id, boundary] as const));
+  const sourceById = new Map(sources.map((source) => [source.id, source] as const));
+  const boxes = new Map<string, BoundarySource>();
+
+  const boxFor = (
+    boundary: ArchitectureBoundary,
+    visiting = new Set<string>(),
+  ): BoundarySource | null => {
+    const cached = boxes.get(boundary.id);
+    if (cached) return cached;
+    if (visiting.has(boundary.id)) return null;
+    visiting.add(boundary.id);
+    const contents: BoundarySource[] = boundary.elementIds
+      .map((id) => sourceById.get(id))
+      .filter((source): source is BoundarySource => Boolean(source));
+    for (const child of active.filter((item) => item.parentBoundaryId === boundary.id)) {
+      const childBox = boxFor(child, visiting);
+      if (childBox) contents.push(childBox);
+    }
+    visiting.delete(boundary.id);
+    if (contents.length === 0) return null;
+    const minX = Math.min(...contents.map((item) => item.x));
+    const minY = Math.min(...contents.map((item) => item.y));
+    const maxX = Math.max(...contents.map((item) => item.x + item.width));
+    const maxY = Math.max(...contents.map((item) => item.y + item.height));
+    const box = {
+      id: boundary.id,
+      x: minX - BOUNDARY_PADDING,
+      y: minY - BOUNDARY_PADDING - BOUNDARY_HEADER,
+      width: maxX - minX + BOUNDARY_PADDING * 2,
+      height: maxY - minY + BOUNDARY_PADDING * 2 + BOUNDARY_HEADER,
+    };
+    boxes.set(boundary.id, box);
+    return box;
+  };
+
+  for (const boundary of active) boxFor(boundary);
+  const depthOf = (boundary: ArchitectureBoundary): number => {
+    let depth = 0;
+    let parent = boundary.parentBoundaryId ? byId.get(boundary.parentBoundaryId) : undefined;
+    while (parent) {
+      depth += 1;
+      parent = parent.parentBoundaryId ? byId.get(parent.parentBoundaryId) : undefined;
+    }
+    return depth;
+  };
+
+  return active.flatMap((boundary) => {
+    const box = boxes.get(boundary.id);
+    if (!box) return [];
+    const depth = depthOf(boundary);
+    return [
+      {
+        id: `boundary:${boundary.id}`,
+        type: "boundary" as const,
+        position: { x: box.x, y: box.y },
+        width: box.width,
+        height: box.height,
+        data: {
+          name: boundary.name,
+          layer: boundary.layer,
+          classification: boundary.classification,
+          boundaryId: boundary.id,
+        },
+        draggable: false,
+        selectable: true,
+        connectable: false,
+        deletable: false,
+        zIndex: depth,
+        style: boundaryStyle(boundary.classification, box.width, box.height),
+      },
+    ];
+  });
 }
 
 export const isBoundaryId = (id: string): boolean => id.startsWith("boundary:");

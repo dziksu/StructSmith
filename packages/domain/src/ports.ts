@@ -1,5 +1,6 @@
 import type {
   ActivityEntry,
+  ArchitectureBoundary,
   ArchitectureElement,
   ArchitectureRecord,
   ArchitectureRelationship,
@@ -35,6 +36,17 @@ export interface RelationshipRepository {
   update(relationship: ArchitectureRelationship): void;
   delete(id: string): void;
   deleteByElement(elementId: string): string[];
+}
+
+export interface BoundaryRepository {
+  listByWorkspace(workspaceId: string): ArchitectureBoundary[];
+  listByView(viewId: string): ArchitectureBoundary[];
+  findById(id: string): ArchitectureBoundary | undefined;
+  insert(boundary: ArchitectureBoundary): void;
+  update(boundary: ArchitectureBoundary): void;
+  delete(id: string): void;
+  removeElementMemberships(elementId: string): void;
+  removeViewElementMembership(viewId: string, elementId: string): void;
 }
 
 export interface ViewRepository {
@@ -91,6 +103,7 @@ export interface Repositories {
   workspaces: WorkspaceRepository;
   elements: ElementRepository;
   relationships: RelationshipRepository;
+  boundaries: BoundaryRepository;
   views: ViewRepository;
   records: RecordRepository;
   snapshots: SnapshotRepository;

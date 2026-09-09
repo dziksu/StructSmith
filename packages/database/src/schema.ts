@@ -72,6 +72,45 @@ export const relationships = sqliteTable(
   ],
 );
 
+export const boundaries = sqliteTable(
+  "boundaries",
+  {
+    id: text("id").primaryKey(),
+    workspaceId: text("workspace_id")
+      .notNull()
+      .references(() => workspaces.id, { onDelete: "cascade" }),
+    viewId: text("view_id").notNull(),
+    parentBoundaryId: text("parent_boundary_id"),
+    kind: text("kind").notNull(),
+    layer: text("layer").notNull().default("deployment"),
+    classification: text("classification"),
+    name: text("name").notNull(),
+    description: text("description"),
+    tagsJson: text("tags_json").notNull().default("[]"),
+    propertiesJson: text("properties_json").notNull().default("{}"),
+    createdAt: text("created_at").notNull(),
+    updatedAt: text("updated_at").notNull(),
+  },
+  (table) => [
+    index("idx_boundaries_workspace").on(table.workspaceId),
+    index("idx_boundaries_view").on(table.viewId),
+    index("idx_boundaries_parent").on(table.parentBoundaryId),
+  ],
+);
+
+export const boundaryMembers = sqliteTable(
+  "boundary_members",
+  {
+    boundaryId: text("boundary_id")
+      .notNull()
+      .references(() => boundaries.id, { onDelete: "cascade" }),
+    elementId: text("element_id")
+      .notNull()
+      .references(() => elements.id, { onDelete: "cascade" }),
+  },
+  (table) => [primaryKey({ columns: [table.boundaryId, table.elementId] })],
+);
+
 export const views = sqliteTable(
   "views",
   {

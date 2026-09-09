@@ -1,12 +1,14 @@
 import { z } from "zod";
 import { LayoutAlgorithmSchema, LayoutDirectionSchema } from "./enums";
 import {
+  CreateBoundarySchema,
   CreateElementSchema,
   CreateRecordSchema,
   CreateRelationshipSchema,
   CreateViewSchema,
   IdSchema,
   LayoutEntrySchema,
+  UpdateBoundarySchema,
   UpdateElementSchema,
   UpdateRecordSchema,
   UpdateRelationshipSchema,
@@ -47,6 +49,41 @@ export const DeleteElementOpSchema = z.object({
   elementId: IdSchema,
   /** Also delete descendants; otherwise children are re-parented to the grandparent. */
   cascade: z.boolean().default(true),
+});
+
+export const CreateBoundaryOpSchema = z.object({
+  op: z.literal("createBoundary"),
+  ref,
+  data: CreateBoundarySchema,
+});
+
+export const UpdateBoundaryOpSchema = z.object({
+  op: z.literal("updateBoundary"),
+  boundaryId: IdSchema,
+  data: UpdateBoundarySchema,
+});
+
+export const DeleteBoundaryOpSchema = z.object({
+  op: z.literal("deleteBoundary"),
+  boundaryId: IdSchema,
+  cascade: z
+    .boolean()
+    .default(false)
+    .describe(
+      "Delete nested boundaries too; otherwise direct children are reparented to the deleted boundary's parent.",
+    ),
+});
+
+export const SetBoundaryMembersOpSchema = z.object({
+  op: z.literal("setBoundaryMembers"),
+  boundaryId: IdSchema,
+  elementIds: z.array(IdSchema).describe("Elements already present in the boundary's owning view."),
+  mode: z
+    .enum(["replace", "add", "remove"])
+    .default("replace")
+    .describe(
+      "How to change membership. Adding or replacing moves claimed elements from another boundary in the same view and layer.",
+    ),
 });
 
 export const CreateRelationshipOpSchema = z.object({
@@ -95,21 +132,31 @@ export const SetViewElementsOpSchema = z.object({
 export const SetViewRelationshipsOpSchema = z.object({
   op: z.literal("setViewRelationships"),
   viewId: IdSchema,
-  relationships: z.array(ViewRelationshipPatchSchema),
+  relationships: z
+    .array(ViewRelationshipPatchSchema)
+    .describe("Per-view visibility, label position and manual bend-point patches."),
 });
 
 export const SetLayoutOpSchema = z.object({
   op: z.literal("setLayout"),
   viewId: IdSchema,
-  entries: z.array(LayoutEntrySchema),
+  entries: z
+    .array(LayoutEntrySchema)
+    .describe("Saved position, size, visibility, lock or stacking patches for view elements."),
 });
 
 export const AutoLayoutViewOpSchema = z.object({
   op: z.literal("autoLayoutView"),
   viewId: IdSchema,
-  direction: LayoutDirectionSchema.default("LR"),
-  algorithm: LayoutAlgorithmSchema.default("dagre"),
-  rootElementId: IdSchema.optional(),
+  direction: LayoutDirectionSchema.default("LR").describe(
+    "LR for left-to-right or TB for top-to-bottom; used by dagre.",
+  ),
+  algorithm: LayoutAlgorithmSchema.default("dagre").describe(
+    "dagre (hierarchical and boundary-aware), force, radial, or grid.",
+  ),
+  rootElementId: IdSchema.optional().describe(
+    "Optional center element for radial layout; ignored by other algorithms.",
+  ),
 });
 
 export const CreateRecordOpSchema = z.object({
@@ -133,6 +180,10 @@ export const ArchitectureOperationSchema = z.discriminatedUnion("op", [
   CreateElementOpSchema,
   UpdateElementOpSchema,
   DeleteElementOpSchema,
+  CreateBoundaryOpSchema,
+  UpdateBoundaryOpSchema,
+  DeleteBoundaryOpSchema,
+  SetBoundaryMembersOpSchema,
   CreateRelationshipOpSchema,
   UpdateRelationshipOpSchema,
   DeleteRelationshipOpSchema,
