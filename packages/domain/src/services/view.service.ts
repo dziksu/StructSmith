@@ -1,6 +1,7 @@
 import type {
   ArchitectureView,
   CreateViewInput,
+  LayoutAlgorithm,
   LayoutDirection,
   LayoutEntry,
   UpdateViewInput,
@@ -131,13 +132,15 @@ export class ViewService {
     workspaceId: string,
     viewId: string,
     direction: LayoutDirection = "LR",
+    algorithm: LayoutAlgorithm = "dagre",
+    rootElementId?: string,
     options: MutationOptions = {},
   ) {
     return mutate(this.ctx, workspaceId, options, (repos, workspace) => {
-      engine.autoLayoutView(repos, workspace, viewId, direction);
+      engine.autoLayoutView(repos, workspace, viewId, direction, algorithm, rootElementId);
       return {
         result: readDetail(repos, viewId),
-        message: `Auto-arranged the diagram (${direction})`,
+        message: `Auto-arranged the diagram (${algorithm}, ${direction})`,
         kind: "view" as const,
         viewId,
       };

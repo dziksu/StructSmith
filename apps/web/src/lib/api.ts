@@ -148,10 +148,15 @@ export const api = {
       method: "POST",
       ...body({ elementIds, mode }),
     }),
-  autoLayout: (viewId: string, direction: "LR" | "TB") =>
+  autoLayout: (
+    viewId: string,
+    direction: "LR" | "TB",
+    algorithm: "dagre" | "force" | "radial" | "grid" = "dagre",
+    rootElementId?: string,
+  ) =>
     request<{ result: ViewDetail; revision: number }>(`/views/${viewId}/auto-layout`, {
       method: "POST",
-      ...body({ direction }),
+      ...body({ direction, algorithm, rootElementId }),
     }),
 
   /* records */

@@ -90,3 +90,7 @@ export type IssueLevel = z.infer<typeof IssueLevelSchema>;
 export const layoutDirections = ["LR", "TB"] as const;
 export const LayoutDirectionSchema = z.enum(layoutDirections);
 export type LayoutDirection = z.infer<typeof LayoutDirectionSchema>;
+
+export const layoutAlgorithms = ["dagre", "force", "radial", "grid"] as const;
+export const LayoutAlgorithmSchema = z.enum(layoutAlgorithms);
+export type LayoutAlgorithm = z.infer<typeof LayoutAlgorithmSchema>;

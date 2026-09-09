@@ -262,7 +262,14 @@ export function modelRoutes(services: Services): Router {
       const id = param(req, "id");
       const request = AutoLayoutRequestSchema.parse(req.body ?? {});
       res.json(
-        services.views.autoLayout(workspaceOfView(id), id, request.direction, mutationOptions(req)),
+        services.views.autoLayout(
+          workspaceOfView(id),
+          id,
+          request.direction,
+          request.algorithm,
+          request.rootElementId,
+          mutationOptions(req),
+        ),
       );
     }),
   );

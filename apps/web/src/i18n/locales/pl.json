@@ -100,6 +100,8 @@
     "view": "Widok",
     "add": "Dodaj",
     "autoLayout": "Auto układ",
+    "chooseLayout": "Wybierz algorytm układu",
+    "layoutAlgorithm": "Algorytm układu",
     "fitView": "Dopasuj widok",
     "undo": "Cofnij",
     "redo": "Ponów",
@@ -108,6 +110,12 @@
     "search": "Szukaj (⌘K)",
     "newView": "Nowy widok",
     "backHome": "Wszystkie przestrzenie"
+  },
+  "layoutAlgorithms": {
+    "dagre": "Hierarchiczny (domyślny)",
+    "force": "Sieć zależności",
+    "radial": "Promienisty",
+    "grid": "Zwarta siatka"
   },
   "explorer": {
     "model": "Model",
@@ -148,6 +156,7 @@
     "showDescriptions": "Pokaż opisy",
     "snapToGrid": "Przyciągaj do siatki",
     "layoutDirection": "Kierunek układu",
+    "layoutAlgorithm": "Algorytm układu",
     "relationshipRouting": "Styl połączeń",
     "routingOrthogonal": "Ortogonalny (zalecany)",
     "routingCurved": "Krzywy",

@@ -77,7 +77,7 @@ export const MCP_TOOLS: readonly McpToolInfo[] = [
   { name: "view_set_layout", description: "Write element positions for a view.", mutating: true },
   {
     name: "view_auto_layout",
-    description: "Arrange a view automatically (dagre).",
+    description: "Arrange a view with hierarchical, force, radial, or grid layout.",
     mutating: true,
   },
 

@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { LayoutDirectionSchema } from "./enums";
+import { LayoutAlgorithmSchema, LayoutDirectionSchema } from "./enums";
 import {
   CreateElementSchema,
   CreateRecordSchema,
@@ -108,6 +108,8 @@ export const AutoLayoutViewOpSchema = z.object({
   op: z.literal("autoLayoutView"),
   viewId: IdSchema,
   direction: LayoutDirectionSchema.default("LR"),
+  algorithm: LayoutAlgorithmSchema.default("dagre"),
+  rootElementId: IdSchema.optional(),
 });
 
 export const CreateRecordOpSchema = z.object({

@@ -6,6 +6,7 @@ import {
   CreateRelationshipSchema,
   CreateViewSchema,
   CreateWorkspaceSchema,
+  LayoutAlgorithmSchema,
   LayoutDirectionSchema,
   LayoutEntrySchema,
   ReferenceTargetKindSchema,
@@ -502,6 +503,8 @@ export function registerTools(
       workspaceId,
       viewId: z.string(),
       direction: LayoutDirectionSchema.default("LR"),
+      algorithm: LayoutAlgorithmSchema.default("dagre"),
+      rootElementId: z.string().optional(),
       expectedRevision,
     },
     (args: unknown) => {
@@ -510,14 +513,23 @@ export function registerTools(
           workspaceId: z.string(),
           viewId: z.string(),
           direction: LayoutDirectionSchema.default("LR"),
+          algorithm: LayoutAlgorithmSchema.default("dagre"),
+          rootElementId: z.string().optional(),
           expectedRevision: z.number().int().optional(),
         })
         .parse(args);
       return json(
-        services.views.autoLayout(input.workspaceId, input.viewId, input.direction, {
-          expectedRevision: input.expectedRevision,
-          source: "mcp",
-        }),
+        services.views.autoLayout(
+          input.workspaceId,
+          input.viewId,
+          input.direction,
+          input.algorithm,
+          input.rootElementId,
+          {
+            expectedRevision: input.expectedRevision,
+            source: "mcp",
+          },
+        ),
       );
     },
   );

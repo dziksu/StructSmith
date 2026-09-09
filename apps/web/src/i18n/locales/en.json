@@ -96,6 +96,8 @@
     "view": "View",
     "add": "Add",
     "autoLayout": "Auto layout",
+    "chooseLayout": "Choose layout algorithm",
+    "layoutAlgorithm": "Layout algorithm",
     "fitView": "Fit view",
     "undo": "Undo",
     "redo": "Redo",
@@ -104,6 +106,12 @@
     "search": "Search (⌘K)",
     "newView": "New view",
     "backHome": "All workspaces"
+  },
+  "layoutAlgorithms": {
+    "dagre": "Hierarchical (default)",
+    "force": "Network",
+    "radial": "Radial",
+    "grid": "Compact grid"
   },
   "explorer": {
     "model": "Model",
@@ -144,6 +152,7 @@
     "showDescriptions": "Show descriptions",
     "snapToGrid": "Snap to grid",
     "layoutDirection": "Layout direction",
+    "layoutAlgorithm": "Layout algorithm",
     "relationshipRouting": "Connector style",
     "routingOrthogonal": "Orthogonal (recommended)",
     "routingCurved": "Curved",

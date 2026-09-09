@@ -173,7 +173,14 @@ export function applyOperations(
       }
       case "autoLayoutView": {
         const viewId = refs.resolve(operation.viewId);
-        engine.autoLayoutView(repos, workspace, viewId, operation.direction);
+        engine.autoLayoutView(
+          repos,
+          workspace,
+          viewId,
+          operation.direction,
+          operation.algorithm,
+          operation.rootElementId ? refs.resolve(operation.rootElementId) : undefined,
+        );
         applied.push({ op: operation.op, id: viewId });
         break;
       }

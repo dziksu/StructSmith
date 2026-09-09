@@ -111,17 +111,22 @@ export function Inspector({ workspaceId, elements, relationships, records, view 
               workspaceId={workspaceId}
               onPatch={(settings) =>
                 applyOperations.mutate({
-                  label: settings.autoLayoutDirection
-                    ? t("inspector.layoutDirection")
-                    : t("inspector.viewSettings"),
+                  label: settings.autoLayoutAlgorithm
+                    ? t("inspector.layoutAlgorithm")
+                    : settings.autoLayoutDirection
+                      ? t("inspector.layoutDirection")
+                      : t("inspector.viewSettings"),
                   operations: [
                     { op: "updateView", viewId: view.id, data: { settings } },
-                    ...(settings.autoLayoutDirection
+                    ...(settings.autoLayoutDirection || settings.autoLayoutAlgorithm
                       ? [
                           {
                             op: "autoLayoutView" as const,
                             viewId: view.id,
-                            direction: settings.autoLayoutDirection,
+                            direction:
+                              settings.autoLayoutDirection ?? view.settings.autoLayoutDirection,
+                            algorithm:
+                              settings.autoLayoutAlgorithm ?? view.settings.autoLayoutAlgorithm,
                           },
                         ]
                       : []),
@@ -582,6 +587,28 @@ function ViewInspector({
             <SelectContent>
               <SelectItem value="LR">Left → Right</SelectItem>
               <SelectItem value="TB">Top → Bottom</SelectItem>
+            </SelectContent>
+          </Select>
+        </Field>
+
+        <Field label={t("inspector.layoutAlgorithm")}>
+          <Select
+            value={view.settings.autoLayoutAlgorithm}
+            onValueChange={(value) =>
+              onPatch({
+                autoLayoutAlgorithm: value as ViewDetail["settings"]["autoLayoutAlgorithm"],
+              })
+            }
+          >
+            <SelectTrigger>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {(["dagre", "force", "radial", "grid"] as const).map((algorithm) => (
+                <SelectItem key={algorithm} value={algorithm}>
+                  {t(`layoutAlgorithms.${algorithm}`)}
+                </SelectItem>
+              ))}
             </SelectContent>
           </Select>
         </Field>

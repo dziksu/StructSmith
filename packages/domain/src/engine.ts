@@ -7,6 +7,7 @@ import type {
   CreateRecordInput,
   CreateRelationshipInput,
   CreateViewInput,
+  LayoutAlgorithm,
   LayoutDirection,
   LayoutEntry,
   UpdateElementInput,
@@ -36,6 +37,7 @@ export const defaultViewSettings: ViewSettings = {
   showBoundaries: true,
   snapToGrid: false,
   autoLayoutDirection: "LR",
+  autoLayoutAlgorithm: "dagre",
   relationshipRouting: "orthogonal",
   showRelationshipLabels: true,
   showFullTitles: false,
@@ -472,6 +474,8 @@ export function autoLayoutView(
   workspace: Workspace,
   viewId: string,
   direction: LayoutDirection = "LR",
+  algorithm: LayoutAlgorithm = "dagre",
+  rootElementId?: string,
 ): ViewElement[] {
   const view = requireView(repos, viewId, workspace.id);
   const entries = repos.views.listElements(viewId).filter((entry) => !entry.hidden);
@@ -487,6 +491,9 @@ export function autoLayoutView(
       return {
         id: entry.elementId,
         ...estimateElementSize(element, view.settings, entry),
+        x: entry.x,
+        y: entry.y,
+        locked: entry.locked,
         parentId: element?.parentId ?? null,
       };
     }),
@@ -500,6 +507,8 @@ export function autoLayoutView(
       label: edgeLabel(edge),
     })),
     direction,
+    algorithm,
+    rootElementId,
   );
 
   const byId = new Map(entries.map((entry) => [entry.elementId, entry] as const));

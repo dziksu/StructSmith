@@ -84,7 +84,7 @@ describe("batch operations", () => {
         ref: "view",
         data: { name: "Invoices", kind: "custom", elementIds: ["@api", "@queue", "@worker"] },
       },
-      { op: "autoLayoutView", viewId: "@view", direction: "LR" },
+      { op: "autoLayoutView", viewId: "@view", direction: "LR", algorithm: "dagre" },
     ];
 
     const result = services.model.applyOperations(workspace.id, { operations }, "mcp");

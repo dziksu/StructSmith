@@ -140,6 +140,7 @@ const defaultSettings: ViewSettings = {
   showBoundaries: true,
   snapToGrid: false,
   autoLayoutDirection: "LR",
+  autoLayoutAlgorithm: "dagre",
   relationshipRouting: "orthogonal",
   showRelationshipLabels: true,
   showFullTitles: false,
