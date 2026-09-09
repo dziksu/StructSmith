@@ -26,6 +26,11 @@ test("release syncs changelog and package version through one auto-merged pull r
   const stamp = `bun scripts/set-build-version.ts "\${{ steps.release.outputs.version }}"`;
   expect(workflow).toContain("id: changelog-pr");
   expect(workflow).toContain("steps.changelog-pr.outputs.pull-request-number != ''");
+  expect(workflow).toContain("Wait for release metadata verification");
+  expect(workflow).toContain('select(.name == "Lint, types, tests, build")');
+  expect(workflow.indexOf("Wait for release metadata verification")).toBeLessThan(
+    workflow.indexOf("Merge release metadata pull request"),
+  );
   expect(workflow).toContain('if [ "$merge_state" = "CLEAN" ]; then');
   expect(workflow).toContain('gh pr merge --squash "$RELEASE_PR_NUMBER"');
   expect(workflow).toContain('gh pr merge --squash --auto "$RELEASE_PR_NUMBER"');
@@ -44,6 +49,9 @@ test("Docker cache export cannot block CI or image publication", () => {
   );
 
   expect(ciWorkflow).toContain("cache-to: type=gha,mode=min,scope=ci,ignore-error=true,timeout=2m");
+  expect(ciWorkflow).toContain(
+    "github.event_name != 'pull_request' || !startsWith(github.head_ref, 'automation/changelog-v')",
+  );
   expect(imageWorkflow).toContain(
     "cache-to: type=gha,mode=max,scope=release-image,ignore-error=true,timeout=2m",
   );
