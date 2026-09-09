@@ -114,6 +114,7 @@ export function toBoundary(
   return {
     id: row.id,
     workspaceId: row.workspaceId,
+    viewId: row.viewId,
     parentBoundaryId: row.parentBoundaryId,
     kind: row.kind as BoundaryKind,
     layer: row.layer as BoundaryLayer,
@@ -132,6 +133,7 @@ export function fromBoundary(boundary: ArchitectureBoundary): Row<typeof boundar
   return {
     id: boundary.id,
     workspaceId: boundary.workspaceId,
+    viewId: boundary.viewId,
     parentBoundaryId: boundary.parentBoundaryId,
     kind: boundary.kind,
     layer: boundary.layer,

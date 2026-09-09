@@ -12,6 +12,9 @@ export function workspaceInspection(
   options: WorkspaceInspectionOptions = {},
 ) {
   const document = services.model.getDocument(workspaceId);
+  const nestedBoundaries = document.views.flatMap((view) => view.boundaries);
+  const boundaryCount =
+    nestedBoundaries.length > 0 ? nestedBoundaries.length : (document.boundaries ?? []).length;
   const views = options.includeLayouts
     ? document.views
     : document.views.map(({ elements: _elements, relationships: _relationships, ...view }) => view);
@@ -21,13 +24,12 @@ export function workspaceInspection(
     revision: document.workspace.revision,
     counts: {
       elements: document.elements.length,
-      boundaries: (document.boundaries ?? []).length,
+      boundaries: boundaryCount,
       relationships: document.relationships.length,
       views: document.views.length,
       records: document.records.length,
     },
     elements: document.elements,
-    boundaries: document.boundaries ?? [],
     relationships: document.relationships,
     views,
     records: document.records,

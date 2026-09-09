@@ -127,19 +127,19 @@ export function modelRoutes(services: Services): Router {
   /* ------------------------------ boundaries ------------------------------ */
 
   router.get(
-    "/workspaces/:id/boundaries",
+    "/views/:id/boundaries",
     handler((req, res) => res.json({ boundaries: services.boundaries.list(param(req, "id")) })),
   );
 
   router.post(
-    "/workspaces/:id/boundaries",
+    "/views/:id/boundaries",
     handler((req, res) =>
       res
         .status(201)
         .json(
           services.boundaries.create(
-            param(req, "id"),
-            CreateBoundarySchema.parse(req.body),
+            workspaceOfView(param(req, "id")),
+            CreateBoundarySchema.parse({ ...req.body, viewId: param(req, "id") }),
             mutationOptions(req),
           ),
         ),

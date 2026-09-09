@@ -180,6 +180,16 @@ function boundaryRepository(db: Executor): BoundaryRepository {
       const members = membersFor(rows.map((row) => row.id));
       return rows.map((row) => toBoundary(row, members.get(row.id) ?? []));
     },
+    listByView: (viewId) => {
+      const rows = db
+        .select()
+        .from(t.boundaries)
+        .where(eq(t.boundaries.viewId, viewId))
+        .orderBy(asc(t.boundaries.createdAt), asc(t.boundaries.id))
+        .all();
+      const members = membersFor(rows.map((row) => row.id));
+      return rows.map((row) => toBoundary(row, members.get(row.id) ?? []));
+    },
     findById: (id) => {
       const row = db.select().from(t.boundaries).where(eq(t.boundaries.id, id)).get();
       return row ? toBoundary(row, membersFor([id]).get(id) ?? []) : undefined;
@@ -200,6 +210,23 @@ function boundaryRepository(db: Executor): BoundaryRepository {
     },
     removeElementMemberships: (elementId) => {
       db.delete(t.boundaryMembers).where(eq(t.boundaryMembers.elementId, elementId)).run();
+    },
+    removeViewElementMembership: (viewId, elementId) => {
+      const boundaryIds = db
+        .select({ id: t.boundaries.id })
+        .from(t.boundaries)
+        .where(eq(t.boundaries.viewId, viewId))
+        .all()
+        .map((row) => row.id);
+      if (boundaryIds.length === 0) return;
+      db.delete(t.boundaryMembers)
+        .where(
+          and(
+            eq(t.boundaryMembers.elementId, elementId),
+            inArray(t.boundaryMembers.boundaryId, boundaryIds),
+          ),
+        )
+        .run();
     },
   };
 }

@@ -18,6 +18,7 @@ interface EditorState {
   bottomPanel: BottomPanel;
   commandOpen: boolean;
   paletteOpen: boolean;
+  paletteBoundaryId: string | null;
   connectFrom: string | null;
   focusRequest: { elementId: string; nonce: number } | null;
   pendingSave: number;
@@ -28,6 +29,7 @@ interface EditorState {
   setBottomPanel: (panel: BottomPanel) => void;
   setCommandOpen: (open: boolean) => void;
   setPaletteOpen: (open: boolean) => void;
+  openElementPalette: (boundaryId?: string | null) => void;
   setConnectFrom: (elementId: string | null) => void;
   requestFocus: (elementId: string) => void;
   beginSave: () => void;
@@ -40,6 +42,7 @@ export const useEditorStore = create<EditorState>((set) => ({
   bottomPanel: null,
   commandOpen: false,
   paletteOpen: false,
+  paletteBoundaryId: null,
   connectFrom: null,
   focusRequest: null,
   pendingSave: 0,
@@ -50,7 +53,9 @@ export const useEditorStore = create<EditorState>((set) => ({
   setBottomPanel: (bottomPanel) =>
     set((state) => ({ bottomPanel: state.bottomPanel === bottomPanel ? null : bottomPanel })),
   setCommandOpen: (commandOpen) => set({ commandOpen }),
-  setPaletteOpen: (paletteOpen) => set({ paletteOpen }),
+  setPaletteOpen: (paletteOpen) =>
+    set({ paletteOpen, ...(paletteOpen ? {} : { paletteBoundaryId: null }) }),
+  openElementPalette: (paletteBoundaryId = null) => set({ paletteOpen: true, paletteBoundaryId }),
   setConnectFrom: (connectFrom) => set({ connectFrom }),
   requestFocus: (elementId) => set({ focusRequest: { elementId, nonce: Date.now() } }),
   beginSave: () => set((state) => ({ pendingSave: state.pendingSave + 1 })),

@@ -92,7 +92,6 @@ export class WorkspaceService {
       return {
         workspace,
         elements: repos.elements.listByWorkspace(workspaceId),
-        boundaries: repos.boundaries.listByWorkspace(workspaceId),
         relationships: repos.relationships.listByWorkspace(workspaceId),
         revision: workspace.revision,
       };

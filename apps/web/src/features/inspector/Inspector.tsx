@@ -110,6 +110,21 @@ export function Inspector({
                   label: t("boundaries.membershipChanged"),
                   operations: nextBoundaryId
                     ? [
+                        ...(view && !view.elements.some((entry) => entry.elementId === element.id)
+                          ? [
+                              {
+                                op: "setViewElements" as const,
+                                viewId: view.id,
+                                elementIds: [element.id],
+                                mode: "add" as const,
+                              },
+                              {
+                                op: "setLayout" as const,
+                                viewId: view.id,
+                                entries: [{ elementId: element.id, hidden: false }],
+                              },
+                            ]
+                          : []),
                         {
                           op: "setBoundaryMembers",
                           boundaryId: nextBoundaryId,
@@ -136,7 +151,9 @@ export function Inspector({
             <RelationshipInspector
               key={relationship.id}
               relationship={relationship}
-              elements={elements}
+              elements={elements.filter((element) =>
+                view?.elements.some((entry) => entry.elementId === element.id),
+              )}
               workspaceId={workspaceId}
               viewId={view?.id}
               onPatch={(data, label) =>

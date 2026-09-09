@@ -66,13 +66,23 @@ export class ImportService {
           workspaceId: newId,
           parentId: element.parentId ? mapId(element.parentId) : null,
         })),
-        boundaries: (document.boundaries ?? []).map((boundary) => ({
-          ...boundary,
-          id: mapId(boundary.id),
-          workspaceId: newId,
-          parentBoundaryId: boundary.parentBoundaryId ? mapId(boundary.parentBoundaryId) : null,
-          elementIds: boundary.elementIds.map(mapId),
-        })),
+        boundaries: (document.boundaries ?? []).flatMap((boundary) => {
+          const ownerViewId = boundary.viewId ?? document.views[0]?.id;
+          return ownerViewId
+            ? [
+                {
+                  ...boundary,
+                  id: mapId(boundary.id),
+                  workspaceId: newId,
+                  viewId: mapId(ownerViewId),
+                  parentBoundaryId: boundary.parentBoundaryId
+                    ? mapId(boundary.parentBoundaryId)
+                    : null,
+                  elementIds: boundary.elementIds.map(mapId),
+                },
+              ]
+            : [];
+        }),
         relationships: document.relationships.map((relationship) => ({
           ...relationship,
           id: mapId(relationship.id),
@@ -96,6 +106,14 @@ export class ImportService {
               ...entry,
               viewId,
               relationshipId: mapId(entry.relationshipId),
+            })),
+            boundaries: (view.boundaries ?? []).map((boundary) => ({
+              ...boundary,
+              id: mapId(boundary.id),
+              workspaceId: newId,
+              viewId,
+              parentBoundaryId: boundary.parentBoundaryId ? mapId(boundary.parentBoundaryId) : null,
+              elementIds: boundary.elementIds.map(mapId),
             })),
           };
         }),

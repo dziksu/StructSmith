@@ -118,12 +118,12 @@ export const api = {
     request<{ elements: ArchitectureElement[] }>(`/workspaces/${id}/elements`).then(
       (r) => r.elements,
     ),
-  listBoundaries: (id: string) =>
-    request<{ boundaries: ArchitectureBoundary[] }>(`/workspaces/${id}/boundaries`).then(
+  listBoundaries: (viewId: string) =>
+    request<{ boundaries: ArchitectureBoundary[] }>(`/views/${viewId}/boundaries`).then(
       (r) => r.boundaries,
     ),
-  createBoundary: (id: string, input: CreateBoundaryInput) =>
-    request<{ result: ArchitectureBoundary; revision: number }>(`/workspaces/${id}/boundaries`, {
+  createBoundary: (viewId: string, input: Omit<CreateBoundaryInput, "viewId">) =>
+    request<{ result: ArchitectureBoundary; revision: number }>(`/views/${viewId}/boundaries`, {
       method: "POST",
       ...body(input),
     }),

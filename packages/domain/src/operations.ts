@@ -78,6 +78,7 @@ export function applyOperations(
       case "createBoundary": {
         const boundary = engine.createBoundary(repos, workspace, {
           ...operation.data,
+          viewId: refs.resolve(operation.data.viewId),
           parentBoundaryId: refs.resolve(operation.data.parentBoundaryId),
           elementIds: operation.data.elementIds
             ? refs.resolveAll(operation.data.elementIds)

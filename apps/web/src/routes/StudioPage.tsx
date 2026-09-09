@@ -111,7 +111,7 @@ function StudioContent({
   }, [reference, requestFocus, select, setExplorerTab]);
 
   const elements = useMemo(() => model.data?.elements ?? [], [model.data]);
-  const boundaries = useMemo(() => model.data?.boundaries ?? [], [model.data]);
+  const boundaries = useMemo(() => view.data?.boundaries ?? [], [view.data]);
   const relationships = useMemo(() => model.data?.relationships ?? [], [model.data]);
   const recordList = useMemo(() => records.data ?? [], [records.data]);
   const viewList = useMemo(() => views.data ?? [], [views.data]);

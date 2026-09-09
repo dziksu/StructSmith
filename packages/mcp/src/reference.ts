@@ -43,15 +43,22 @@ export function resolveReference(
   }
 
   if (type === "boundary") {
-    const boundaries = document.boundaries ?? [];
+    const nestedBoundaries = document.views.flatMap((view) => view.boundaries);
+    const boundaries = nestedBoundaries.length > 0 ? nestedBoundaries : (document.boundaries ?? []);
     const target = boundaries.find((item) => item.id === targetId);
     if (!target) throw new Error(`Boundary not found: ${targetId}`);
     return {
       reference,
       target,
       context: {
-        parent: boundaries.find((item) => item.id === target.parentBoundaryId) ?? null,
-        children: boundaries.filter((item) => item.parentBoundaryId === target.id),
+        view: document.views.find((item) => item.id === target.viewId) ?? null,
+        parent:
+          boundaries.find(
+            (item) => item.viewId === target.viewId && item.id === target.parentBoundaryId,
+          ) ?? null,
+        children: boundaries.filter(
+          (item) => item.viewId === target.viewId && item.parentBoundaryId === target.id,
+        ),
         members: document.elements.filter((item) => target.elementIds.includes(item.id)),
       },
     };

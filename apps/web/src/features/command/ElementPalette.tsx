@@ -27,6 +27,7 @@ export function ElementPalette({
 }) {
   const { t } = useTranslation();
   const open = useEditorStore((state) => state.paletteOpen);
+  const boundaryId = useEditorStore((state) => state.paletteBoundaryId);
   const setOpen = useEditorStore((state) => state.setPaletteOpen);
   const select = useEditorStore((state) => state.select);
   const applyOperations = useApplyOperations(workspaceId);
@@ -56,6 +57,16 @@ export function ElementPalette({
                   elementIds: ["@created"],
                   mode: "add" as const,
                 },
+                ...(boundaryId
+                  ? [
+                      {
+                        op: "setBoundaryMembers" as const,
+                        boundaryId,
+                        elementIds: ["@created"],
+                        mode: "add" as const,
+                      },
+                    ]
+                  : []),
               ]
             : []),
         ],

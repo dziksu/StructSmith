@@ -342,7 +342,7 @@ GET    /api/workspaces/:id/export/mermaid
 POST   /api/workspaces/:id/commands         # atomic batch of operations
 
 POST   /api/workspaces/:id/elements         PATCH/DELETE /api/elements/:id
-GET/POST /api/workspaces/:id/boundaries     PATCH/DELETE /api/boundaries/:id
+GET/POST /api/views/:id/boundaries          PATCH/DELETE /api/boundaries/:id
 POST   /api/workspaces/:id/relationships    PATCH/DELETE /api/relationships/:id
 GET/POST /api/workspaces/:id/views          GET/PATCH/DELETE /api/views/:id
 PATCH  /api/views/:id/layout                # batched, debounced layout write
@@ -367,11 +367,13 @@ Errors always use the same envelope:
 - Desktop-first three-pane layout: explorer, canvas, inspector — all resizable
 - Custom React Flow nodes with icon, name, technology and a kind/role badge; external
   elements are visually distinct
-- Semantic, nested boundaries for deployment, security, compliance and ownership layers;
-  each view chooses which layer to display
+- Semantic, nested boundaries owned by a view, so the same model element can be grouped
+  differently on deployment, security, compliance and ownership diagrams
+- Explorer separates the active view tree from the reusable element library; elements can be
+  added or dragged into a view or one of its boundaries
 - Manual layout (debounced batch save) and automatic dagre, force, radial and grid layouts;
   compound dagre layout keeps boundary members together
-- Views: the same element on many diagrams, each with its own layout
+- Views: the same element on many diagrams, each with its own structure, boundaries and layout
 - Presales records linked to elements, with a subtle risk indicator on the canvas
 - Deterministic validator with error / warning / info levels
 - Export: semantic JSON, Mermaid, PNG, SVG. Import: native JSON

@@ -40,11 +40,13 @@ export interface RelationshipRepository {
 
 export interface BoundaryRepository {
   listByWorkspace(workspaceId: string): ArchitectureBoundary[];
+  listByView(viewId: string): ArchitectureBoundary[];
   findById(id: string): ArchitectureBoundary | undefined;
   insert(boundary: ArchitectureBoundary): void;
   update(boundary: ArchitectureBoundary): void;
   delete(id: string): void;
   removeElementMemberships(elementId: string): void;
+  removeViewElementMembership(viewId: string, elementId: string): void;
 }
 
 export interface ViewRepository {

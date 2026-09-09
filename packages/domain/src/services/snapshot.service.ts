@@ -101,13 +101,28 @@ export function restoreDocument(repos: Repositories, document: WorkspaceDocument
   }
 
   for (const element of inParentOrder(document.elements)) repos.elements.insert(element);
-  for (const boundary of boundariesInParentOrder(document.boundaries ?? [])) {
+  for (const view of document.views) {
+    const { boundaries: _boundaries, elements, relationships, ...rest } = view;
+    repos.views.insert(rest);
+  }
+  const fallbackViewId = document.views[0]?.id;
+  const nestedBoundaries = document.views.flatMap((view) =>
+    view.boundaries.map((boundary) => ({ ...boundary, viewId: view.id })),
+  );
+  const legacyBoundaries = (document.boundaries ?? []).map((boundary) => ({
+    ...boundary,
+    // Compatibility with snapshots written before boundaries were view-owned.
+    viewId: boundary.viewId ?? fallbackViewId,
+  }));
+  const boundaries = nestedBoundaries.length > 0 ? nestedBoundaries : legacyBoundaries;
+  for (const boundary of boundariesInParentOrder(
+    boundaries.filter((boundary) => Boolean(boundary.viewId)) as ArchitectureBoundary[],
+  )) {
     repos.boundaries.insert(boundary);
   }
   for (const relationship of document.relationships) repos.relationships.insert(relationship);
   for (const view of document.views) {
-    const { elements, relationships, ...rest } = view;
-    repos.views.insert(rest);
+    const { elements, relationships } = view;
     for (const entry of elements) repos.views.upsertElement(entry);
     for (const entry of relationships) repos.views.upsertRelationship(entry);
   }

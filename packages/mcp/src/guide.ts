@@ -56,8 +56,8 @@ export function modelingGuide() {
       "Containers belong to software systems; components belong to containers.",
       "Use external=true for systems outside the modeled ownership boundary.",
       "Records capture assumptions, risks, unknowns, requirements, decisions and notes; they are not diagram nodes.",
-      "Boundaries group elements by deployment, security, compliance or ownership semantics. They are not elements and cannot be relationship endpoints.",
-      "An element can belong to at most one boundary in a layer, while belonging to boundaries in other layers.",
+      "Boundaries belong to a view. They group that view's elements by deployment, security, compliance or ownership semantics; they are not model elements or relationship endpoints.",
+      "The same model element can have different boundary membership in different views. Within one view it can belong to at most one boundary in a layer.",
     ],
     enums: {
       elementKinds,
@@ -100,7 +100,7 @@ export function modelingGuide() {
       relationshipBehavior:
         "Visible relationships are derived from the semantic model. Descendant relationships may be lifted and grouped; explicit view relationship entries only customize visibility and routing.",
       boundaryBehavior:
-        "The view boundaryLayer selects which semantic layer is rendered. showBoundaries controls its visibility. Nested boundaries derive their rectangles from visible members and child boundaries.",
+        "Each view owns its boundary tree. The view boundaryLayer selects which layer is rendered and showBoundaries controls its visibility. Add elements to the view before assigning them to one of its boundaries.",
     },
     concurrency: {
       expectedRevision:

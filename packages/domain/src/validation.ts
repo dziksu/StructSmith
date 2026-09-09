@@ -8,8 +8,10 @@ import { checkParent, wouldCreateCycle } from "./rules";
 export function validateDocument(document: WorkspaceDocument): ValidationResult {
   const issues: ValidationIssue[] = [];
   const { elements, relationships, views } = document;
-  const boundaries = document.boundaries ?? [];
+  const nestedBoundaries = views.flatMap((view) => view.boundaries);
+  const boundaries = nestedBoundaries.length > 0 ? nestedBoundaries : (document.boundaries ?? []);
   const byId = new Map(elements.map((element) => [element.id, element]));
+  const viewsById = new Map(views.map((view) => [view.id, view] as const));
 
   const elementsInViews = new Set<string>();
   for (const view of views) {
@@ -19,6 +21,16 @@ export function validateDocument(document: WorkspaceDocument): ValidationResult 
   const boundaryById = new Map(boundaries.map((boundary) => [boundary.id, boundary] as const));
   const memberships = new Map<string, string>();
   for (const boundary of boundaries) {
+    const boundaryView = viewsById.get(boundary.viewId);
+    if (!boundaryView) {
+      issues.push({
+        level: "error",
+        code: "BOUNDARY_VIEW_MISSING",
+        message: `Boundary "${boundary.name}" references a view that does not exist.`,
+        boundaryId: boundary.id,
+        viewId: boundary.viewId,
+      });
+    }
     const parent = boundary.parentBoundaryId
       ? boundaryById.get(boundary.parentBoundaryId)
       : undefined;
@@ -28,6 +40,14 @@ export function validateDocument(document: WorkspaceDocument): ValidationResult 
         code: "BOUNDARY_PARENT_MISSING",
         message: `Boundary "${boundary.name}" references a parent that does not exist.`,
         boundaryId: boundary.id,
+      });
+    } else if (parent && parent.viewId !== boundary.viewId) {
+      issues.push({
+        level: "error",
+        code: "BOUNDARY_VIEW_MISMATCH",
+        message: `Boundary "${boundary.name}" is nested in a different view.`,
+        boundaryId: boundary.id,
+        viewId: boundary.viewId,
       });
     } else if (parent && parent.layer !== boundary.layer) {
       issues.push({
@@ -61,13 +81,23 @@ export function validateDocument(document: WorkspaceDocument): ValidationResult 
           boundaryId: boundary.id,
         });
       }
-      const key = `${boundary.layer}:${elementId}`;
+      if (boundaryView && !boundaryView.elements.some((entry) => entry.elementId === elementId)) {
+        issues.push({
+          level: "error",
+          code: "BOUNDARY_MEMBER_NOT_IN_VIEW",
+          message: `Boundary "${boundary.name}" contains an element outside its view.`,
+          elementId,
+          boundaryId: boundary.id,
+          viewId: boundary.viewId,
+        });
+      }
+      const key = `${boundary.viewId}:${boundary.layer}:${elementId}`;
       const previous = memberships.get(key);
       if (previous && previous !== boundary.id) {
         issues.push({
           level: "error",
           code: "BOUNDARY_MEMBER_DUPLICATE",
-          message: `An element belongs to two boundaries in the ${boundary.layer} layer.`,
+          message: `An element belongs to two boundaries in the ${boundary.layer} layer of one view.`,
           elementId,
           boundaryId: boundary.id,
         });

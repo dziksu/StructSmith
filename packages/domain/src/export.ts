@@ -95,9 +95,14 @@ export function toMermaid(
     }
   };
 
-  const activeBoundaries = (document.boundaries ?? []).filter(
-    (boundary) => boundary.layer === (view?.settings.boundaryLayer ?? "deployment"),
-  );
+  const nestedBoundaries = document.views.flatMap((candidate) => candidate.boundaries);
+  const allBoundaries =
+    nestedBoundaries.length > 0 ? nestedBoundaries : (document.boundaries ?? []);
+  const activeBoundaries = view
+    ? allBoundaries.filter(
+        (boundary) => boundary.viewId === view.id && boundary.layer === view.settings.boundaryLayer,
+      )
+    : [];
   const boundaryIds = new Set(activeBoundaries.map((boundary) => boundary.id));
   const renderBoundary = (boundary: ArchitectureBoundary, indent: string): void => {
     if (renderedBoundaries.has(boundary.id)) return;
@@ -168,32 +173,28 @@ export function toOutline(document: WorkspaceDocument): string {
   lines.push("", "## Elements");
   for (const element of childrenOf(null)) render(element, 0);
 
-  const boundaries = document.boundaries ?? [];
-  if (boundaries.length > 0) {
-    const elementsById = new Map(document.elements.map((element) => [element.id, element]));
-    const renderBoundary = (boundary: ArchitectureBoundary, depth: number): void => {
-      const indent = "  ".repeat(depth);
-      const classification = boundary.classification ? ` · ${boundary.classification}` : "";
-      lines.push(
-        `${indent}- ${boundary.name} (${boundary.kind} · ${boundary.layer}${classification}) [${boundary.id}]`,
-      );
-      for (const elementId of boundary.elementIds) {
-        lines.push(`${indent}  - member: ${elementsById.get(elementId)?.name ?? elementId}`);
-      }
-      for (const child of boundaries.filter(
-        (candidate) => candidate.parentBoundaryId === boundary.id,
-      )) {
-        renderBoundary(child, depth + 1);
-      }
-    };
-    const boundaryIds = new Set(boundaries.map((boundary) => boundary.id));
-    lines.push("", "## Boundaries");
-    for (const boundary of boundaries) {
-      if (!boundary.parentBoundaryId || !boundaryIds.has(boundary.parentBoundaryId)) {
-        renderBoundary(boundary, 0);
-      }
+  const nestedBoundaries = document.views.flatMap((view) => view.boundaries);
+  const boundaries = nestedBoundaries.length > 0 ? nestedBoundaries : (document.boundaries ?? []);
+  const elementsById = new Map(document.elements.map((element) => [element.id, element]));
+  const renderBoundary = (
+    boundary: ArchitectureBoundary,
+    candidates: readonly ArchitectureBoundary[],
+    depth: number,
+  ): void => {
+    const indent = "  ".repeat(depth);
+    const classification = boundary.classification ? ` · ${boundary.classification}` : "";
+    lines.push(
+      `${indent}- ${boundary.name} (${boundary.kind} · ${boundary.layer}${classification}) [${boundary.id}]`,
+    );
+    for (const elementId of boundary.elementIds) {
+      lines.push(`${indent}  - member: ${elementsById.get(elementId)?.name ?? elementId}`);
     }
-  }
+    for (const child of candidates.filter(
+      (candidate) => candidate.parentBoundaryId === boundary.id,
+    )) {
+      renderBoundary(child, candidates, depth + 1);
+    }
+  };
 
   lines.push("", "## Relationships");
   const byId = new Map(document.elements.map((element) => [element.id, element]));
@@ -211,6 +212,13 @@ export function toOutline(document: WorkspaceDocument): string {
   lines.push("", "## Views");
   for (const view of document.views) {
     lines.push(`- ${view.name} (${view.kind}, key=${view.key}) — ${view.elements.length} elements`);
+    const viewBoundaries = boundaries.filter((boundary) => boundary.viewId === view.id);
+    const boundaryIds = new Set(viewBoundaries.map((boundary) => boundary.id));
+    for (const boundary of viewBoundaries) {
+      if (!boundary.parentBoundaryId || !boundaryIds.has(boundary.parentBoundaryId)) {
+        renderBoundary(boundary, viewBoundaries, 1);
+      }
+    }
   }
 
   if (document.records.length > 0) {

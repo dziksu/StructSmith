@@ -579,31 +579,57 @@ export function Canvas({
       event.preventDefault();
       const elementId = event.dataTransfer.getData(DRAG_MIME);
       if (!elementId) return;
-      if (view.elements.some((entry) => entry.elementId === elementId && !entry.hidden)) {
+      const targetNode = (event.target as Element | null)?.closest<HTMLElement>(
+        ".react-flow__node-boundary",
+      );
+      const candidateBoundaryId = targetNode?.dataset.id?.startsWith("boundary:")
+        ? boundaryElementId(targetNode.dataset.id)
+        : null;
+      const targetBoundaryId = boundaries.some((boundary) => boundary.id === candidateBoundaryId)
+        ? candidateBoundaryId
+        : null;
+      const alreadyVisible = view.elements.some(
+        (entry) => entry.elementId === elementId && !entry.hidden,
+      );
+      if (alreadyVisible && !targetBoundaryId) {
         toast.message(t("explorer.inView"));
         return;
       }
       const position = flow.screenToFlowPosition({ x: event.clientX, y: event.clientY });
       applyOperations.mutate({
-        label: t("explorer.addToView"),
+        label: targetBoundaryId ? t("boundaries.membershipChanged") : t("explorer.addToView"),
         operations: [
           { op: "setViewElements", viewId: view.id, elementIds: [elementId], mode: "add" },
-          {
-            op: "setLayout",
-            viewId: view.id,
-            entries: [
-              {
-                elementId,
-                x: Math.round(position.x - NODE_WIDTH / 2),
-                y: Math.round(position.y - NODE_HEIGHT / 2),
-                hidden: false,
-              },
-            ],
-          },
+          ...(!alreadyVisible
+            ? [
+                {
+                  op: "setLayout" as const,
+                  viewId: view.id,
+                  entries: [
+                    {
+                      elementId,
+                      x: Math.round(position.x - NODE_WIDTH / 2),
+                      y: Math.round(position.y - NODE_HEIGHT / 2),
+                      hidden: false,
+                    },
+                  ],
+                },
+              ]
+            : []),
+          ...(targetBoundaryId
+            ? [
+                {
+                  op: "setBoundaryMembers" as const,
+                  boundaryId: targetBoundaryId,
+                  elementIds: [elementId],
+                  mode: "add" as const,
+                },
+              ]
+            : []),
         ],
       });
     },
-    [applyOperations, flow, t, view.elements, view.id],
+    [applyOperations, boundaries, flow, t, view.elements, view.id],
   );
 
   /* --------------------------------- render --------------------------------- */

@@ -97,6 +97,7 @@ export type UpdateElementInput = z.infer<typeof UpdateElementSchema>;
 export const ArchitectureBoundarySchema = z.object({
   id: IdSchema,
   workspaceId: IdSchema,
+  viewId: IdSchema,
   parentBoundaryId: IdSchema.nullable(),
   kind: BoundaryKindSchema,
   layer: BoundaryLayerSchema,
@@ -113,6 +114,7 @@ export type ArchitectureBoundary = z.infer<typeof ArchitectureBoundarySchema>;
 
 export const CreateBoundarySchema = z.object({
   id: IdSchema.optional(),
+  viewId: IdSchema,
   parentBoundaryId: IdSchema.nullable().optional(),
   kind: BoundaryKindSchema,
   layer: BoundaryLayerSchema.default("deployment"),
@@ -125,7 +127,7 @@ export const CreateBoundarySchema = z.object({
 });
 export type CreateBoundaryInput = z.input<typeof CreateBoundarySchema>;
 
-export const UpdateBoundarySchema = CreateBoundarySchema.omit({ id: true }).partial();
+export const UpdateBoundarySchema = CreateBoundarySchema.omit({ id: true, viewId: true }).partial();
 export type UpdateBoundaryInput = z.infer<typeof UpdateBoundarySchema>;
 
 /* ------------------------------------------------------------------ */
@@ -242,6 +244,7 @@ export type ArchitectureView = z.infer<typeof ArchitectureViewSchema>;
 
 /** A view together with its layout rows. */
 export const ViewDetailSchema = ArchitectureViewSchema.extend({
+  boundaries: z.array(ArchitectureBoundarySchema).default([]),
   elements: z.array(ViewElementSchema),
   relationships: z.array(ViewRelationshipSchema),
 });
@@ -359,7 +362,6 @@ export type ActivityEntry = z.infer<typeof ActivityEntrySchema>;
 export const ArchitectureModelSchema = z.object({
   workspace: WorkspaceSchema,
   elements: z.array(ArchitectureElementSchema),
-  boundaries: z.array(ArchitectureBoundarySchema),
   relationships: z.array(ArchitectureRelationshipSchema),
   revision: z.number().int(),
 });

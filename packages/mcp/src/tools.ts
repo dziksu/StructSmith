@@ -306,10 +306,10 @@ export function registerTools(
     "boundary_list",
     {
       description: describe("boundary_list"),
-      inputSchema: { workspaceId },
+      inputSchema: { viewId: z.string() },
       annotations: readOnlyAnnotations,
     },
-    ({ workspaceId: id }) => json(services.boundaries.list(id)),
+    ({ viewId }) => json(services.boundaries.list(viewId)),
   );
 
   registerWrite(

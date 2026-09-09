@@ -79,6 +79,7 @@ export const boundaries = sqliteTable(
     workspaceId: text("workspace_id")
       .notNull()
       .references(() => workspaces.id, { onDelete: "cascade" }),
+    viewId: text("view_id").notNull(),
     parentBoundaryId: text("parent_boundary_id"),
     kind: text("kind").notNull(),
     layer: text("layer").notNull().default("deployment"),
@@ -92,6 +93,7 @@ export const boundaries = sqliteTable(
   },
   (table) => [
     index("idx_boundaries_workspace").on(table.workspaceId),
+    index("idx_boundaries_view").on(table.viewId),
     index("idx_boundaries_parent").on(table.parentBoundaryId),
   ],
 );

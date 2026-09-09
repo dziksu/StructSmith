@@ -66,7 +66,7 @@ export const MCP_TOOLS: readonly McpToolInfo[] = [
 
   {
     name: "boundary_list",
-    description: "List semantic boundaries and their members.",
+    description: "List one view's boundaries and their members.",
     mutating: false,
   },
   { name: "boundary_create", description: "Create a semantic boundary.", mutating: true },

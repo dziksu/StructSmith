@@ -4,7 +4,7 @@ import { computeSemanticBoundaries } from "../apps/web/src/features/canvas/graph
 import { createTestContext, createWorkspace } from "./helpers";
 
 describe("semantic boundaries", () => {
-  test("persist nested boundaries and keep one membership per layer", () => {
+  test("keeps boundary trees and memberships independent between views", () => {
     const { services, close } = createTestContext();
     try {
       const workspace = createWorkspace(services);
@@ -12,11 +12,23 @@ describe("semantic boundaries", () => {
         kind: "container",
         name: "API",
       }).result;
+      const deployment = services.views.create(workspace.id, {
+        kind: "deployment",
+        name: "Production deployment",
+        elementIds: [api.id],
+      }).result;
+      const security = services.views.create(workspace.id, {
+        kind: "custom",
+        name: "Security zones",
+        elementIds: [api.id],
+      }).result;
       const production = services.boundaries.create(workspace.id, {
+        viewId: deployment.id,
         kind: "environment",
         name: "Production",
       }).result;
       const application = services.boundaries.create(workspace.id, {
+        viewId: deployment.id,
         parentBoundaryId: production.id,
         kind: "networkZone",
         layer: "deployment",
@@ -25,6 +37,7 @@ describe("semantic boundaries", () => {
         elementIds: [api.id],
       }).result;
       const reassigned = services.boundaries.create(workspace.id, {
+        viewId: deployment.id,
         parentBoundaryId: production.id,
         kind: "trustZone",
         layer: "deployment",
@@ -33,18 +46,50 @@ describe("semantic boundaries", () => {
         elementIds: [api.id],
       }).result;
       services.boundaries.create(workspace.id, {
+        viewId: deployment.id,
         kind: "complianceScope",
         layer: "compliance",
         name: "PCI scope",
         elementIds: [api.id],
       });
+      const internet = services.boundaries.create(workspace.id, {
+        viewId: security.id,
+        kind: "trustZone",
+        layer: "deployment",
+        classification: "public",
+        name: "Internet-facing",
+        elementIds: [api.id],
+      }).result;
 
       const document = services.model.getDocument(workspace.id);
-      const boundaries = document.boundaries ?? [];
-      expect(boundaries).toHaveLength(4);
+      const boundaries = document.views.flatMap((view) => view.boundaries);
+      expect(boundaries).toHaveLength(5);
       expect(boundaries.find((item) => item.id === application.id)?.elementIds).toEqual([]);
       expect(boundaries.find((item) => item.id === reassigned.id)?.elementIds).toEqual([api.id]);
+      expect(boundaries.find((item) => item.id === internet.id)?.elementIds).toEqual([api.id]);
+      expect(services.views.get(deployment.id).boundaries).toHaveLength(4);
+      expect(services.views.get(security.id).boundaries).toHaveLength(1);
       expect(validateDocument(document).valid).toBe(true);
+      expect("boundaries" in services.model.get(workspace.id)).toBe(false);
+
+      services.views.setElements(workspace.id, deployment.id, [api.id], "remove");
+      expect(
+        services.views.get(deployment.id).boundaries.flatMap((boundary) => boundary.elementIds),
+      ).toEqual([]);
+      expect(services.views.get(security.id).boundaries[0]?.elementIds).toEqual([api.id]);
+
+      const outside = services.elements.create(workspace.id, {
+        kind: "container",
+        name: "Outside this view",
+      }).result;
+      expect(() =>
+        services.boundaries.create(workspace.id, {
+          viewId: deployment.id,
+          kind: "networkZone",
+          name: "Invalid zone",
+          elementIds: [outside.id],
+        }),
+      ).toThrow("must be added to the view");
     } finally {
       close();
     }
@@ -61,13 +106,28 @@ describe("semantic boundaries", () => {
           operations: [
             { op: "createElement", ref: "api", data: { kind: "container", name: "API" } },
             {
+              op: "createView",
+              ref: "deployment",
+              data: {
+                kind: "deployment",
+                name: "Production deployment",
+                elementIds: ["@api"],
+              },
+            },
+            {
               op: "createBoundary",
               ref: "production",
-              data: { kind: "environment", layer: "deployment", name: "Production" },
+              data: {
+                viewId: "@deployment",
+                kind: "environment",
+                layer: "deployment",
+                name: "Production",
+              },
             },
             {
               op: "createBoundary",
               data: {
+                viewId: "@deployment",
                 parentBoundaryId: "@production",
                 kind: "networkZone",
                 layer: "deployment",
@@ -82,12 +142,24 @@ describe("semantic boundaries", () => {
       );
 
       const document = services.model.getDocument(workspace.id);
-      expect(document.boundaries).toHaveLength(2);
-      expect(toMermaid(document)).toContain("subgraph");
-      expect(toMermaid(document)).toContain("Private application zone");
+      expect(document.views[0]?.boundaries).toHaveLength(2);
+      expect(toMermaid(document, { view: document.views[0] })).toContain("subgraph");
+      expect(toMermaid(document, { view: document.views[0] })).toContain(
+        "Private application zone",
+      );
+
+      const withBoundaries = services.snapshots.create(workspace.id, "With view boundaries");
+      services.boundaries.delete(workspace.id, document.views[0]?.boundaries[0]?.id as string, {
+        cascade: true,
+      });
+      expect(services.views.get(document.views[0]?.id as string).boundaries).toEqual([]);
+      services.snapshots.restore(withBoundaries.id);
+      expect(services.views.get(document.views[0]?.id as string).boundaries).toHaveLength(2);
 
       services.snapshots.restore(result.snapshotId as string);
-      expect(services.model.getDocument(workspace.id).boundaries).toEqual([]);
+      expect(
+        services.model.getDocument(workspace.id).views.flatMap((view) => view.boundaries),
+      ).toEqual([]);
     } finally {
       close();
     }
@@ -98,6 +170,7 @@ describe("semantic boundaries", () => {
       {
         id: "production",
         workspaceId: "workspace",
+        viewId: "view",
         parentBoundaryId: null,
         kind: "environment" as const,
         layer: "deployment" as const,
@@ -113,6 +186,7 @@ describe("semantic boundaries", () => {
       {
         id: "private",
         workspaceId: "workspace",
+        viewId: "view",
         parentBoundaryId: "production",
         kind: "networkZone" as const,
         layer: "deployment" as const,
