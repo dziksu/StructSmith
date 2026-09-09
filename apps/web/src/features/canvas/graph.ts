@@ -108,7 +108,9 @@ export function buildGraph({ view, elements, relationships, records }: BuildInpu
         showDescriptions: view.settings.showDescriptions,
         minimumHeight: size.height,
       },
-      zIndex: entry.zIndex,
+      // Keep semantic boundaries above the canvas background, relationship
+      // paths above their fills, and cards above both.
+      zIndex: 20 + entry.zIndex,
       width: size.width,
       height: expanded ? undefined : size.height,
       style: expanded ? { minHeight: size.height } : undefined,
@@ -139,6 +141,7 @@ export function buildGraph({ view, elements, relationships, records }: BuildInpu
       targetHandle: view.settings.autoLayoutDirection === "TB" ? "t" : undefined,
       selectable: unambiguous,
       deletable: unambiguous,
+      zIndex: 10,
       data: {
         relationship: first,
         implied: edge.implied,
@@ -159,6 +162,27 @@ export interface BoundarySource {
   y: number;
   width: number;
   height: number;
+}
+
+function boundaryStyle(
+  classification: ArchitectureBoundary["classification"],
+  width: number,
+  height: number,
+): Record<string, string | number> {
+  const accent =
+    classification === "public"
+      ? "var(--ownership-external)"
+      : classification === "private"
+        ? "var(--ownership-internal)"
+        : "var(--boundary)";
+  return {
+    width,
+    height,
+    border: `4px solid ${accent}`,
+    borderRadius: 12,
+    backgroundColor: `color-mix(in srgb, ${accent} 22%, transparent)`,
+    boxShadow: `inset 0 0 0 1px color-mix(in srgb, ${accent} 35%, transparent)`,
+  };
 }
 
 /**
@@ -198,6 +222,8 @@ export function computeBoundaries(
       id: `boundary:${parentId}`,
       type: "boundary",
       position: { x: minX - BOUNDARY_PADDING, y: minY - BOUNDARY_PADDING - BOUNDARY_HEADER },
+      width: maxX - minX + BOUNDARY_PADDING * 2,
+      height: maxY - minY + BOUNDARY_PADDING * 2 + BOUNDARY_HEADER,
       data: {
         name: parent.name,
         layer: "deployment",
@@ -208,11 +234,12 @@ export function computeBoundaries(
       selectable: true,
       connectable: false,
       deletable: false,
-      zIndex: -1,
-      style: {
-        width: maxX - minX + BOUNDARY_PADDING * 2,
-        height: maxY - minY + BOUNDARY_PADDING * 2 + BOUNDARY_HEADER,
-      },
+      zIndex: 0,
+      style: boundaryStyle(
+        parent.external ? "public" : null,
+        maxX - minX + BOUNDARY_PADDING * 2,
+        maxY - minY + BOUNDARY_PADDING * 2 + BOUNDARY_HEADER,
+      ),
     });
   }
   return nodes;
@@ -283,6 +310,8 @@ export function computeSemanticBoundaries(
         id: `boundary:${boundary.id}`,
         type: "boundary" as const,
         position: { x: box.x, y: box.y },
+        width: box.width,
+        height: box.height,
         data: {
           name: boundary.name,
           layer: boundary.layer,
@@ -293,8 +322,8 @@ export function computeSemanticBoundaries(
         selectable: true,
         connectable: false,
         deletable: false,
-        zIndex: -100 + depth,
-        style: { width: box.width, height: box.height },
+        zIndex: depth,
+        style: boundaryStyle(boundary.classification, box.width, box.height),
       },
     ];
   });

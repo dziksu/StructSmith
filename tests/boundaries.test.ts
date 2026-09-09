@@ -140,6 +140,12 @@ describe("semantic boundaries", () => {
     const privateZone = rendered[1]?.style as { width: number; height: number };
     expect(production.width).toBeGreaterThan(privateZone.width);
     expect(production.height).toBeGreaterThan(privateZone.height);
+    // React Flow uses the node fields, rather than CSS dimensions, to decide
+    // whether a custom node can become visible.
+    expect(rendered[0]?.width).toBe(production.width);
+    expect(rendered[0]?.height).toBe(production.height);
+    expect(rendered[1]?.width).toBe(privateZone.width);
+    expect(rendered[1]?.height).toBe(privateZone.height);
 
     const positions = computeLayout(
       [

@@ -7,28 +7,30 @@ import type { BoundaryNodeData } from "./graph";
 /** A semantic boundary rendered from the live footprint of its visible members. */
 function BoundaryNodeComponent({ data, selected }: NodeProps & { data: BoundaryNodeData }) {
   const { t } = useTranslation();
+  const accent =
+    data.classification === "public"
+      ? "var(--ownership-external)"
+      : data.classification === "private"
+        ? "var(--ownership-internal)"
+        : "var(--boundary)";
 
   return (
     <div
       className={cn(
-        "as-node h-full w-full overflow-hidden rounded-lg border-2 border-dashed shadow-sm",
-        data.classification === "public"
-          ? "border-node-external-border bg-ownership-external/[0.09]"
-          : data.classification === "private"
-            ? "border-node-internal-border bg-ownership-internal/[0.10]"
-            : "border-muted-foreground/70 bg-muted/[0.08]",
+        "as-node h-full w-full overflow-hidden rounded-lg shadow-lg",
+        selected && "ring-2 ring-primary ring-offset-2 ring-offset-canvas",
       )}
-      style={selected ? { borderColor: "var(--primary)" } : undefined}
+      style={{
+        outline: selected ? "3px solid var(--primary)" : undefined,
+        outlineOffset: selected ? 2 : undefined,
+      }}
     >
       <div
-        className={cn(
-          "flex min-h-7 items-center gap-2 border-b px-3 py-1.5 text-[10.5px] font-semibold uppercase tracking-wider backdrop-blur-sm",
-          data.classification === "public"
-            ? "border-node-external-border/60 bg-ownership-external/15"
-            : data.classification === "private"
-              ? "border-node-internal-border/60 bg-ownership-internal/15"
-              : "border-border bg-card/85",
-        )}
+        className="flex min-h-9 items-center gap-2 border-b-2 px-3 py-2 text-xs font-bold uppercase tracking-wider backdrop-blur-sm"
+        style={{
+          borderColor: accent,
+          backgroundColor: `color-mix(in oklch, ${accent} 34%, var(--canvas))`,
+        }}
       >
         <span
           className={cn(
@@ -36,7 +38,7 @@ function BoundaryNodeComponent({ data, selected }: NodeProps & { data: BoundaryN
             data.classification === "public" ? "bg-ownership-external" : "bg-ownership-internal",
           )}
         />
-        <span className="text-foreground">{data.name}</span>
+        <span className="text-foreground drop-shadow-sm">{data.name}</span>
         <span
           className={cn(
             "font-medium",
