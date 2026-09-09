@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.8.0](https://github.com/dziksu/structsmith/compare/v1.7.0...v1.8.0) (2026-09-09)
+
+### Features
+
+* **model:** add semantic architecture boundaries ([#46](https://github.com/dziksu/structsmith/issues/46)) ([4e16821](https://github.com/dziksu/structsmith/commit/4e16821d1cf3df82729f5ae9717332268e43aa82))
+
 ## [1.7.0](https://github.com/dziksu/structsmith/compare/v1.6.2...v1.7.0) (2026-09-09)
 
 ### Features
