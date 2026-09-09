@@ -178,10 +178,9 @@ function boundaryStyle(
   return {
     width,
     height,
-    border: `4px solid ${accent}`,
+    border: `1px solid color-mix(in oklch, ${accent} 45%, var(--canvas))`,
     borderRadius: 12,
     backgroundColor: `color-mix(in srgb, ${accent} 8%, transparent)`,
-    boxShadow: `inset 0 0 0 1px color-mix(in srgb, ${accent} 35%, transparent)`,
   };
 }
 
