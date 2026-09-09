@@ -43,6 +43,10 @@ export function ModelTree({ workspaceId, elements, boundaries, view }: ModelTree
       ),
     [view],
   );
+  const activeBoundaries = boundaries.filter(
+    (boundary) => boundary.layer === (view?.settings.boundaryLayer ?? "deployment"),
+  );
+  const assignedToBoundary = new Set(activeBoundaries.flatMap((boundary) => boundary.elementIds));
 
   const matches = useMemo(() => {
     const needle = filter.trim().toLowerCase();
@@ -58,7 +62,9 @@ export function ModelTree({ workspaceId, elements, boundaries, view }: ModelTree
     );
   }, [elements, filter]);
 
-  const roots = elements.filter((element) => !element.parentId);
+  const roots = elements.filter(
+    (element) => !element.parentId && !assignedToBoundary.has(element.id),
+  );
   const groups: Group[] = [
     {
       key: "people",
@@ -130,14 +136,42 @@ export function ModelTree({ workspaceId, elements, boundaries, view }: ModelTree
     });
 
   const renderBoundary = (boundary: ArchitectureBoundary, depth: number) => {
-    const children = boundaries.filter((candidate) => candidate.parentBoundaryId === boundary.id);
+    const children = activeBoundaries.filter(
+      (candidate) => candidate.parentBoundaryId === boundary.id,
+    );
+    const memberIds = new Set(boundary.elementIds);
+    const members = boundary.elementIds
+      .map((id) => elements.find((element) => element.id === id))
+      .filter((element): element is ArchitectureElement => Boolean(element))
+      .filter((element) => !element.parentId || !memberIds.has(element.parentId));
     const active = selection.type === "boundary" && selection.id === boundary.id;
+    const collapseKey = `boundary:${boundary.id}`;
+    const isCollapsed = collapsed[collapseKey] ?? false;
     return (
       <div key={boundary.id}>
         <div
           role="button"
           tabIndex={0}
           onClick={() => select({ type: "boundary", id: boundary.id })}
+          onDragOver={(event) => {
+            if (event.dataTransfer.types.includes(DRAG_MIME)) event.preventDefault();
+          }}
+          onDrop={(event) => {
+            event.preventDefault();
+            const elementId = event.dataTransfer.getData(DRAG_MIME);
+            if (!elementId) return;
+            applyOperations.mutate({
+              label: t("boundaries.membershipChanged"),
+              operations: [
+                {
+                  op: "setBoundaryMembers",
+                  boundaryId: boundary.id,
+                  elementIds: [elementId],
+                  mode: "add",
+                },
+              ],
+            });
+          }}
           onKeyDown={(event) =>
             event.key === "Enter" && select({ type: "boundary", id: boundary.id })
           }
@@ -147,6 +181,24 @@ export function ModelTree({ workspaceId, elements, boundaries, view }: ModelTree
           )}
           style={{ paddingLeft: 10 + depth * 12 }}
         >
+          {children.length > 0 || members.length > 0 ? (
+            <button
+              type="button"
+              className="rounded p-0.5 text-muted-foreground hover:text-foreground"
+              onClick={(event) => {
+                event.stopPropagation();
+                setCollapsed((current) => ({ ...current, [collapseKey]: !isCollapsed }));
+              }}
+            >
+              {isCollapsed ? (
+                <ChevronRight className="h-3 w-3" />
+              ) : (
+                <ChevronDown className="h-3 w-3" />
+              )}
+            </button>
+          ) : (
+            <span className="w-4" />
+          )}
           <SquareDashed className="h-3.5 w-3.5 text-muted-foreground" />
           <span className="flex-1 truncate">{boundary.name}</span>
           <span className="text-[9px] uppercase text-muted-foreground">
@@ -154,7 +206,10 @@ export function ModelTree({ workspaceId, elements, boundaries, view }: ModelTree
           </span>
           <button
             type="button"
-            className="hidden rounded p-0.5 text-muted-foreground hover:text-destructive group-hover:block"
+            className={cn(
+              "rounded p-0.5 text-muted-foreground hover:text-destructive",
+              active ? "block" : "hidden group-hover:block",
+            )}
             onClick={(event) => {
               event.stopPropagation();
               applyOperations.mutate({
@@ -166,14 +221,21 @@ export function ModelTree({ workspaceId, elements, boundaries, view }: ModelTree
             <Trash2 className="h-3 w-3" />
           </button>
         </div>
-        {children.map((child) => renderBoundary(child, depth + 1))}
+        {!isCollapsed && children.map((child) => renderBoundary(child, depth + 1))}
+        {!isCollapsed && members.map((member) => renderElement(member, depth + 1, memberIds))}
       </div>
     );
   };
 
-  const renderElement = (element: ArchitectureElement, depth: number) => {
+  const renderElement = (
+    element: ArchitectureElement,
+    depth: number,
+    allowedIds?: ReadonlySet<string>,
+  ) => {
     if (!isVisible(element)) return null;
-    const children = childrenOf(element.id);
+    const children = childrenOf(element.id).filter((child) =>
+      allowedIds ? allowedIds.has(child.id) : !assignedToBoundary.has(child.id),
+    );
     const isCollapsed = collapsed[element.id] ?? false;
     const Icon = iconFor(element.kind, element.role);
     const active = selection.type === "element" && selection.id === element.id;
@@ -271,7 +333,7 @@ export function ModelTree({ workspaceId, elements, boundaries, view }: ModelTree
           </span>
         </div>
 
-        {!isCollapsed && children.map((child) => renderElement(child, depth + 1))}
+        {!isCollapsed && children.map((child) => renderElement(child, depth + 1, allowedIds))}
       </div>
     );
   };
@@ -329,15 +391,13 @@ export function ModelTree({ workspaceId, elements, boundaries, view }: ModelTree
               <button
                 type="button"
                 onClick={createBoundary}
-                className="rounded p-0.5 hover:text-foreground"
+                className="flex items-center gap-1 rounded px-1 py-0.5 text-[10px] normal-case tracking-normal hover:bg-accent hover:text-foreground"
               >
                 <Plus className="h-3 w-3" />
+                {t("boundaries.add")}
               </button>
             </div>
-            {boundaries
-              .filter(
-                (boundary) => boundary.layer === (view?.settings.boundaryLayer ?? "deployment"),
-              )
+            {activeBoundaries
               .filter((boundary) => !boundary.parentBoundaryId)
               .map((boundary) => renderBoundary(boundary, 0))}
           </div>

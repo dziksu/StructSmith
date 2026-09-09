@@ -153,12 +153,26 @@ export function Inspector({
               key={boundary.id}
               boundary={boundary}
               boundaries={boundaries}
+              elements={elements}
               workspaceId={workspaceId}
               viewId={view?.id}
               onPatch={(data) =>
                 applyOperations.mutate({
                   label: t("boundaries.updated"),
                   operations: [{ op: "updateBoundary", boundaryId: boundary.id, data }],
+                })
+              }
+              onMemberChange={(elementId, member) =>
+                applyOperations.mutate({
+                  label: t("boundaries.membershipChanged"),
+                  operations: [
+                    {
+                      op: "setBoundaryMembers",
+                      boundaryId: boundary.id,
+                      elementIds: [elementId],
+                      mode: member ? "add" : "remove",
+                    },
+                  ],
                 })
               }
             />
@@ -208,19 +222,31 @@ export function Inspector({
 function BoundaryInspector({
   boundary,
   boundaries,
+  elements,
   workspaceId,
   viewId,
   onPatch,
+  onMemberChange,
 }: {
   boundary: ArchitectureBoundary;
   boundaries: readonly ArchitectureBoundary[];
+  elements: readonly ArchitectureElement[];
   workspaceId: string;
   viewId?: string;
   onPatch: (data: UpdateBoundaryInput) => void;
+  onMemberChange: (elementId: string, member: boolean) => void;
 }) {
   const { t } = useTranslation();
   const [name, setName] = useState(boundary.name);
   const [description, setDescription] = useState(boundary.description ?? "");
+  const [memberFilter, setMemberFilter] = useState("");
+  const memberIds = new Set(boundary.elementIds);
+  const visibleElements = elements
+    .filter((element) => element.name.toLowerCase().includes(memberFilter.trim().toLowerCase()))
+    .sort((left, right) => {
+      const membershipDifference = Number(memberIds.has(right.id)) - Number(memberIds.has(left.id));
+      return membershipDifference || left.name.localeCompare(right.name);
+    });
   const commitName = () => {
     const value = name.trim();
     if (value && value !== boundary.name) onPatch({ name: value });
@@ -370,6 +396,48 @@ function BoundaryInspector({
               ))}
           </SelectContent>
         </Select>
+      </Field>
+      <Field label={t("boundaries.memberElements")}>
+        <p className="text-[11px] leading-relaxed text-muted-foreground">
+          {t("boundaries.membershipHint")}
+        </p>
+        <Input
+          value={memberFilter}
+          onChange={(event) => setMemberFilter(event.target.value)}
+          placeholder={t("boundaries.filterElements")}
+          className="h-7"
+        />
+        <div className="max-h-72 space-y-1 overflow-y-auto rounded-md border border-border bg-background p-1">
+          {visibleElements.map((element) => {
+            const member = memberIds.has(element.id);
+            const assignedElsewhere = boundaries.find(
+              (candidate) =>
+                candidate.id !== boundary.id &&
+                candidate.layer === boundary.layer &&
+                candidate.elementIds.includes(element.id),
+            );
+            return (
+              <div
+                key={element.id}
+                className="flex items-center gap-2 rounded px-2 py-1.5 hover:bg-accent"
+              >
+                <Switch
+                  checked={member}
+                  onCheckedChange={(checked) => onMemberChange(element.id, checked)}
+                  aria-label={`${member ? t("boundaries.removeMember") : t("boundaries.addMember")} ${element.name}`}
+                />
+                <span className="min-w-0 flex-1">
+                  <span className="block truncate text-xs">{element.name}</span>
+                  {assignedElsewhere && (
+                    <span className="block truncate text-[10px] text-muted-foreground">
+                      {assignedElsewhere.name}
+                    </span>
+                  )}
+                </span>
+              </div>
+            );
+          })}
+        </div>
       </Field>
     </div>
   );

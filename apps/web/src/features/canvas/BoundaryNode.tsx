@@ -11,16 +11,25 @@ function BoundaryNodeComponent({ data, selected }: NodeProps & { data: BoundaryN
   return (
     <div
       className={cn(
-        "as-node h-full w-full rounded-lg border border-dashed",
+        "as-node h-full w-full overflow-hidden rounded-lg border-2 border-dashed shadow-sm",
         data.classification === "public"
-          ? "border-node-external-border/70 bg-ownership-external/[0.05]"
+          ? "border-node-external-border bg-ownership-external/[0.09]"
           : data.classification === "private"
-            ? "border-node-internal-border/80 bg-ownership-internal/[0.06]"
-            : "border-border/80 bg-muted/[0.04]",
+            ? "border-node-internal-border bg-ownership-internal/[0.10]"
+            : "border-muted-foreground/70 bg-muted/[0.08]",
       )}
       style={selected ? { borderColor: "var(--primary)" } : undefined}
     >
-      <div className="flex items-center gap-2 px-3 py-1.5 text-[10.5px] font-semibold uppercase tracking-wider">
+      <div
+        className={cn(
+          "flex min-h-7 items-center gap-2 border-b px-3 py-1.5 text-[10.5px] font-semibold uppercase tracking-wider backdrop-blur-sm",
+          data.classification === "public"
+            ? "border-node-external-border/60 bg-ownership-external/15"
+            : data.classification === "private"
+              ? "border-node-internal-border/60 bg-ownership-internal/15"
+              : "border-border bg-card/85",
+        )}
+      >
         <span
           className={cn(
             "h-2 w-2 rounded-sm",
