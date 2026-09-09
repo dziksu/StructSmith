@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.7.0](https://github.com/dziksu/structsmith/compare/v1.6.2...v1.7.0) (2026-09-09)
+
+### Features
+
+* **layout:** add graph arrangement algorithms ([48beb2d](https://github.com/dziksu/structsmith/commit/48beb2d22d1b97d3ad358549d3a11a845e774575))
+* **ui:** improve diagram presentation controls ([e0700c5](https://github.com/dziksu/structsmith/commit/e0700c5d248a7e32039ead5e94b32b98f6ef3378))
+
 ## [1.6.2](https://github.com/dziksu/structsmith/compare/v1.6.1...v1.6.2) (2026-09-08)
 
 ### Bug Fixes
