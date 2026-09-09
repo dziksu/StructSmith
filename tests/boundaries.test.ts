@@ -142,6 +142,10 @@ describe("semantic boundaries", () => {
       );
 
       const document = services.model.getDocument(workspace.id);
+      const productionId = result.appliedOperations.find(
+        (operation) => operation.ref === "production",
+      )?.id;
+      expect(productionId).toBeDefined();
       expect(document.views[0]?.boundaries).toHaveLength(2);
       expect(toMermaid(document, { view: document.views[0] })).toContain("subgraph");
       expect(toMermaid(document, { view: document.views[0] })).toContain(
@@ -149,7 +153,7 @@ describe("semantic boundaries", () => {
       );
 
       const withBoundaries = services.snapshots.create(workspace.id, "With view boundaries");
-      services.boundaries.delete(workspace.id, document.views[0]?.boundaries[0]?.id as string, {
+      services.boundaries.delete(workspace.id, productionId as string, {
         cascade: true,
       });
       expect(services.views.get(document.views[0]?.id as string).boundaries).toEqual([]);

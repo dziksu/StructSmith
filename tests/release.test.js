@@ -26,7 +26,9 @@ test("release syncs changelog and package version through one auto-merged pull r
   const stamp = `bun scripts/set-build-version.ts "\${{ steps.release.outputs.version }}"`;
   expect(workflow).toContain("id: changelog-pr");
   expect(workflow).toContain("steps.changelog-pr.outputs.pull-request-number != ''");
-  expect(workflow).toContain("gh pr merge --squash --auto");
+  expect(workflow).toContain('if [ "$merge_state" = "CLEAN" ]; then');
+  expect(workflow).toContain('gh pr merge --squash "$RELEASE_PR_NUMBER"');
+  expect(workflow).toContain('gh pr merge --squash --auto "$RELEASE_PR_NUMBER"');
   expect(workflow).toContain("GH_TOKEN:");
   expect(workflow).toContain("secrets.RELEASE_PR_TOKEN");
   expect(workflow).toContain(stamp);
