@@ -59,8 +59,10 @@ jobs:
           push: false
           load: true
           tags: structsmith:ci
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+          cache-from: type=gha,scope=ci
+          # Cache uploads are an optimization. A full or temporarily
+          # unavailable GitHub cache must not fail an otherwise valid build.
+          cache-to: type=gha,mode=min,scope=ci,ignore-error=true,timeout=2m
 
       - name: Smoke test the image
         run: |

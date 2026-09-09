@@ -36,6 +36,19 @@ test("release syncs changelog and package version through one auto-merged pull r
   expect(workflow.indexOf(stamp)).toBeLessThan(workflow.indexOf("id: changelog-pr"));
 });
 
+test("Docker cache export cannot block CI or image publication", () => {
+  const ciWorkflow = readFileSync(new URL("../.github/workflows/ci.yml", import.meta.url), "utf8");
+  const imageWorkflow = readFileSync(
+    new URL("../.github/workflows/docker.yml", import.meta.url),
+    "utf8",
+  );
+
+  expect(ciWorkflow).toContain("cache-to: type=gha,mode=min,scope=ci,ignore-error=true,timeout=2m");
+  expect(imageWorkflow).toContain(
+    "cache-to: type=gha,mode=max,scope=release-image,ignore-error=true,timeout=2m",
+  );
+});
+
 test("source package version matches the newest changelog release", () => {
   const manifest = JSON.parse(readFileSync(new URL("../package.json", import.meta.url), "utf8"));
   const changelog = readFileSync(new URL("../CHANGELOG.md", import.meta.url), "utf8");
