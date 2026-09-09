@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.8.2](https://github.com/dziksu/structsmith/compare/v1.8.1...v1.8.2) (2026-09-09)
+
+### Bug Fixes
+
+* **ci:** keep cache failures from breaking release metadata ([#51](https://github.com/dziksu/structsmith/issues/51)) ([b5d2289](https://github.com/dziksu/structsmith/commit/b5d22892e568320161c2ca519410e75eb4af6b95))
+
 ## [1.8.1](https://github.com/dziksu/structsmith/compare/v1.8.0...v1.8.1) (2026-09-09)
 
 ### Bug Fixes
