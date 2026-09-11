@@ -1,6 +1,7 @@
 import {
   ApplyOperationsRequestSchema,
   CreateWorkspaceSchema,
+  ImportMermaidRequestSchema,
   ImportWorkspaceRequestSchema,
   UpdateWorkspaceSchema,
 } from "@structsmith/contracts";
@@ -111,6 +112,20 @@ export function workspaceRoutes(services: Services): Router {
         services.imports.importDocument(request.document, {
           mode: request.mode,
           name: request.name,
+        }),
+      );
+    }),
+  );
+
+  router.post(
+    "/workspaces/import/mermaid",
+    handler((req, res) => {
+      const request = ImportMermaidRequestSchema.parse(req.body);
+      res.status(201).json(
+        services.imports.importMermaid(request.source, {
+          mode: request.mode,
+          name: request.name,
+          workspaceId: request.workspaceId,
         }),
       );
     }),

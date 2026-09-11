@@ -85,7 +85,7 @@ export function toMermaid(
     rendered.add(element.id);
     const children = childrenOf(element.id);
     if (children.length > 0) {
-      lines.push(`${indent}subgraph ${nodeId(element.id)}_group["${escapeLabel(element.name)}"]`);
+      lines.push(`${indent}subgraph ${nodeId(element.id)}["${elementLabel(element)}"]`);
       lines.push(`${indent}  direction ${direction}`);
       for (const child of children) renderElement(child, `${indent}  `);
       lines.push(`${indent}end`);

@@ -1,9 +1,12 @@
 import type { Workspace, WorkspaceDocument } from "@structsmith/contracts";
+import { ImportMermaidRequestSchema } from "@structsmith/contracts";
 import { requireWorkspace, type ServiceContext } from "../context";
+import { badRequest, DomainError } from "../errors";
 import { createId, nowIso } from "../ids";
+import { parseMermaidToWorkspaceDocument } from "../mermaid-import";
 import { restoreDocument } from "./snapshot.service";
 
-/** Native JSON import (spec §43). */
+/** Shared import domain layer for native JSON and Mermaid (REST and MCP). */
 export class ImportService {
   constructor(private readonly ctx: ServiceContext) {}
 
@@ -143,5 +146,33 @@ export class ImportService {
       message: "Workspace imported",
     });
     return workspace;
+  }
+
+  importMermaid(
+    source: string,
+    options: { mode?: "new" | "overwrite"; name?: string; workspaceId?: string } = {},
+  ): Workspace {
+    if (options.mode === "overwrite" && !options.workspaceId) {
+      throw badRequest("workspaceId is required when importing in overwrite mode.");
+    }
+
+    let document: WorkspaceDocument;
+    try {
+      const request = ImportMermaidRequestSchema.parse({ ...options, source });
+      document = parseMermaidToWorkspaceDocument(request.source, {
+        workspaceName: request.name,
+        workspaceId: request.workspaceId,
+      });
+    } catch (error) {
+      if (error instanceof DomainError) {
+        throw error;
+      }
+      if (error instanceof Error) {
+        throw badRequest(`Invalid Mermaid source: ${error.message}`);
+      }
+      throw error;
+    }
+    // Persistence errors must retain their real cause, not become syntax errors.
+    return this.importDocument(document, { mode: options.mode });
   }
 }

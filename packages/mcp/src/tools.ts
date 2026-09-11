@@ -7,6 +7,7 @@ import {
   CreateRelationshipSchema,
   CreateViewSchema,
   CreateWorkspaceSchema,
+  ImportMermaidRequestSchema,
   LayoutAlgorithmSchema,
   LayoutDirectionSchema,
   LayoutEntrySchema,
@@ -775,5 +776,21 @@ export function registerTools(
       annotations: readOnlyAnnotations,
     },
     ({ workspaceId: id, viewId }) => plain(services.model.exportMermaid(id, viewId)),
+  );
+
+  registerWrite(
+    "import_mermaid",
+    ImportMermaidRequestSchema.shape,
+    (args: unknown) => {
+      const input = ImportMermaidRequestSchema.parse(args);
+      return json(
+        services.imports.importMermaid(input.source, {
+          mode: input.mode,
+          name: input.name,
+          workspaceId: input.workspaceId,
+        }),
+      );
+    },
+    true,
   );
 }

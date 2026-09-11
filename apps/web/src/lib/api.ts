@@ -11,6 +11,7 @@ import type {
   CreateRecordInput,
   CreateViewInput,
   CreateWorkspaceInput,
+  ImportMermaidRequest,
   McpInfo,
   SnapshotSummary,
   UpdateBoundaryInput,
@@ -97,6 +98,11 @@ export const api = {
     request<Workspace>("/workspaces/import", {
       method: "POST",
       ...body({ document, mode: "new", name }),
+    }),
+  importMermaidWorkspace: (source: string, name?: string) =>
+    request<Workspace>("/workspaces/import/mermaid", {
+      method: "POST",
+      ...body({ source, mode: "new", name } as ImportMermaidRequest),
     }),
 
   /* model */

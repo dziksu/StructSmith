@@ -1,5 +1,5 @@
 import type { Workspace, WorkspaceMode } from "@structsmith/contracts";
-import { PRODUCT, WorkspaceDocumentSchema } from "@structsmith/contracts";
+import { PRODUCT } from "@structsmith/contracts";
 import {
   ArrowRight,
   Braces,
@@ -18,7 +18,7 @@ import {
   Trash2,
   Waypoints,
 } from "lucide-react";
-import { useRef, useState } from "react";
+import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import { Logo } from "@/components/Logo";
@@ -58,6 +58,7 @@ import { queryClient, queryKeys } from "@/lib/query";
 import { type Theme, useTheme } from "@/lib/theme";
 import { formatDateTime } from "@/lib/utils";
 import { useCopyAgentReference } from "../reference/useCopyAgentReference";
+import { ImportWorkspaceDialog } from "./ImportWorkspaceDialog";
 
 const EXAMPLE_ID = "example-client-portal";
 
@@ -80,7 +81,7 @@ export function HomePage({ onOpenWorkspace, onOpenMcp }: HomePageProps) {
   const workspaces = useWorkspaces();
   const onError = useApiErrorHandler();
   const copyReference = useCopyAgentReference();
-  const fileInput = useRef<HTMLInputElement>(null);
+  const [importOpen, setImportOpen] = useState(false);
 
   const [createOpen, setCreateOpen] = useState(false);
   const [editingWorkspace, setEditingWorkspace] = useState<Workspace | null>(null);
@@ -144,18 +145,6 @@ export function HomePage({ onOpenWorkspace, onOpenMcp }: HomePageProps) {
       onError(error);
     } finally {
       setSaving(false);
-    }
-  };
-
-  const importFile = async (file: File): Promise<void> => {
-    try {
-      const document = WorkspaceDocumentSchema.parse(JSON.parse(await file.text()));
-      const workspace = await api.importWorkspace(document);
-      toast.success(t("home.imported"));
-      refresh();
-      onOpenWorkspace(workspace.id);
-    } catch (error) {
-      onError(error);
     }
   };
 
@@ -276,7 +265,7 @@ export function HomePage({ onOpenWorkspace, onOpenMcp }: HomePageProps) {
                 {t("home.openExample")}
               </Button>
             )}
-            <Button variant="outline" onClick={() => fileInput.current?.click()}>
+            <Button variant="outline" onClick={() => setImportOpen(true)}>
               <FileUp className="h-3.5 w-3.5" />
               {t("home.importWorkspace")}
             </Button>
@@ -512,17 +501,17 @@ export function HomePage({ onOpenWorkspace, onOpenMcp }: HomePageProps) {
         </section>
       </main>
 
-      <input
-        ref={fileInput}
-        type="file"
-        accept="application/json,.json"
-        className="hidden"
-        onChange={(event) => {
-          const file = event.target.files?.[0];
-          if (file) void importFile(file);
-          event.target.value = "";
-        }}
-      />
+      {importOpen && (
+        <ImportWorkspaceDialog
+          onClose={() => setImportOpen(false)}
+          onImported={(workspace) => {
+            setImportOpen(false);
+            toast.success(t("home.imported"));
+            refresh();
+            onOpenWorkspace(workspace.id);
+          }}
+        />
+      )}
 
       <Dialog
         open={createOpen || Boolean(editingWorkspace)}

@@ -65,7 +65,17 @@ export const ImportWorkspaceRequestSchema = z.object({
   mode: z.enum(["new", "overwrite"]).default("new"),
   name: z.string().min(1).max(200).optional(),
 });
+export const ImportMermaidRequestSchema = z.object({
+  source: z.string().trim().min(1).max(1_000_000),
+  /** Import as a new workspace (default) or overwrite the referenced one. */
+  mode: z.enum(["new", "overwrite"]).default("new"),
+  /** Explicit name for the target workspace. */
+  name: z.string().trim().min(1).max(200).optional(),
+  /** Required when mode=overwrite: target workspace id. */
+  workspaceId: IdSchema.optional(),
+});
 export type ImportWorkspaceRequest = z.input<typeof ImportWorkspaceRequestSchema>;
+export type ImportMermaidRequest = z.input<typeof ImportMermaidRequestSchema>;
 
 /** Payload of the `workspace.updated` SSE event. */
 export const WorkspaceUpdatedEventSchema = z.object({
