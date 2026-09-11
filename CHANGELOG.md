@@ -1,5 +1,15 @@
 # Changelog
 
+## [1.9.2](https://github.com/dziksu/structsmith/compare/v1.9.1...v1.9.2) (2026-09-11)
+
+### Bug Fixes
+
+* **canvas:** render relationship labels above edges ([cd63b24](https://github.com/dziksu/structsmith/commit/cd63b24edf268ade0456cce0861d7ea2ee02e240))
+* **editor:** select newly created connections ([01f26c9](https://github.com/dziksu/structsmith/commit/01f26c9628a7242525ba1c9050539ebc36365caa))
+* **inspector:** expand relationship descriptions ([58ac777](https://github.com/dziksu/structsmith/commit/58ac77712f4ca74b1afe150ecdd1ca297db2ff41))
+* **layout:** keep visible parents as regular nodes ([8efe54b](https://github.com/dziksu/structsmith/commit/8efe54b69857759c76c4a785350b4a5a1a80f1cd))
+* **views:** respect scope when seeding elements ([2c8cada](https://github.com/dziksu/structsmith/commit/2c8cada8a8c6458d661e21a1a9f0552150baa658))
+
 ## [1.9.1](https://github.com/dziksu/structsmith/compare/v1.9.0...v1.9.1) (2026-09-11)
 
 ### Bug Fixes
