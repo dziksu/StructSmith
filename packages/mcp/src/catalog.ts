@@ -146,6 +146,12 @@ export const MCP_TOOLS: readonly McpToolInfo[] = [
     description: "Export the model or a view as a Mermaid diagram.",
     mutating: false,
   },
+  {
+    name: "import_mermaid",
+    description:
+      "Import Mermaid flowchart/graph source as a semantic workspace with an arranged view. Other diagram types are rejected. Defaults to a new workspace; overwrite replaces the entire target workspace and requires workspaceId.",
+    mutating: true,
+  },
 ];
 
 export const MCP_RESOURCES: readonly string[] = [

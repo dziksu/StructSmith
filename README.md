@@ -344,6 +344,7 @@ silently overwrite each other.
 GET    /api/workspaces                      POST   /api/workspaces
 GET    /api/workspaces/:id                  PATCH  /api/workspaces/:id
 DELETE /api/workspaces/:id                  POST   /api/workspaces/import
+POST   /api/workspaces/import/mermaid
 
 GET    /api/workspaces/:id/model            GET    /api/workspaces/:id/document
 GET    /api/workspaces/:id/validate         GET    /api/workspaces/:id/activity
@@ -376,6 +377,8 @@ Errors always use the same envelope:
 - Desktop-first three-pane layout: explorer, canvas, inspector — all resizable
 - Custom React Flow nodes with icon, name, technology and a kind/role badge; external
   elements are visually distinct
+- Import existing Mermaid diagrams in `flowchart`/`graph` syntax from `.mmd` / `.mermaid`
+  files as a semantic workspace baseline
 - Semantic, nested boundaries owned by a view, so the same model element can be grouped
   differently on deployment, security, compliance and ownership diagrams
 - Explorer separates the active view tree from the reusable element library; elements can be
@@ -385,10 +388,59 @@ Errors always use the same envelope:
 - Views: the same element on many diagrams, each with its own structure, boundaries and layout
 - Presales records linked to elements, with a subtle risk indicator on the canvas
 - Deterministic validator with error / warning / info levels
-- Export: semantic JSON, Mermaid, PNG, SVG. Import: native JSON
+- Export: semantic JSON, Mermaid, PNG, SVG. Import: native JSON and Mermaid flowcharts
 - Snapshots with restore; undo/redo (`⌘Z` / `⌘⇧Z`) rides on them
 - Command palette (`⌘K`), `F` to fit the view, `Delete`, `Escape`
 - Light / dark / system themes, English and Polish UI
+
+### Mermaid import
+
+On the home page, choose **Import workspace**, drop or select a JSON backup,
+`.mmd`, `.mermaid`, or text file, then edit the suggested workspace name and choose
+**Import and open**. File selection alone does not create a workspace. The dialog
+uses `react-dropzone` without a native extension filter so macOS can select Mermaid
+files; content validation happens during import. Alternatively, call
+`POST /api/workspaces/import/mermaid` / MCP `import_mermaid` with
+`{ "source": "flowchart LR\nA[Client] -->|Uses| B[API]" }`.
+An optional `name` overrides the Mermaid frontmatter title. Import creates a new
+workspace by default. `mode: "overwrite"` requires `workspaceId` and replaces
+that workspace's model, views, and records; it does not merge or synchronize.
+MCP read-only mode does not expose this operation.
+
+Supported syntax includes `flowchart` and `graph`, all five directions, standalone
+and inline node declarations, traditional shapes, `@{ shape: ..., label: ... }`,
+Unicode and quoted labels, multiline/Markdown strings, common HTML/Mermaid entities,
+semicolon-separated statements, labeled and chained edges, `&` endpoint groups,
+dotted/thick/long links, circle/cross arrowheads, bidirectional links, edge IDs,
+and nested subgraphs (including links to subgraphs). A single fenced Mermaid block
+and YAML frontmatter with a scalar `title` are accepted. Configuration, styles,
+classes, click actions, accessibility directives, and invisible layout links are
+ignored; callbacks and external image/icon resources are never executed or loaded.
+
+Nodes and subgraphs become reusable semantic elements of kind `custom`; subgraph
+membership becomes parent/child containment. This is an import convention, not an
+inference of C4 meaning from visual shapes. Kind, role, and technology explicitly
+embedded in StructSmith export labels are recovered. Edge labels become descriptions;
+a trailing `[technology]` is recognized. Dotted links map to `async`, directed links
+to `sync`, and undirected links to `custom`; bidirectional links create two directed
+relationships. Mermaid IDs are retained as provenance in `properties["mermaid.id"]`.
+Layout is computed by the existing domain layout helper and stored only on the view.
+RL/BT imports are mirrored initially; later automatic layout uses the saved LR/TB axis.
+
+This is a semantic starting point, not a pixel-perfect or lossless round trip.
+Per-subgraph directions, styling, animation, exact shapes, and Markdown formatting
+are not reproduced. Exported view boundaries cannot reliably be distinguished from
+semantic subgraphs. Mermaid does not carry all StructSmith model metadata, and
+older exports may use parent endpoint IDs distinct from their subgraph IDs.
+Sequence, class, ER, state, C4, and other diagram families require separate semantic
+adapters and are rejected with a clear error. Unrecognized structural syntax also
+fails before any workspace is changed. Limits are 1,000,000 source characters,
+2,000 nodes, and 10,000 relationships.
+
+The syntax scope follows the official [Mermaid flowchart documentation](https://mermaid.js.org/syntax/flowchart.html).
+The transport/domain integration is small; most implementation and maintenance
+complexity lies in syntax coverage and mapping Mermaid constructs into a semantic
+model. Native JSON remains the format for complete backups and lossless round trips.
 
 ### Adding a language
 
