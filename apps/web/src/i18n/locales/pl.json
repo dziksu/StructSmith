@@ -190,6 +190,8 @@
   },
   "contextMenu": {
     "edit": "Edytuj",
+    "copyWithConnections": "Kopiuj z połączeniami",
+    "copyElementsOnly": "Kopiuj same elementy",
     "duplicate": "Duplikuj",
     "connect": "Połącz stąd",
     "hideFromView": "Ukryj w tym widoku",
@@ -319,7 +321,7 @@
     "selectAll": "Zaznacz wszystkie elementy",
     "addToSelection": "Dodaj do zaznaczenia",
     "marqueeSelection": "Zaznaczenie prostokątem",
-    "copy": "Kopiuj zaznaczone elementy",
+    "copyWithConnections": "Kopiuj zaznaczone elementy z połączeniami",
     "paste": "Wklej elementy",
     "delete": "Usuń zaznaczone elementy",
     "undo": "Cofnij",

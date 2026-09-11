@@ -87,7 +87,7 @@ const view: ViewDetail = {
 };
 
 describe("diagram clipboard", () => {
-  test("copies only relationships internal to the selected group", () => {
+  test("copies incident relationships by default", () => {
     const externalRelationship = { ...relationship, id: "external", targetElementId: "three" };
     const clipboard = createDiagramClipboard(
       "workspace",
@@ -98,7 +98,21 @@ describe("diagram clipboard", () => {
     );
 
     expect(clipboard?.elements.map((item) => item.id)).toEqual(["one", "two"]);
-    expect(clipboard?.relationships.map((item) => item.id)).toEqual(["relationship"]);
+    expect(clipboard?.relationships.map((item) => item.id)).toEqual(["relationship", "external"]);
+  });
+
+  test("can copy elements without any relationships", () => {
+    const clipboard = createDiagramClipboard(
+      "workspace",
+      view,
+      [element("one"), element("two")],
+      [relationship],
+      ["one", "two"],
+      "elements-only",
+    );
+
+    expect(clipboard?.elements).toHaveLength(2);
+    expect(clipboard?.relationships).toEqual([]);
   });
 
   test("pastes elements, hierarchy, layout and internal relationships in one batch", () => {
@@ -135,6 +149,26 @@ describe("diagram clipboard", () => {
       data: {
         sourceElementId: "@copy-element-0",
         targetElementId: "@copy-element-1",
+      },
+    });
+  });
+
+  test("reconnects a copied element to an existing neighbour in the same workspace", () => {
+    const clipboard = createDiagramClipboard(
+      "workspace",
+      view,
+      [element("one"), element("two")],
+      [relationship],
+      ["one"],
+    );
+    if (!clipboard) throw new Error("Expected clipboard data");
+
+    const operations = buildPasteOperations(clipboard, "workspace", "view");
+    expect(operations.at(-1)).toMatchObject({
+      op: "createRelationship",
+      data: {
+        sourceElementId: "@copy-element-0",
+        targetElementId: "two",
       },
     });
   });

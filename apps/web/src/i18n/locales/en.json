@@ -186,6 +186,8 @@
   },
   "contextMenu": {
     "edit": "Edit",
+    "copyWithConnections": "Copy with connections",
+    "copyElementsOnly": "Copy elements only",
     "duplicate": "Duplicate",
     "connect": "Connect from here",
     "hideFromView": "Hide from this view",
@@ -315,7 +317,7 @@
     "selectAll": "Select all elements",
     "addToSelection": "Add to selection",
     "marqueeSelection": "Rectangle selection",
-    "copy": "Copy selected elements",
+    "copyWithConnections": "Copy selected elements with connections",
     "paste": "Paste elements",
     "delete": "Remove selected items",
     "undo": "Undo",

@@ -34,7 +34,7 @@ import { useEditorStore } from "@/store/editor";
 import { useHistoryStore } from "@/store/history";
 import { useCopyAgentReference } from "../reference/useCopyAgentReference";
 import { BoundaryNode } from "./BoundaryNode";
-import { buildPasteOperations, createDiagramClipboard } from "./clipboard";
+import { buildPasteOperations, createDiagramClipboard, type DiagramCopyMode } from "./clipboard";
 import { ElementNode } from "./ElementNode";
 import {
   boundaryElementId,
@@ -529,6 +529,24 @@ export function Canvas({
     [applyOperations, elementsById, view.elements, view.id],
   );
 
+  const copyElementsToClipboard = useCallback(
+    (elementIds: readonly string[], mode: DiagramCopyMode = "with-connections") => {
+      const nextClipboard = createDiagramClipboard(
+        workspaceId,
+        view,
+        elements,
+        relationships,
+        elementIds,
+        mode,
+      );
+      if (!nextClipboard) return false;
+      setClipboard(nextClipboard);
+      toast.success(t("canvas.copiedElements", { count: elementIds.length }));
+      return true;
+    },
+    [elements, relationships, setClipboard, t, view, workspaceId],
+  );
+
   const onNodeContextMenu = useCallback<NodeMouseHandler>(
     (event, node) => {
       event.preventDefault();
@@ -539,7 +557,20 @@ export function Canvas({
         return;
       }
       const elementId = node.id;
-      select({ type: "element", id: elementId });
+      const selectedElementIds = nodes
+        .filter((candidate) => candidate.type === "element" && candidate.selected)
+        .map((candidate) => candidate.id);
+      const contextElementIds =
+        node.selected && selectedElementIds.length > 1 ? selectedElementIds : [elementId];
+      if (!node.selected) {
+        setNodes((current) =>
+          current.map((candidate) => ({ ...candidate, selected: candidate.id === elementId })),
+        );
+        setEdges((current) =>
+          current.map((edge) => (edge.selected ? { ...edge, selected: false } : edge)),
+        );
+        select({ type: "element", id: elementId });
+      }
       setMenu({
         x: event.clientX,
         y: event.clientY,
@@ -549,7 +580,16 @@ export function Canvas({
             onSelect: () => select({ type: "element", id: elementId }),
           },
           {
+            label: t("contextMenu.copyWithConnections"),
+            onSelect: () => copyElementsToClipboard(contextElementIds),
+          },
+          {
+            label: t("contextMenu.copyElementsOnly"),
+            onSelect: () => copyElementsToClipboard(contextElementIds, "elements-only"),
+          },
+          {
             label: t("reference.copy"),
+            separatorBefore: true,
             onSelect: () =>
               void copyReference({
                 type: "element",
@@ -578,10 +618,12 @@ export function Canvas({
     },
     [
       copyReference,
+      copyElementsToClipboard,
       deleteFromModel,
       duplicateElement,
       elementsById,
       hideInView,
+      nodes,
       removeFromView,
       select,
       setConnectFrom,
@@ -726,17 +768,8 @@ export function Canvas({
         const ids = nodes
           .filter((node) => node.type === "element" && node.selected)
           .map((node) => node.id);
-        const nextClipboard = createDiagramClipboard(
-          workspaceId,
-          view,
-          elements,
-          relationships,
-          ids,
-        );
-        if (!nextClipboard) return;
+        if (!copyElementsToClipboard(ids)) return;
         event.preventDefault();
-        setClipboard(nextClipboard);
-        toast.success(t("canvas.copiedElements", { count: ids.length }));
         return;
       }
 
@@ -756,9 +789,8 @@ export function Canvas({
     applyOperations,
     clearSelection,
     clipboard,
-    elements,
+    copyElementsToClipboard,
     nodes,
-    relationships,
     select,
     setClipboard,
     t,

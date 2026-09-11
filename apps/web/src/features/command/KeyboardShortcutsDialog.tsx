@@ -21,7 +21,7 @@ export function KeyboardShortcutsDialog() {
     [t("shortcuts.selectAll"), `${primary} A`],
     [t("shortcuts.addToSelection"), `${primary} + ${t("shortcuts.click")}`],
     [t("shortcuts.marqueeSelection"), `${primary} + ${t("shortcuts.dragCanvas")}`],
-    [t("shortcuts.copy"), `${primary} C`],
+    [t("shortcuts.copyWithConnections"), `${primary} C`],
     [t("shortcuts.paste"), `${primary} V`],
     [t("shortcuts.delete"), "Delete / Backspace"],
     [t("shortcuts.undo"), `${primary} Z`],

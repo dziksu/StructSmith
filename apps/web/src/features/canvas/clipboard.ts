@@ -6,21 +6,28 @@ import type {
 } from "@structsmith/contracts";
 import type { DiagramClipboard } from "@/store/editor";
 
+export type DiagramCopyMode = "with-connections" | "elements-only";
+
 export function createDiagramClipboard(
   workspaceId: string,
   view: ViewDetail,
   elements: readonly ArchitectureElement[],
   relationships: readonly ArchitectureRelationship[],
   selectedElementIds: readonly string[],
+  mode: DiagramCopyMode = "with-connections",
 ): DiagramClipboard | null {
   const selected = new Set(selectedElementIds);
   const copiedElements = elements.filter((element) => selected.has(element.id));
   if (copiedElements.length === 0) return null;
 
-  const copiedRelationships = relationships.filter(
-    (relationship) =>
-      selected.has(relationship.sourceElementId) && selected.has(relationship.targetElementId),
-  );
+  const copiedRelationships =
+    mode === "with-connections"
+      ? relationships.filter(
+          (relationship) =>
+            selected.has(relationship.sourceElementId) ||
+            selected.has(relationship.targetElementId),
+        )
+      : [];
   const copiedRelationshipIds = new Set(copiedRelationships.map((relationship) => relationship.id));
 
   return {
@@ -49,13 +56,21 @@ export function buildPasteOperations(
   const elementRefs = new Map(
     clipboard.elements.map((element, index) => [element.id, `copy-element-${index}`] as const),
   );
+  const sameWorkspace = clipboard.workspaceId === workspaceId;
+  const relationshipsToPaste = clipboard.relationships.filter(
+    (relationship) =>
+      sameWorkspace ||
+      (elementRefs.has(relationship.sourceElementId) &&
+        elementRefs.has(relationship.targetElementId)),
+  );
   const relationshipRefs = new Map(
-    clipboard.relationships.map(
+    relationshipsToPaste.map(
       (relationship, index) => [relationship.id, `copy-relationship-${index}`] as const,
     ),
   );
   const referenceTo = (elementId: string): string => `@${elementRefs.get(elementId)}`;
-  const sameWorkspace = clipboard.workspaceId === workspaceId;
+  const endpointFor = (elementId: string): string =>
+    elementRefs.has(elementId) ? referenceTo(elementId) : elementId;
 
   const operations: ArchitectureOperationInput[] = clipboard.elements.map((element) => ({
     op: "createElement" as const,
@@ -103,13 +118,13 @@ export function buildPasteOperations(
     }),
   });
 
-  for (const relationship of clipboard.relationships) {
+  for (const relationship of relationshipsToPaste) {
     operations.push({
       op: "createRelationship",
       ref: relationshipRefs.get(relationship.id),
       data: {
-        sourceElementId: referenceTo(relationship.sourceElementId),
-        targetElementId: referenceTo(relationship.targetElementId),
+        sourceElementId: endpointFor(relationship.sourceElementId),
+        targetElementId: endpointFor(relationship.targetElementId),
         description: relationship.description,
         technology: relationship.technology,
         interactionStyle: relationship.interactionStyle,
