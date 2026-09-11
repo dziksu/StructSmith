@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.9.1](https://github.com/dziksu/structsmith/compare/v1.9.0...v1.9.1) (2026-09-11)
+
+### Bug Fixes
+
+* **layout:** ignore edges to dagre clusters ([#57](https://github.com/dziksu/structsmith/issues/57)) ([7acde7a](https://github.com/dziksu/structsmith/commit/7acde7a54b4b1e1882992ce0066638f22429a7b2))
+
 ## [1.9.0](https://github.com/dziksu/structsmith/compare/v1.8.2...v1.9.0) (2026-09-11)
 
 ### Features
