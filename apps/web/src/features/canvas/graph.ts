@@ -16,8 +16,8 @@ import type { Edge, Node } from "@xyflow/react";
 
 export const NODE_WIDTH = DEFAULT_NODE_WIDTH;
 export const NODE_HEIGHT = DEFAULT_NODE_HEIGHT;
-const BOUNDARY_PADDING = 28;
-const BOUNDARY_HEADER = 26;
+export const BOUNDARY_PADDING = 28;
+export const BOUNDARY_HEADER = 36;
 
 export interface ElementNodeData extends Record<string, unknown> {
   element: ArchitectureElement;
@@ -165,6 +165,10 @@ export interface BoundarySource {
   height: number;
 }
 
+interface NestedBoundarySource extends BoundarySource {
+  elementIds: readonly string[];
+}
+
 function boundaryStyle(
   classification: ArchitectureBoundary["classification"],
   width: number,
@@ -194,6 +198,7 @@ export function computeBoundaries(
   sources: readonly BoundarySource[],
   elementsById: ReadonlyMap<string, ArchitectureElement>,
   enabled: boolean,
+  nestedBoundaries: readonly NestedBoundarySource[] = [],
 ): FlowNode[] {
   if (!enabled) return [];
 
@@ -206,6 +211,28 @@ export function computeBoundaries(
     const bucket = groups.get(parentId);
     if (bucket) bucket.push(source);
     else groups.set(parentId, [source]);
+  }
+
+  // A semantic boundary can sit inside a parent-element frame. Include the
+  // entire nested rectangle in that parent's footprint, rather than deriving
+  // both frames independently from the same cards and overlapping headers.
+  for (const boundary of nestedBoundaries) {
+    const parentIds = new Set(
+      boundary.elementIds
+        .map((elementId) => elementsById.get(elementId)?.parentId)
+        .filter(
+          (parentId): parentId is string =>
+            parentId !== null && parentId !== undefined && !present.has(parentId),
+        ),
+    );
+    for (const parentId of parentIds) {
+      const bucket = groups.get(parentId);
+      if (bucket) {
+        if (!bucket.some((source) => source.id === boundary.id)) bucket.push(boundary);
+      } else {
+        groups.set(parentId, [boundary]);
+      }
+    }
   }
 
   const nodes: FlowNode[] = [];
@@ -326,11 +353,70 @@ export function computeSemanticBoundaries(
         selectable: false,
         connectable: false,
         deletable: false,
-        zIndex: depth,
+        // Parent-element frames use zero. Semantic boundaries sit above them,
+        // and each nested semantic level sits above its parent.
+        zIndex: depth + 1,
         style: boundaryStyle(boundary.classification, box.width, box.height),
       },
     ];
   });
+}
+
+/** Compute both boundary systems together so their boxes form one visual hierarchy. */
+export function computeCanvasBoundaries(
+  sources: readonly BoundarySource[],
+  elementsById: ReadonlyMap<string, ArchitectureElement>,
+  boundaries: readonly ArchitectureBoundary[],
+  layer: ArchitectureBoundary["layer"],
+  enabled: boolean,
+): { parentBoundaries: FlowNode[]; semanticBoundaries: FlowNode[] } {
+  const semanticBoundaries = computeSemanticBoundaries(sources, boundaries, layer, enabled);
+  if (!enabled) return { parentBoundaries: [], semanticBoundaries };
+
+  const active = boundaries.filter((boundary) => boundary.layer === layer);
+  const children = new Map<string, ArchitectureBoundary[]>();
+  for (const boundary of active) {
+    if (!boundary.parentBoundaryId) continue;
+    const bucket = children.get(boundary.parentBoundaryId);
+    if (bucket) bucket.push(boundary);
+    else children.set(boundary.parentBoundaryId, [boundary]);
+  }
+
+  const members = new Map<string, Set<string>>();
+  const memberIds = (boundaryId: string, visiting = new Set<string>()): Set<string> => {
+    const cached = members.get(boundaryId);
+    if (cached) return cached;
+    if (visiting.has(boundaryId)) return new Set();
+    visiting.add(boundaryId);
+    const boundary = active.find((candidate) => candidate.id === boundaryId);
+    const result = new Set(boundary?.elementIds ?? []);
+    for (const child of children.get(boundaryId) ?? []) {
+      for (const elementId of memberIds(child.id, visiting)) result.add(elementId);
+    }
+    visiting.delete(boundaryId);
+    members.set(boundaryId, result);
+    return result;
+  };
+
+  const nestedBoundaries = semanticBoundaries.flatMap((node): NestedBoundarySource[] => {
+    const boundaryId = node.data.boundaryId;
+    if (!boundaryId || node.width === undefined || node.height === undefined) return [];
+    return [
+      {
+        id: node.id,
+        x: node.position.x,
+        y: node.position.y,
+        width: node.width,
+        height: node.height,
+        elementIds: [...memberIds(String(boundaryId))],
+      },
+    ];
+  });
+
+  return {
+    parentBoundaries: computeBoundaries(sources, elementsById, enabled, nestedBoundaries),
+    semanticBoundaries,
+  };
 }
 
 export const isBoundaryId = (id: string): boolean => id.startsWith("boundary:");
