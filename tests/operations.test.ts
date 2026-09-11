@@ -145,6 +145,13 @@ describe("batch operations", () => {
       expect(result.elements.every(({ x, y }) => Number.isFinite(x) && Number.isFinite(y))).toBe(
         true,
       );
+      const byId = new Map(result.elements.map((entry) => [entry.elementId, entry] as const));
+      expect(byId.get(system.id)?.x).toBeGreaterThan(
+        byId.get(customer.id)?.x ?? Number.POSITIVE_INFINITY,
+      );
+      expect(byId.get(database.id)?.x).toBeGreaterThan(
+        byId.get(api.id)?.x ?? Number.POSITIVE_INFINITY,
+      );
     } finally {
       close();
     }

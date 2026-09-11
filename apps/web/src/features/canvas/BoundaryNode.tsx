@@ -49,7 +49,9 @@ function BoundaryNodeComponent({ data, selected }: NodeProps & { data: BoundaryN
         >
           {data.classification
             ? t(`boundaries.classification.${data.classification}`)
-            : t(`boundaries.layer.${data.layer}`)}
+            : data.kind
+              ? t(`kinds.${data.kind}`)
+              : t(`boundaries.layer.${data.layer}`)}
         </span>
       </div>
     </div>

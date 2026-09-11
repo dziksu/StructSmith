@@ -100,7 +100,7 @@ describe("Dagre layout", () => {
     }
   });
 
-  test("ignores edges to visible parent clusters", () => {
+  test("keeps edges to visible parents in the layout graph", () => {
     const nodes = [
       { id: "system" },
       { id: "api", parentId: "system" },
@@ -123,9 +123,13 @@ describe("Dagre layout", () => {
       ]);
       expect(positions.every(({ x, y }) => Number.isFinite(x) && Number.isFinite(y))).toBe(true);
       const byId = new Map(positions.map((position) => [position.id, position] as const));
+      const customer = byId.get("customer");
+      const system = byId.get("system");
       const api = byId.get("api");
       const database = byId.get("database");
-      if (!api || !database) throw new Error("Missing child layout positions");
+      if (!customer || !system || !api || !database) throw new Error("Missing layout positions");
+      expect(direction === "LR" ? system.x > customer.x : system.y > customer.y).toBe(true);
+      expect(direction === "LR" ? database.x > system.x : database.y > system.y).toBe(true);
       expect(direction === "LR" ? database.x > api.x : database.y > api.y).toBe(true);
     }
   });
