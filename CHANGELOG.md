@@ -1,5 +1,18 @@
 # Changelog
 
+## [1.10.0](https://github.com/dziksu/structsmith/compare/v1.9.3...v1.10.0) (2026-09-11)
+
+### Features
+
+* **import:** support Mermaid diagrams and workspace import dialog ([#71](https://github.com/dziksu/structsmith/issues/71)) ([fdb2f91](https://github.com/dziksu/structsmith/commit/fdb2f91bedcb04ce23b890dacb5fa1a20ef1ea1d))
+
+### Build and Dependencies
+
+* **deps-dev:** update Bun types and retain compatible changelog preset ([#68](https://github.com/dziksu/structsmith/issues/68)) ([c6055dd](https://github.com/dziksu/structsmith/commit/c6055dd6596708796a4394353647f0666a36aaa0))
+* **deps:** bump @tanstack/react-router in the tanstack group ([#67](https://github.com/dziksu/structsmith/issues/67)) ([a82fba7](https://github.com/dziksu/structsmith/commit/a82fba78ce3d35e864a0670dbb3cee6729fd82a8))
+* **deps:** bump lucide-react from 1.41.0 to 1.43.0 ([#69](https://github.com/dziksu/structsmith/issues/69)) ([0794d54](https://github.com/dziksu/structsmith/commit/0794d543be117b24a22271dba55c8ffed78a3164))
+* **deps:** bump react-resizable-panels from 4.12.3 to 4.12.4 ([#70](https://github.com/dziksu/structsmith/issues/70)) ([e8fc6da](https://github.com/dziksu/structsmith/commit/e8fc6dad03d32862de4314480faf0fc7a8120606))
+
 ## [1.9.3](https://github.com/dziksu/structsmith/compare/v1.9.2...v1.9.3) (2026-09-11)
 
 ### Bug Fixes
