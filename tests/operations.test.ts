@@ -101,6 +101,55 @@ describe("batch operations", () => {
     close();
   });
 
+  test("auto-layout handles a visible parent with children and a relationship to the parent", () => {
+    const { services, close } = createTestContext();
+    try {
+      const workspace = createWorkspace(services);
+      const system = services.elements.create(workspace.id, {
+        kind: "softwareSystem",
+        name: "Payments Platform",
+      }).result;
+      const api = services.elements.create(workspace.id, {
+        kind: "container",
+        parentId: system.id,
+        name: "Payments API",
+      }).result;
+      const database = services.elements.create(workspace.id, {
+        kind: "container",
+        parentId: system.id,
+        name: "Payments Database",
+      }).result;
+      const customer = services.elements.create(workspace.id, {
+        kind: "person",
+        name: "Customer",
+      }).result;
+      services.relationships.create(workspace.id, {
+        sourceElementId: customer.id,
+        targetElementId: system.id,
+        description: "Uses",
+      });
+      services.relationships.create(workspace.id, {
+        sourceElementId: api.id,
+        targetElementId: database.id,
+        description: "Reads and writes",
+      });
+      const view = services.views.create(workspace.id, {
+        kind: "container",
+        name: "All elements",
+        elementIds: [system.id, api.id, database.id, customer.id],
+      }).result;
+
+      const result = services.views.autoLayout(workspace.id, view.id, "LR", "dagre").result;
+
+      expect(result.elements).toHaveLength(4);
+      expect(result.elements.every(({ x, y }) => Number.isFinite(x) && Number.isFinite(y))).toBe(
+        true,
+      );
+    } finally {
+      close();
+    }
+  });
+
   test("a failing operation rolls the whole batch back", () => {
     const { services, close } = createTestContext();
     const workspace = createWorkspace(services);

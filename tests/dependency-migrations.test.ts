@@ -99,6 +99,36 @@ describe("Dagre layout", () => {
       expect(Number.isFinite(position.x) && Number.isFinite(position.y)).toBe(true);
     }
   });
+
+  test("ignores edges to visible parent clusters", () => {
+    const nodes = [
+      { id: "system" },
+      { id: "api", parentId: "system" },
+      { id: "database", parentId: "system" },
+      { id: "customer" },
+    ];
+    const edges = [
+      { source: "customer", target: "system" },
+      { source: "system", target: "database" },
+      { source: "api", target: "database" },
+    ];
+
+    for (const direction of ["LR", "TB"] as const) {
+      const positions = computeLayout(nodes, edges, direction, "dagre");
+      expect(positions.map((position) => position.id)).toEqual([
+        "system",
+        "api",
+        "database",
+        "customer",
+      ]);
+      expect(positions.every(({ x, y }) => Number.isFinite(x) && Number.isFinite(y))).toBe(true);
+      const byId = new Map(positions.map((position) => [position.id, position] as const));
+      const api = byId.get("api");
+      const database = byId.get("database");
+      if (!api || !database) throw new Error("Missing child layout positions");
+      expect(direction === "LR" ? database.x > api.x : database.y > api.y).toBe(true);
+    }
+  });
 });
 
 describe("Canvas relationship presentation", () => {
