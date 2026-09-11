@@ -230,7 +230,9 @@ export function computeBoundaries(
         elementId: parent.id,
       },
       draggable: false,
-      selectable: true,
+      // Derived containers are clickable through Canvas.onNodeClick, but must
+      // stay out of React Flow's rectangle/multi-selection of real elements.
+      selectable: false,
       connectable: false,
       deletable: false,
       zIndex: 0,
@@ -318,7 +320,9 @@ export function computeSemanticBoundaries(
           boundaryId: boundary.id,
         },
         draggable: false,
-        selectable: true,
+        // Boundary boxes are view-owned containers, not blocks in a group
+        // selection. Canvas.onNodeClick still opens their inspector.
+        selectable: false,
         connectable: false,
         deletable: false,
         zIndex: depth,

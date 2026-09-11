@@ -2,6 +2,7 @@ import type { ArchitectureView, LayoutAlgorithm, Workspace } from "@structsmith/
 import {
   Check,
   ChevronDown,
+  Keyboard,
   Languages,
   LayoutGrid,
   Maximize,
@@ -29,6 +30,7 @@ import {
 import { Separator } from "@/components/ui/separator";
 import { Tooltip } from "@/components/ui/tooltip";
 import { supportedLanguages } from "@/i18n";
+import { primaryModifierLabel } from "@/lib/platform";
 import { type Theme, useTheme } from "@/lib/theme";
 import { useEditorStore } from "@/store/editor";
 import { useCopyAgentReference } from "../reference/useCopyAgentReference";
@@ -58,10 +60,12 @@ export function TopBar(props: TopBarProps) {
   const { theme, setTheme } = useTheme();
   const copyReference = useCopyAgentReference();
   const setCommandOpen = useEditorStore((state) => state.setCommandOpen);
+  const setShortcutsOpen = useEditorStore((state) => state.setShortcutsOpen);
   const openElementPalette = useEditorStore((state) => state.openElementPalette);
   const setExplorerTab = useEditorStore((state) => state.setExplorerTab);
 
   const ThemeIcon = theme === "dark" ? Moon : theme === "light" ? Sun : Monitor;
+  const primary = primaryModifierLabel();
 
   return (
     <header className="flex h-10 shrink-0 items-center gap-1 border-b border-border bg-card px-2">
@@ -200,13 +204,13 @@ export function TopBar(props: TopBarProps) {
         </Button>
       </Tooltip>
 
-      <Tooltip label={`${t("topbar.undo")} (⌘Z)`}>
+      <Tooltip label={`${t("topbar.undo")} (${primary}Z)`}>
         <Button variant="ghost" size="iconSm" onClick={props.onUndo} disabled={!props.canUndo}>
           <Undo2 className="h-3.5 w-3.5" />
         </Button>
       </Tooltip>
 
-      <Tooltip label={`${t("topbar.redo")} (⌘⇧Z)`}>
+      <Tooltip label={`${t("topbar.redo")} (${primary}Shift Z)`}>
         <Button variant="ghost" size="iconSm" onClick={props.onRedo} disabled={!props.canRedo}>
           <Redo2 className="h-3.5 w-3.5" />
         </Button>
@@ -214,9 +218,25 @@ export function TopBar(props: TopBarProps) {
 
       <span className="flex-1" />
 
-      <Tooltip label={t("topbar.search")}>
-        <Button variant="ghost" size="iconSm" onClick={() => setCommandOpen(true)}>
+      <Tooltip label={`${t("topbar.search")} (${primary}K)`}>
+        <Button
+          variant="ghost"
+          size="iconSm"
+          aria-label={t("topbar.search")}
+          onClick={() => setCommandOpen(true)}
+        >
           <Search className="h-3.5 w-3.5" />
+        </Button>
+      </Tooltip>
+
+      <Tooltip label={`${t("shortcuts.title")} (${primary}/)`}>
+        <Button
+          variant="ghost"
+          size="iconSm"
+          aria-label={t("shortcuts.title")}
+          onClick={() => setShortcutsOpen(true)}
+        >
+          <Keyboard className="h-3.5 w-3.5" />
         </Button>
       </Tooltip>
 

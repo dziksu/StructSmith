@@ -195,7 +195,13 @@ export function Inspector({
             />
           )}
 
-          {!element && !relationship && !boundary && view && (
+          {selection.type === "elements" && (
+            <p className="text-xs text-muted-foreground">
+              {t("inspector.multipleSelected", { count: selection.ids.length })}
+            </p>
+          )}
+
+          {!element && !relationship && !boundary && selection.type !== "elements" && view && (
             <ViewInspector
               key={view.id}
               view={view}

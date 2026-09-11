@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import { Canvas } from "@/features/canvas/Canvas";
 import { CommandPalette } from "@/features/command/CommandPalette";
 import { ElementPalette } from "@/features/command/ElementPalette";
+import { KeyboardShortcutsDialog } from "@/features/command/KeyboardShortcutsDialog";
 import { Explorer } from "@/features/explorer/Explorer";
 import { Inspector } from "@/features/inspector/Inspector";
 import { BottomPanel } from "@/features/panels/BottomPanel";
@@ -25,6 +26,7 @@ import {
 import { useHistory } from "@/hooks/useHistory";
 import { useWorkspaceEvents } from "@/hooks/useWorkspaceEvents";
 import { parseReferenceSearchValue } from "@/lib/agentReference";
+import { hasPrimaryModifier } from "@/lib/platform";
 import { useEditorStore } from "@/store/editor";
 import { useHistoryStore } from "@/store/history";
 
@@ -76,6 +78,7 @@ function StudioContent({
   const requestFocus = useEditorStore((state) => state.requestFocus);
   const setExplorerTab = useEditorStore((state) => state.setExplorerTab);
   const setCommandOpen = useEditorStore((state) => state.setCommandOpen);
+  const setShortcutsOpen = useEditorStore((state) => state.setShortcutsOpen);
   const handledReference = useRef<string | null>(null);
 
   useWorkspaceEvents(workspaceId);
@@ -160,19 +163,24 @@ function StudioContent({
         target?.tagName === "INPUT" ||
         target?.tagName === "TEXTAREA" ||
         target?.isContentEditable === true;
-      const meta = event.metaKey || event.ctrlKey;
+      const primary = hasPrimaryModifier(event);
 
-      if (meta && event.key.toLowerCase() === "k") {
+      if (primary && event.key.toLowerCase() === "k") {
         event.preventDefault();
         setCommandOpen(true);
         return;
       }
-      if (meta && event.key.toLowerCase() === "z") {
+      if (primary && event.key === "/") {
+        event.preventDefault();
+        setShortcutsOpen(true);
+        return;
+      }
+      if (primary && event.key.toLowerCase() === "z") {
         event.preventDefault();
         void (event.shiftKey ? history.redo() : history.undo());
         return;
       }
-      if (meta && event.key.toLowerCase() === "s") {
+      if (primary && event.key.toLowerCase() === "s") {
         event.preventDefault();
         toast.success(t("status.saved"));
         return;
@@ -282,6 +290,7 @@ function StudioContent({
       />
 
       <ElementPalette workspaceId={workspaceId} view={view.data ?? null} />
+      <KeyboardShortcutsDialog />
       <CommandPalette
         elements={elements}
         relationships={relationships}
