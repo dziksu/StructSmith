@@ -176,20 +176,31 @@ export function ModelTree({ workspaceId, elements, boundaries, view }: ModelTree
 
   const createBoundary = (): void => {
     if (!view) return;
-    applyOperations.mutate({
-      label: t("boundaries.created"),
-      operations: [
-        {
-          op: "createBoundary",
-          data: {
-            viewId: view.id,
-            name: t("boundaries.newName"),
-            kind: "networkZone",
-            layer: view.settings.boundaryLayer,
+    applyOperations.mutate(
+      {
+        label: t("boundaries.created"),
+        operations: [
+          {
+            op: "createBoundary",
+            ref: "boundary",
+            data: {
+              viewId: view.id,
+              name: t("boundaries.newName"),
+              kind: "networkZone",
+              layer: view.settings.boundaryLayer,
+            },
           },
+        ],
+      },
+      {
+        onSuccess: (result) => {
+          const created = result.appliedOperations.find(
+            (operation) => operation.ref === "boundary",
+          );
+          if (created?.id) select({ type: "boundary", id: created.id });
         },
-      ],
-    });
+      },
+    );
   };
 
   const startElementDrag = (event: React.DragEvent, elementId: string): void => {
