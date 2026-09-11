@@ -25,7 +25,7 @@
     "@structsmith/contracts": "workspace:*",
     "@structsmith/domain": "workspace:*",
     "@tanstack/react-query": "^5.62.11",
-    "@tanstack/react-router": "^1.95.1",
+    "@tanstack/react-router": "^1.170.33",
     "@xyflow/react": "^12.4.2",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
