@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.9.3](https://github.com/dziksu/structsmith/compare/v1.9.2...v1.9.3) (2026-09-11)
+
+### Bug Fixes
+
+* **canvas:** preserve nested boundary headers ([e8d1beb](https://github.com/dziksu/structsmith/commit/e8d1beb19a31552a56f14dba0fda0e2b670e7045))
+
 ## [1.9.2](https://github.com/dziksu/structsmith/compare/v1.9.1...v1.9.2) (2026-09-11)
 
 ### Bug Fixes
