@@ -845,6 +845,9 @@ export function Canvas({
         selectionMode={SelectionMode.Partial}
         panOnDrag={[1, 2]}
         multiSelectionKeyCode={primaryModifierKeyCode()}
+        // A selected boundary covers a large area. Keep the explicit graph
+        // layering (boundaries < edges < elements) so cards remain clickable.
+        elevateNodesOnSelect={false}
         snapToGrid={view.settings.snapToGrid}
         snapGrid={[16, 16]}
         minZoom={0.15}
