@@ -25,6 +25,7 @@ import { Tooltip } from "@/components/ui/tooltip";
 import { useApplyOperations } from "@/hooks/useApi";
 import { cn } from "@/lib/utils";
 import { CopyReferenceButton } from "../reference/CopyReferenceButton";
+import { initialViewElementIds } from "./viewSeed";
 
 const VIEW_KINDS: ViewKind[] = [
   "systemContext",
@@ -60,6 +61,7 @@ export function ViewsPanel({
 
   const create = (): void => {
     if (!name.trim()) return;
+    const scopeElementId = scope === "none" ? null : scope;
     applyOperations.mutate(
       {
         label: t("views.create"),
@@ -70,8 +72,8 @@ export function ViewsPanel({
             data: {
               name: name.trim(),
               kind,
-              scopeElementId: scope === "none" ? null : scope,
-              elementIds: seed === "all" ? elements.map((element) => element.id) : [],
+              scopeElementId,
+              elementIds: seed === "all" ? initialViewElementIds(elements, scopeElementId) : [],
             },
           },
           { op: "autoLayoutView", viewId: "@view", direction: "LR" },
