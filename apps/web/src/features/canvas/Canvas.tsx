@@ -340,17 +340,28 @@ export function Canvas({
       if (sourceElementId === targetElementId) return;
       const source = elementsById.get(sourceElementId)?.name ?? sourceElementId;
       const target = elementsById.get(targetElementId)?.name ?? targetElementId;
-      applyOperations.mutate({
-        label: `Connected ${source} → ${target}`,
-        operations: [
-          {
-            op: "createRelationship",
-            data: { sourceElementId, targetElementId, interactionStyle: "sync" },
+      applyOperations.mutate(
+        {
+          label: `Connected ${source} → ${target}`,
+          operations: [
+            {
+              op: "createRelationship",
+              ref: "relationship",
+              data: { sourceElementId, targetElementId, interactionStyle: "sync" },
+            },
+          ],
+        },
+        {
+          onSuccess: (result) => {
+            const created = result.appliedOperations.find(
+              (operation) => operation.ref === "relationship",
+            );
+            if (created?.id) select({ type: "relationship", id: created.id });
           },
-        ],
-      });
+        },
+      );
     },
-    [applyOperations, elementsById],
+    [applyOperations, elementsById, select],
   );
 
   const onConnect = useCallback(

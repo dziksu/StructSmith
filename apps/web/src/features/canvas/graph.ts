@@ -30,7 +30,8 @@ export interface ElementNodeData extends Record<string, unknown> {
 
 export interface BoundaryNodeData extends Record<string, unknown> {
   name: string;
-  layer: string;
+  layer?: ArchitectureBoundary["layer"];
+  kind?: ArchitectureElement["kind"];
   classification: "public" | "restricted" | "private" | null;
   boundaryId?: string;
   elementId?: string;
@@ -225,7 +226,7 @@ export function computeBoundaries(
       height: maxY - minY + BOUNDARY_PADDING * 2 + BOUNDARY_HEADER,
       data: {
         name: parent.name,
-        layer: "deployment",
+        kind: parent.kind,
         classification: parent.external ? "public" : null,
         elementId: parent.id,
       },

@@ -800,7 +800,9 @@ function RelationshipInspector({
       </div>
 
       <Field label={t("common.description")}>
-        <Input
+        <Textarea
+          autoFocus
+          rows={3}
           value={description}
           onChange={(event) => {
             setDescription(event.target.value);

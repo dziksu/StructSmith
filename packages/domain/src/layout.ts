@@ -211,31 +211,17 @@ function computeDagreLayout(
   for (const parentId of detachedParents) {
     graph.setNode(clusterId(parentId), {});
   }
-  const compoundNodeIds = new Set<string>();
   for (const node of nodes) {
     if (node.groupId && groupIds.has(node.groupId)) {
       graph.setParent(node.id, clusterId(node.groupId));
       continue;
     }
-    if (!node.parentId) continue;
-    if (present.has(node.parentId)) {
-      graph.setParent(node.id, node.parentId);
-      compoundNodeIds.add(node.parentId);
-    } else if (detachedParents.has(node.parentId)) {
+    if (node.parentId && detachedParents.has(node.parentId)) {
       graph.setParent(node.id, clusterId(node.parentId));
     }
   }
   for (const edge of edges) {
-    if (
-      !present.has(edge.source) ||
-      !present.has(edge.target) ||
-      edge.source === edge.target ||
-      // Dagre uses visible parents as compound clusters and crashes when an
-      // edge endpoint is a cluster. Keep those semantic relationships in the
-      // view, but omit them from the layout graph.
-      compoundNodeIds.has(edge.source) ||
-      compoundNodeIds.has(edge.target)
-    ) {
+    if (!present.has(edge.source) || !present.has(edge.target) || edge.source === edge.target) {
       continue;
     }
     const label = estimateLabelSize(edge.label);

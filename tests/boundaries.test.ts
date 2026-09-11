@@ -1,9 +1,45 @@
 import { describe, expect, test } from "bun:test";
 import { computeLayout, toMermaid, validateDocument } from "@structsmith/domain";
-import { computeSemanticBoundaries } from "../apps/web/src/features/canvas/graph";
+import {
+  computeBoundaries,
+  computeSemanticBoundaries,
+} from "../apps/web/src/features/canvas/graph";
 import { createTestContext, createWorkspace } from "./helpers";
 
 describe("semantic boundaries", () => {
+  test("labels a derived parent frame with the parent element kind", () => {
+    const { services, close } = createTestContext();
+    try {
+      const workspace = createWorkspace(services);
+      const system = services.elements.create(workspace.id, {
+        kind: "softwareSystem",
+        name: "Payments Platform",
+      }).result;
+      const api = services.elements.create(workspace.id, {
+        kind: "container",
+        parentId: system.id,
+        name: "Payments API",
+      }).result;
+      const elements = services.elements.list(workspace.id);
+
+      const frames = computeBoundaries(
+        [{ id: api.id, x: 100, y: 100, width: 220, height: 96 }],
+        new Map(elements.map((element) => [element.id, element] as const)),
+        true,
+      );
+
+      expect(frames).toHaveLength(1);
+      expect(frames[0]?.data).toMatchObject({
+        name: "Payments Platform",
+        kind: "softwareSystem",
+        elementId: system.id,
+      });
+      expect(frames[0]?.data).not.toHaveProperty("layer");
+    } finally {
+      close();
+    }
+  });
+
   test("keeps boundary trees and memberships independent between views", () => {
     const { services, close } = createTestContext();
     try {
