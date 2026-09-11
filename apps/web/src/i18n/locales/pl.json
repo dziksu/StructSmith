@@ -328,9 +328,7 @@
     "clearSelection": "Wyczyść zaznaczenie",
     "pan": "Przesuń kanwę",
     "click": "kliknięcie",
-    "dragCanvas": "przeciągnięcie po kanwie",
-    "space": "Spacja",
-    "drag": "przeciągnięcie"
+    "dragCanvas": "przeciągnięcie po kanwie"
   },
   "status": {
     "revision": "rew. {{revision}}",

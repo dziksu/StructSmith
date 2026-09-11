@@ -324,9 +324,7 @@
     "clearSelection": "Clear selection",
     "pan": "Pan canvas",
     "click": "click",
-    "dragCanvas": "drag canvas",
-    "space": "Space",
-    "drag": "drag"
+    "dragCanvas": "drag canvas"
   },
   "status": {
     "revision": "rev {{revision}}",

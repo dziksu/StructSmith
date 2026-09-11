@@ -532,11 +532,13 @@ export function Canvas({
   const onNodeContextMenu = useCallback<NodeMouseHandler>(
     (event, node) => {
       event.preventDefault();
-      if (node.type === "boundary" && node.data?.boundaryId) {
-        select({ type: "boundary", id: String(node.data.boundaryId) });
+      // Right-click and right-button panning must never activate a boundary.
+      // Boundaries remain selectable with an intentional left click.
+      if (node.type === "boundary") {
+        setMenu(null);
         return;
       }
-      const elementId = isBoundaryId(node.id) ? boundaryElementId(node.id) : node.id;
+      const elementId = node.id;
       select({ type: "element", id: elementId });
       setMenu({
         x: event.clientX,
@@ -841,9 +843,9 @@ export function Canvas({
           );
         }}
         onDelete={deleteSelection}
-        selectionOnDrag
         selectionMode={SelectionMode.Partial}
-        panOnDrag={[1, 2]}
+        panOnDrag
+        selectionKeyCode={primaryModifierKeyCode()}
         multiSelectionKeyCode={primaryModifierKeyCode()}
         // A selected boundary covers a large area. Keep the explicit graph
         // layering (boundaries < edges < elements) so cards remain clickable.

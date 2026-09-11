@@ -20,7 +20,7 @@ export function KeyboardShortcutsDialog() {
     [t("shortcuts.showShortcuts"), `${primary} /`],
     [t("shortcuts.selectAll"), `${primary} A`],
     [t("shortcuts.addToSelection"), `${primary} + ${t("shortcuts.click")}`],
-    [t("shortcuts.marqueeSelection"), t("shortcuts.dragCanvas")],
+    [t("shortcuts.marqueeSelection"), `${primary} + ${t("shortcuts.dragCanvas")}`],
     [t("shortcuts.copy"), `${primary} C`],
     [t("shortcuts.paste"), `${primary} V`],
     [t("shortcuts.delete"), "Delete / Backspace"],
@@ -28,7 +28,7 @@ export function KeyboardShortcutsDialog() {
     [t("shortcuts.redo"), `${primary} Shift Z`],
     [t("shortcuts.fitView"), "F"],
     [t("shortcuts.clearSelection"), "Escape"],
-    [t("shortcuts.pan"), `${t("shortcuts.space")} + ${t("shortcuts.drag")}`],
+    [t("shortcuts.pan"), t("shortcuts.dragCanvas")],
   ] as const;
 
   return (
