@@ -16,11 +16,13 @@
 </p>
 
 <p align="center">
-  <video src="https://github.com/dziksu/StructSmith/raw/main/public/demo.mp4" width="900" controls muted playsinline></video>
+  <a href="https://youtu.be/lPCVpdmPozU">
+    <img src="public/demo-thumbnail.jpg" width="900" alt="Watch the 90-second StructSmith demo on YouTube">
+  </a>
   <br>
   <sub>
-    90-second tour: model a payments system, name the relationships, group them in a boundary,
-    then drill into one container — <a href="public/demo.mp4">watch the demo</a>.
+    <a href="https://youtu.be/lPCVpdmPozU">▶ 90-second demo</a> — model a payments system, name the
+    relationships as you draw them, group containers in a boundary, then drill into one of them.
   </sub>
 </p>
 
