@@ -24,6 +24,12 @@ export function relationshipFocus(
     : "dimmed";
 }
 
+export function relationshipLabelBackground(focus: RelationshipFocus): string {
+  return focus === "connected"
+    ? "color-mix(in oklch, var(--primary) 12%, var(--card))"
+    : "var(--card)";
+}
+
 /**
  * Interaction style drives the line style; colour is purely presentation and
  * never stored on the model (spec §12).
@@ -90,13 +96,14 @@ function RelationshipEdgeComponent({
         <EdgeLabelRenderer>
           <div
             className={cn(
-              "pointer-events-none absolute max-w-[170px] rounded border bg-card/95 px-1.5 py-0.5 text-center text-[10px] font-medium leading-[1.3] shadow-sm transition-[border-color,background-color,opacity] duration-150",
+              "pointer-events-none absolute max-w-[170px] rounded border px-1.5 py-0.5 text-center text-[10px] font-medium leading-[1.3] shadow-sm transition-[border-color,background-color,opacity] duration-150",
               focus === "connected"
-                ? "border-primary/70 bg-primary/10 text-foreground"
+                ? "border-primary/70 text-foreground"
                 : "border-border text-foreground",
             )}
             style={{
               transform: `translate(-50%, -50%) translate(${labelX}px, ${labelY}px)`,
+              backgroundColor: relationshipLabelBackground(focus),
               opacity: focus === "dimmed" ? 0.75 : 1,
               // Wrap to at most three lines — the layout reserves exactly this box.
               display: "-webkit-box",

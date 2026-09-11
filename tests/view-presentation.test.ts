@@ -1,7 +1,10 @@
 import { expect, test } from "bun:test";
 import { UpdateViewSchema } from "@structsmith/contracts";
 import { buildGraph } from "../apps/web/src/features/canvas/graph";
-import { relationshipFocus } from "../apps/web/src/features/canvas/RelationshipEdge";
+import {
+  relationshipFocus,
+  relationshipLabelBackground,
+} from "../apps/web/src/features/canvas/RelationshipEdge";
 import { createTestContext, createWorkspace } from "./helpers";
 
 test("selecting an element emphasizes only its directly connected relationships", () => {
@@ -9,6 +12,14 @@ test("selecting an element emphasizes only its directly connected relationships"
   expect(relationshipFocus("a", "a", "b")).toBe("connected");
   expect(relationshipFocus("b", "a", "b")).toBe("connected");
   expect(relationshipFocus("c", "a", "b")).toBe("dimmed");
+});
+
+test("relationship labels use an opaque card background", () => {
+  expect(relationshipLabelBackground("normal")).toBe("var(--card)");
+  expect(relationshipLabelBackground("dimmed")).toBe("var(--card)");
+  expect(relationshipLabelBackground("connected")).toBe(
+    "color-mix(in oklch, var(--primary) 12%, var(--card))",
+  );
 });
 
 test("presentation switches are independent, scoped to a view and undoable without moving cards", () => {
