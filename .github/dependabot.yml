@@ -5,6 +5,10 @@ updates:
     schedule:
       interval: weekly
     open-pull-requests-limit: 5
+    ignore:
+      # Preset 10+ requires writer 9+. Upgrade the semantic-release tooling together.
+      - dependency-name: conventional-changelog-conventionalcommits
+        update-types: ["version-update:semver-major"]
     groups:
       i18n:
         patterns: ["i18next", "react-i18next", "i18next-browser-languagedetector"]
