@@ -1,7 +1,7 @@
 {
   "name": "structsmith",
   "private": true,
-  "version": "1.9.0",
+  "version": "1.9.1",
   "license": "MIT",
   "description": "Local-first, MCP-native tool for modelling software architecture — a self-hosted alternative to Structurizr with a React Flow editor.",
   "keywords": [
