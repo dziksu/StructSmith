@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.9.0](https://github.com/dziksu/structsmith/compare/v1.8.2...v1.9.0) (2026-09-11)
+
+### Features
+
+* add diagram multi-selection and clipboard shortcuts ([#55](https://github.com/dziksu/structsmith/issues/55)) ([5c5fa6e](https://github.com/dziksu/structsmith/commit/5c5fa6e5f3251445646eaf9fd8f2230f65e8c636))
+
 ## [1.8.2](https://github.com/dziksu/structsmith/compare/v1.8.1...v1.8.2) (2026-09-09)
 
 ### Bug Fixes
