@@ -16,13 +16,12 @@
 </p>
 
 <p align="center">
-  <img src="public/screen_01.png" alt="StructSmith desktop system context view with blue internal and amber external elements" width="900">
+  <video src="https://github.com/dziksu/StructSmith/raw/main/public/demo.mp4" width="900" controls muted playsinline></video>
   <br>
-  <sub>Dark-theme desktop view with consistent ownership colours across the canvas and model tree.</sub>
-  <br><br>
-  <img src="public/screen_02.png" alt="StructSmith container view with the external Auth0 element selected in the ownership inspector" width="900">
-  <br>
-  <sub>Container view: the canvas, model tree and ownership inspector use the same visual language.</sub>
+  <sub>
+    90-second tour: model a payments system, name the relationships, group them in a boundary,
+    then drill into one container — <a href="public/demo.mp4">watch the demo</a>.
+  </sub>
 </p>
 
 A local-first, open-source tool for modelling software architecture — a self-hosted
