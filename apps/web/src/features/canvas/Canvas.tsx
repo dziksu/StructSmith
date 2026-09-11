@@ -19,6 +19,7 @@ import {
   type OnNodeDrag,
   type OnSelectionChangeParams,
   ReactFlow,
+  SelectionMode,
   useNodesInitialized,
   useReactFlow,
 } from "@xyflow/react";
@@ -27,11 +28,13 @@ import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import { useApiErrorHandler, useApplyOperations } from "@/hooks/useApi";
 import { api } from "@/lib/api";
+import { hasPrimaryModifier, primaryModifierKeyCode } from "@/lib/platform";
 import { invalidateWorkspace } from "@/lib/query";
 import { useEditorStore } from "@/store/editor";
 import { useHistoryStore } from "@/store/history";
 import { useCopyAgentReference } from "../reference/useCopyAgentReference";
 import { BoundaryNode } from "./BoundaryNode";
+import { buildPasteOperations, createDiagramClipboard, type DiagramCopyMode } from "./clipboard";
 import { ElementNode } from "./ElementNode";
 import {
   boundaryElementId,
@@ -90,6 +93,8 @@ export function Canvas({
   const focusRequest = useEditorStore((state) => state.focusRequest);
   const beginSave = useEditorStore((state) => state.beginSave);
   const endSave = useEditorStore((state) => state.endSave);
+  const clipboard = useEditorStore((state) => state.clipboard);
+  const setClipboard = useEditorStore((state) => state.setClipboard);
 
   const graph = useMemo(
     () => buildGraph({ view, elements, relationships, records }),
@@ -358,7 +363,12 @@ export function Canvas({
 
   const onSelectionChange = useCallback(
     ({ nodes: selectedNodes, edges: selectedEdges }: OnSelectionChangeParams) => {
-      const node = selectedNodes[0];
+      const elementNodes = selectedNodes.filter((node) => node.type === "element");
+      if (elementNodes.length > 1) {
+        select({ type: "elements", ids: elementNodes.map((node) => node.id).sort() });
+        return;
+      }
+      const node = elementNodes[0] ?? selectedNodes[0];
       const edge = selectedEdges[0];
       if (node) {
         if (node.type === "boundary" && node.data?.boundaryId) {
@@ -371,18 +381,28 @@ export function Canvas({
         }
       } else if (edge) {
         select({ type: "relationship", id: relationshipIdOf(edge) });
+      } else {
+        clearSelection();
       }
     },
-    [select],
+    [clearSelection, select],
   );
 
   const onNodeClick = useCallback<NodeMouseHandler>(
     (_event, node) => {
-      if (!connectFrom || isBoundaryId(node.id)) return;
+      if (node.type === "boundary") {
+        if (node.data?.boundaryId) {
+          select({ type: "boundary", id: String(node.data.boundaryId) });
+        } else if (node.data?.elementId) {
+          select({ type: "element", id: String(node.data.elementId) });
+        }
+        return;
+      }
+      if (!connectFrom) return;
       createRelationship(connectFrom, node.id);
       setConnectFrom(null);
     },
-    [connectFrom, createRelationship, setConnectFrom],
+    [connectFrom, createRelationship, select, setConnectFrom],
   );
 
   const removeFromView = useCallback(
@@ -418,6 +438,47 @@ export function Canvas({
       });
     },
     [applyOperations, t],
+  );
+
+  const deleteSelection = useCallback(
+    ({ nodes: deletedNodes, edges: deletedEdges }: { nodes: FlowNode[]; edges: FlowEdge[] }) => {
+      const elementIds = deletedNodes
+        .filter((node) => node.type === "element")
+        .map((node) => node.id);
+      // React Flow also reports edges connected to a deleted node. Only remove
+      // a semantic relationship when the edge itself was explicitly selected.
+      const relationshipIds = [
+        ...new Set(
+          deletedEdges
+            .filter((edge) => edge.selected)
+            .map(relationshipIdOf)
+            .filter((id) => !id.startsWith("implied:")),
+        ),
+      ];
+      if (elementIds.length === 0 && relationshipIds.length === 0) return;
+
+      applyOperations.mutate({
+        label: t("canvas.deletedSelection"),
+        operations: [
+          ...(elementIds.length > 0
+            ? [
+                {
+                  op: "setViewElements" as const,
+                  viewId: view.id,
+                  elementIds,
+                  mode: "remove" as const,
+                },
+              ]
+            : []),
+          ...relationshipIds.map((relationshipId) => ({
+            op: "deleteRelationship" as const,
+            relationshipId,
+          })),
+        ],
+      });
+      clearSelection();
+    },
+    [applyOperations, clearSelection, t, view.id],
   );
 
   const deleteFromModel = useCallback(
@@ -468,15 +529,48 @@ export function Canvas({
     [applyOperations, elementsById, view.elements, view.id],
   );
 
+  const copyElementsToClipboard = useCallback(
+    (elementIds: readonly string[], mode: DiagramCopyMode = "with-connections") => {
+      const nextClipboard = createDiagramClipboard(
+        workspaceId,
+        view,
+        elements,
+        relationships,
+        elementIds,
+        mode,
+      );
+      if (!nextClipboard) return false;
+      setClipboard(nextClipboard);
+      toast.success(t("canvas.copiedElements", { count: elementIds.length }));
+      return true;
+    },
+    [elements, relationships, setClipboard, t, view, workspaceId],
+  );
+
   const onNodeContextMenu = useCallback<NodeMouseHandler>(
     (event, node) => {
       event.preventDefault();
-      if (node.type === "boundary" && node.data?.boundaryId) {
-        select({ type: "boundary", id: String(node.data.boundaryId) });
+      // Right-click and right-button panning must never activate a boundary.
+      // Boundaries remain selectable with an intentional left click.
+      if (node.type === "boundary") {
+        setMenu(null);
         return;
       }
-      const elementId = isBoundaryId(node.id) ? boundaryElementId(node.id) : node.id;
-      select({ type: "element", id: elementId });
+      const elementId = node.id;
+      const selectedElementIds = nodes
+        .filter((candidate) => candidate.type === "element" && candidate.selected)
+        .map((candidate) => candidate.id);
+      const contextElementIds =
+        node.selected && selectedElementIds.length > 1 ? selectedElementIds : [elementId];
+      if (!node.selected) {
+        setNodes((current) =>
+          current.map((candidate) => ({ ...candidate, selected: candidate.id === elementId })),
+        );
+        setEdges((current) =>
+          current.map((edge) => (edge.selected ? { ...edge, selected: false } : edge)),
+        );
+        select({ type: "element", id: elementId });
+      }
       setMenu({
         x: event.clientX,
         y: event.clientY,
@@ -486,7 +580,16 @@ export function Canvas({
             onSelect: () => select({ type: "element", id: elementId }),
           },
           {
+            label: t("contextMenu.copyWithConnections"),
+            onSelect: () => copyElementsToClipboard(contextElementIds),
+          },
+          {
+            label: t("contextMenu.copyElementsOnly"),
+            onSelect: () => copyElementsToClipboard(contextElementIds, "elements-only"),
+          },
+          {
             label: t("reference.copy"),
+            separatorBefore: true,
             onSelect: () =>
               void copyReference({
                 type: "element",
@@ -515,10 +618,12 @@ export function Canvas({
     },
     [
       copyReference,
+      copyElementsToClipboard,
       deleteFromModel,
       duplicateElement,
       elementsById,
       hideInView,
+      nodes,
       removeFromView,
       select,
       setConnectFrom,
@@ -632,6 +737,67 @@ export function Canvas({
     [applyOperations, boundaries, flow, t, view.elements, view.id],
   );
 
+  /* ------------------------------- shortcuts ------------------------------- */
+
+  useEffect(() => {
+    const onKeyDown = (event: KeyboardEvent): void => {
+      const target = event.target as HTMLElement | null;
+      const typing =
+        target?.tagName === "INPUT" ||
+        target?.tagName === "TEXTAREA" ||
+        target?.isContentEditable === true;
+      if (typing || !hasPrimaryModifier(event)) return;
+
+      const key = event.key.toLowerCase();
+      if (key === "a") {
+        event.preventDefault();
+        const ids = nodes.filter((node) => node.type === "element").map((node) => node.id);
+        setNodes((current) =>
+          current.map((node) => ({ ...node, selected: node.type === "element" })),
+        );
+        setEdges((current) =>
+          current.map((edge) => (edge.selected ? { ...edge, selected: false } : edge)),
+        );
+        if (ids.length === 1) select({ type: "element", id: ids[0] as string });
+        else if (ids.length > 1) select({ type: "elements", ids: ids.sort() });
+        else clearSelection();
+        return;
+      }
+
+      if (key === "c") {
+        const ids = nodes
+          .filter((node) => node.type === "element" && node.selected)
+          .map((node) => node.id);
+        if (!copyElementsToClipboard(ids)) return;
+        event.preventDefault();
+        return;
+      }
+
+      if (key === "v" && clipboard && !applyOperations.isPending) {
+        event.preventDefault();
+        applyOperations.mutate({
+          label: t("canvas.pastedElements", { count: clipboard.elements.length }),
+          operations: buildPasteOperations(clipboard, workspaceId, view.id),
+        });
+        setClipboard({ ...clipboard, pasteCount: clipboard.pasteCount + 1 });
+      }
+    };
+
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [
+    applyOperations,
+    clearSelection,
+    clipboard,
+    copyElementsToClipboard,
+    nodes,
+    select,
+    setClipboard,
+    t,
+    view,
+    workspaceId,
+  ]);
+
   /* --------------------------------- render --------------------------------- */
 
   const allNodes = useMemo(() => {
@@ -652,7 +818,9 @@ export function Canvas({
       view.settings.showBoundaries,
     ).map((boundary) => ({
       ...boundary,
-      selected: selection.type === "element" && selection.id === boundaryElementId(boundary.id),
+      selected:
+        (selection.type === "element" && selection.id === boundaryElementId(boundary.id)) ||
+        (selection.type === "elements" && selection.ids.includes(boundaryElementId(boundary.id))),
     }));
     const semanticBoundaries = computeSemanticBoundaries(
       sources,
@@ -706,12 +874,14 @@ export function Canvas({
             current.map((edge) => (edge.selected ? { ...edge, selected: false } : edge)),
           );
         }}
-        onNodesDelete={(deleted) => {
-          for (const node of deleted) {
-            if (!isBoundaryId(node.id)) removeFromView(node.id);
-          }
-        }}
-        onEdgesDelete={(deleted) => deleteRelationships(deleted.map(relationshipIdOf))}
+        onDelete={deleteSelection}
+        selectionMode={SelectionMode.Partial}
+        panOnDrag
+        selectionKeyCode={primaryModifierKeyCode()}
+        multiSelectionKeyCode={primaryModifierKeyCode()}
+        // A selected boundary covers a large area. Keep the explicit graph
+        // layering (boundaries < edges < elements) so cards remain clickable.
+        elevateNodesOnSelect={false}
         snapToGrid={view.settings.snapToGrid}
         snapGrid={[16, 16]}
         minZoom={0.15}

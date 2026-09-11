@@ -19,22 +19,6 @@
     "software-architecture",
     "local-first"
   ],
-  "homepage": "https://dziksu.github.io/StructSmith/",
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/dziksu/structsmith.git"
-  },
-  "bugs": {
-    "url": "https://github.com/dziksu/structsmith/issues"
-  },
-  "engines": {
-    "bun": ">=1.2.0"
-  },
-  "type": "module",
-  "workspaces": [
-    "apps/*",
-    "packages/*"
-  ],
   "scripts": {
     "dev": "bun run scripts/dev.ts",
     "dev:server": "bun --watch apps/server/src/index.ts",
@@ -57,6 +41,22 @@
     "mcp:stdio": "bun apps/server/src/mcp-stdio.ts",
     "release": "node scripts/release.ts"
   },
+  "homepage": "https://dziksu.github.io/StructSmith/",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/dziksu/structsmith.git"
+  },
+  "bugs": {
+    "url": "https://github.com/dziksu/structsmith/issues"
+  },
+  "engines": {
+    "bun": ">=1.2.0"
+  },
+  "type": "module",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
   "overrides": {
     "zod": "^4.5.4"
   },

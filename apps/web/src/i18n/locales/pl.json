@@ -107,7 +107,7 @@
     "redo": "Ponów",
     "export": "Eksport",
     "more": "Więcej",
-    "search": "Szukaj (⌘K)",
+    "search": "Szukaj",
     "newView": "Nowy widok",
     "backHome": "Wszystkie przestrzenie"
   },
@@ -142,6 +142,7 @@
   "inspector": {
     "title": "Inspektor",
     "nothingSelected": "Wybierz element lub relację.",
+    "multipleSelected": "Wybrano {{count}} elementów. Możesz je razem przesuwać, kopiować lub usuwać.",
     "hint": "Zmiany zapisują się automatycznie.",
     "element": "Element",
     "relationship": "Relacja",
@@ -182,10 +183,15 @@
     "legend": "Własność",
     "empty": "Ten widok nie zawiera jeszcze elementów",
     "emptyHint": "Dodaj elementy z palety lub przeciągnij je z drzewa modelu.",
-    "hiddenElements": "ukryte: {{count}}"
+    "hiddenElements": "ukryte: {{count}}",
+    "copiedElements": "Skopiowano elementy: {{count}}",
+    "pastedElements": "Wklejono elementy: {{count}}",
+    "deletedSelection": "Usunięto wybrane elementy"
   },
   "contextMenu": {
     "edit": "Edytuj",
+    "copyWithConnections": "Kopiuj z połączeniami",
+    "copyElementsOnly": "Kopiuj same elementy",
     "duplicate": "Duplikuj",
     "connect": "Połącz stąd",
     "hideFromView": "Ukryj w tym widoku",
@@ -305,6 +311,26 @@
     "records": "Wpisy",
     "relationships": "Relacje",
     "actions": "Akcje"
+  },
+  "shortcuts": {
+    "title": "Skróty klawiszowe",
+    "search": "Szukaj skrótów…",
+    "empty": "Brak pasujących skrótów.",
+    "commandPalette": "Otwórz wyszukiwanie",
+    "showShortcuts": "Pokaż skróty klawiszowe",
+    "selectAll": "Zaznacz wszystkie elementy",
+    "addToSelection": "Dodaj do zaznaczenia",
+    "marqueeSelection": "Zaznaczenie prostokątem",
+    "copyWithConnections": "Kopiuj zaznaczone elementy z połączeniami",
+    "paste": "Wklej elementy",
+    "delete": "Usuń zaznaczone elementy",
+    "undo": "Cofnij",
+    "redo": "Ponów",
+    "fitView": "Dopasuj widok",
+    "clearSelection": "Wyczyść zaznaczenie",
+    "pan": "Przesuń kanwę",
+    "click": "kliknięcie",
+    "dragCanvas": "przeciągnięcie po kanwie"
   },
   "status": {
     "revision": "rew. {{revision}}",

@@ -103,7 +103,7 @@
     "redo": "Redo",
     "export": "Export",
     "more": "More",
-    "search": "Search (⌘K)",
+    "search": "Search",
     "newView": "New view",
     "backHome": "All workspaces"
   },
@@ -138,6 +138,7 @@
   "inspector": {
     "title": "Inspector",
     "nothingSelected": "Select an element or a relationship.",
+    "multipleSelected": "{{count}} elements selected. Move, copy or remove them as a group.",
     "hint": "Changes are saved automatically.",
     "element": "Element",
     "relationship": "Relationship",
@@ -178,10 +179,15 @@
     "legend": "Ownership",
     "empty": "This view has no elements yet",
     "emptyHint": "Add elements from the palette, or drag them in from the model tree.",
-    "hiddenElements": "{{count}} hidden"
+    "hiddenElements": "{{count}} hidden",
+    "copiedElements": "Copied {{count}} element(s)",
+    "pastedElements": "Pasted {{count}} element(s)",
+    "deletedSelection": "Removed selected items"
   },
   "contextMenu": {
     "edit": "Edit",
+    "copyWithConnections": "Copy with connections",
+    "copyElementsOnly": "Copy elements only",
     "duplicate": "Duplicate",
     "connect": "Connect from here",
     "hideFromView": "Hide from this view",
@@ -301,6 +307,26 @@
     "records": "Records",
     "relationships": "Relationships",
     "actions": "Actions"
+  },
+  "shortcuts": {
+    "title": "Keyboard shortcuts",
+    "search": "Search shortcuts…",
+    "empty": "No matching shortcuts.",
+    "commandPalette": "Open search",
+    "showShortcuts": "Show keyboard shortcuts",
+    "selectAll": "Select all elements",
+    "addToSelection": "Add to selection",
+    "marqueeSelection": "Rectangle selection",
+    "copyWithConnections": "Copy selected elements with connections",
+    "paste": "Paste elements",
+    "delete": "Remove selected items",
+    "undo": "Undo",
+    "redo": "Redo",
+    "fitView": "Fit view",
+    "clearSelection": "Clear selection",
+    "pan": "Pan canvas",
+    "click": "click",
+    "dragCanvas": "drag canvas"
   },
   "status": {
     "revision": "rev {{revision}}",
