@@ -1,7 +1,10 @@
 import { describe, expect, test } from "bun:test";
 import { computeLayout, toMermaid, validateDocument } from "@structsmith/domain";
 import {
+  BOUNDARY_HEADER,
+  BOUNDARY_PADDING,
   computeBoundaries,
+  computeCanvasBoundaries,
   computeSemanticBoundaries,
 } from "../apps/web/src/features/canvas/graph";
 import { createTestContext, createWorkspace } from "./helpers";
@@ -35,6 +38,77 @@ describe("semantic boundaries", () => {
         elementId: system.id,
       });
       expect(frames[0]?.data).not.toHaveProperty("layer");
+    } finally {
+      close();
+    }
+  });
+
+  test("nests semantic boundary headers inside a derived parent frame", () => {
+    const { services, close } = createTestContext();
+    try {
+      const workspace = createWorkspace(services);
+      const system = services.elements.create(workspace.id, {
+        kind: "softwareSystem",
+        name: "HaloKierowca",
+      }).result;
+      const mobile = services.elements.create(workspace.id, {
+        kind: "container",
+        parentId: system.id,
+        name: "Mobile app",
+      }).result;
+      const api = services.elements.create(workspace.id, {
+        kind: "container",
+        parentId: system.id,
+        name: "API",
+      }).result;
+      const view = services.views.create(workspace.id, {
+        kind: "container",
+        name: "Architecture",
+        elementIds: [mobile.id, api.id],
+      }).result;
+      const clients = services.boundaries.create(workspace.id, {
+        viewId: view.id,
+        kind: "custom",
+        name: "Client applications",
+      }).result;
+      services.boundaries.create(workspace.id, {
+        viewId: view.id,
+        parentBoundaryId: clients.id,
+        kind: "networkZone",
+        name: "Mobile zone",
+        elementIds: [mobile.id],
+      });
+      const elements = services.elements.list(workspace.id);
+
+      const result = computeCanvasBoundaries(
+        [
+          { id: mobile.id, x: 100, y: 100, width: 220, height: 96 },
+          { id: api.id, x: 500, y: 300, width: 220, height: 96 },
+        ],
+        new Map(elements.map((element) => [element.id, element] as const)),
+        services.views.get(view.id).boundaries,
+        "deployment",
+        true,
+      );
+
+      expect(result.parentBoundaries).toHaveLength(1);
+      expect(result.semanticBoundaries).toHaveLength(2);
+      const parent = result.parentBoundaries[0];
+      const clientFrame = result.semanticBoundaries.find(
+        (boundary) => boundary.data.name === "Client applications",
+      );
+      const mobileFrame = result.semanticBoundaries.find(
+        (boundary) => boundary.data.name === "Mobile zone",
+      );
+      if (!parent || !clientFrame || !mobileFrame) throw new Error("Missing nested boundaries");
+
+      expect(clientFrame.position.x - parent.position.x).toBe(BOUNDARY_PADDING);
+      expect(clientFrame.position.y - parent.position.y).toBe(BOUNDARY_PADDING + BOUNDARY_HEADER);
+      expect(mobileFrame.position.x - clientFrame.position.x).toBe(BOUNDARY_PADDING);
+      expect(mobileFrame.position.y - clientFrame.position.y).toBe(
+        BOUNDARY_PADDING + BOUNDARY_HEADER,
+      );
+      expect([parent.zIndex, clientFrame.zIndex, mobileFrame.zIndex]).toEqual([0, 1, 2]);
     } finally {
       close();
     }

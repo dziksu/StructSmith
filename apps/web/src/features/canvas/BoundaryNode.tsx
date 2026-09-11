@@ -26,7 +26,7 @@ function BoundaryNodeComponent({ data, selected }: NodeProps & { data: BoundaryN
       }}
     >
       <div
-        className="flex min-h-9 items-center gap-2 border-b px-3 py-2 text-xs font-bold uppercase tracking-wider backdrop-blur-sm"
+        className="flex h-9 items-center gap-2 border-b px-3 py-2 text-xs font-bold uppercase tracking-wider backdrop-blur-sm"
         style={{
           borderColor: `color-mix(in oklch, ${accent} 45%, var(--canvas))`,
           backgroundColor: `color-mix(in oklch, ${accent} 34%, var(--canvas))`,

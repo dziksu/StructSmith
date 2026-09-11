@@ -39,8 +39,7 @@ import { ElementNode } from "./ElementNode";
 import {
   boundaryElementId,
   buildGraph,
-  computeBoundaries,
-  computeSemanticBoundaries,
+  computeCanvasBoundaries,
   type FlowEdge,
   type FlowNode,
   isBoundaryId,
@@ -821,28 +820,26 @@ export function Canvas({
         width: node.measured?.width ?? node.width ?? NODE_WIDTH,
         height: node.measured?.height ?? node.height ?? NODE_HEIGHT,
       }));
-    // A parent shown as a boundary has no entry in `nodes`, so mirror the
-    // selection onto it here.
-    const legacyBoundaries = computeBoundaries(
+    const computedBoundaries = computeCanvasBoundaries(
       sources,
       elementsById,
+      boundaries,
+      view.settings.boundaryLayer,
       view.settings.showBoundaries,
-    ).map((boundary) => ({
+    );
+    // A parent shown as a boundary has no entry in `nodes`, so mirror the
+    // selection onto it here.
+    const legacyBoundaries = computedBoundaries.parentBoundaries.map((boundary) => ({
       ...boundary,
       selected:
         (selection.type === "element" && selection.id === boundaryElementId(boundary.id)) ||
         (selection.type === "elements" && selection.ids.includes(boundaryElementId(boundary.id))),
     }));
-    const semanticBoundaries = computeSemanticBoundaries(
-      sources,
-      boundaries,
-      view.settings.boundaryLayer,
-      view.settings.showBoundaries,
-    ).map((boundary) => ({
+    const semanticBoundaries = computedBoundaries.semanticBoundaries.map((boundary) => ({
       ...boundary,
       selected: selection.type === "boundary" && selection.id === boundary.data.boundaryId,
     }));
-    return [...semanticBoundaries, ...legacyBoundaries, ...nodes];
+    return [...legacyBoundaries, ...semanticBoundaries, ...nodes];
   }, [
     nodes,
     elementsById,
