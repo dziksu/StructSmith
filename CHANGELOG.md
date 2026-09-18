@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.10.1](https://github.com/dziksu/structsmith/compare/v1.10.0...v1.10.1) (2026-09-18)
+
+### Bug Fixes
+
+* **security:** require patched MCP SDK ([#73](https://github.com/dziksu/structsmith/issues/73)) ([1c939d4](https://github.com/dziksu/structsmith/commit/1c939d4e90ea3a5c5dafd2c69b3c8d3116a7c9f3))
+
 ## [1.10.0](https://github.com/dziksu/structsmith/compare/v1.9.3...v1.10.0) (2026-09-11)
 
 ### Features
