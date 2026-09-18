@@ -12,6 +12,7 @@
   <a href="https://github.com/dziksu/structsmith/actions/workflows/ci.yml"><img alt="CI" src="https://github.com/dziksu/structsmith/actions/workflows/ci.yml/badge.svg"></a>
   <a href="LICENSE"><img alt="License: MIT" src="https://img.shields.io/badge/license-MIT-blue.svg"></a>
   <a href="https://modelcontextprotocol.io"><img alt="MCP" src="https://img.shields.io/badge/MCP-streamable%20http-0FC6F8.svg"></a>
+  <a href="https://m8ven.ai/mcp/dziksu/structsmith"><img alt="M8ven Verified" src="https://m8ven.ai/badge/mcp/dziksu/structsmith?variant=verified"></a>
   <img alt="Bun" src="https://img.shields.io/badge/runtime-Bun-black.svg">
 </p>
 
