@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.10.2](https://github.com/dziksu/structsmith/compare/v1.10.1...v1.10.2) (2026-09-20)
+
+### Build and Dependencies
+
+* **deps:** bump @tanstack/react-router in the tanstack group ([#78](https://github.com/dziksu/structsmith/issues/78)) ([da726e5](https://github.com/dziksu/structsmith/commit/da726e5f3617d61f6fa98aa06268659b5ecd1ca0))
+* **deps:** bump react-i18next in the i18n group ([#76](https://github.com/dziksu/structsmith/issues/76)) ([9ce5a99](https://github.com/dziksu/structsmith/commit/9ce5a9930878b71f48bbe4dbd9d58a0a80fd3cf8))
+* **deps:** bump the react group with 4 updates ([#77](https://github.com/dziksu/structsmith/issues/77)) ([b11f6fa](https://github.com/dziksu/structsmith/commit/b11f6fa991b3842f51a2f38db051cfd34fd7c30c))
+
 ## [1.10.1](https://github.com/dziksu/structsmith/compare/v1.10.0...v1.10.1) (2026-09-18)
 
 ### Bug Fixes
