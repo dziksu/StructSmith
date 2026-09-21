@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.10.3](https://github.com/dziksu/structsmith/compare/v1.10.2...v1.10.3) (2026-09-21)
+
+### Build and Dependencies
+
+* **deps-dev:** bump the dev-dependencies group across 1 directory with 2 updates ([#79](https://github.com/dziksu/structsmith/issues/79)) ([676bcd8](https://github.com/dziksu/structsmith/commit/676bcd8622996592da201a56f6174ba948ca6921))
+* **deps:** bump react-dropzone from 20.1.1 to 20.1.2 ([#80](https://github.com/dziksu/structsmith/issues/80)) ([92f875a](https://github.com/dziksu/structsmith/commit/92f875aa8e3f9e98d084a668d8a489bcceaf83b2))
+
 ## [1.10.2](https://github.com/dziksu/structsmith/compare/v1.10.1...v1.10.2) (2026-09-20)
 
 ### Build and Dependencies
