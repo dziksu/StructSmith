@@ -28,7 +28,7 @@
         "@structsmith/mcp": "workspace:*",
         "cors": "^2.8.5",
         "express": "^5.2.1",
-        "zod": "^4.5.4",
+        "zod": "^4.6.5",
       },
       "devDependencies": {
         "@types/cors": "^2.8.17",
@@ -85,7 +85,7 @@
         "react-resizable-panels": "^4.12.4",
         "sonner": "^2.0.8",
         "tailwind-merge": "^3.6.0",
-        "zod": "^4.5.4",
+        "zod": "^4.6.5",
         "zustand": "^5.0.2",
       },
       "devDependencies": {
@@ -101,7 +101,7 @@
       "name": "@structsmith/contracts",
       "version": "0.1.0",
       "dependencies": {
-        "zod": "^4.5.4",
+        "zod": "^4.6.5",
       },
     },
     "packages/database": {
@@ -119,7 +119,7 @@
       "dependencies": {
         "@dagrejs/dagre": "^3.1.1",
         "@structsmith/contracts": "workspace:*",
-        "zod": "^4.5.4",
+        "zod": "^4.6.5",
       },
     },
     "packages/mcp": {
@@ -129,7 +129,7 @@
         "@modelcontextprotocol/sdk": "^1.30.0",
         "@structsmith/contracts": "workspace:*",
         "@structsmith/domain": "workspace:*",
-        "zod": "^4.5.4",
+        "zod": "^4.6.5",
       },
     },
   },
