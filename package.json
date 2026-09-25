@@ -65,11 +65,11 @@
     "@semantic-release/changelog": "^7.0.0",
     "@semantic-release/commit-analyzer": "^13.0.1",
     "@semantic-release/release-notes-generator": "^14.1.1",
-    "@semantic-release/github": "^12.0.9",
+    "@semantic-release/github": "^12.0.10",
     "conventional-changelog-conventionalcommits": "^9.3.1",
     "@biomejs/biome": "^2.5.14",
     "@types/bun": "^1.4.2",
-    "drizzle-kit": "^0.31.10",
+    "drizzle-kit": "^0.31.11",
     "typescript": "^7.0.2"
   }
 }
