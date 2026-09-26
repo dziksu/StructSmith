@@ -1,5 +1,15 @@
 # Changelog
 
+## [1.10.4](https://github.com/dziksu/structsmith/compare/v1.10.3...v1.10.4) (2026-09-26)
+
+### Build and Dependencies
+
+* **deps-dev:** bump the dev-dependencies group with 2 updates ([#85](https://github.com/dziksu/structsmith/issues/85)) ([04c2a21](https://github.com/dziksu/structsmith/commit/04c2a211f84717fbc7e95bd05721eef6e9f728d9))
+* **deps:** bump react-i18next in the i18n group ([#83](https://github.com/dziksu/structsmith/issues/83)) ([9fc8037](https://github.com/dziksu/structsmith/commit/9fc8037f0e9ec0a8535b246f0fc1db11d7c91d52))
+* **deps:** bump tailwind-merge from 3.6.0 to 3.7.0 ([#86](https://github.com/dziksu/structsmith/issues/86)) ([326caf4](https://github.com/dziksu/structsmith/commit/326caf4941126be99573b5a17a411046d70efdae))
+* **deps:** bump the tanstack group with 2 updates ([#84](https://github.com/dziksu/structsmith/issues/84)) ([4814e2c](https://github.com/dziksu/structsmith/commit/4814e2ca7d4d7549be6da63b1cb4c17655547f28))
+* **deps:** bump zod from 4.5.4 to 4.6.5 ([#87](https://github.com/dziksu/structsmith/issues/87)) ([3e8c13b](https://github.com/dziksu/structsmith/commit/3e8c13b3b2e31e8bd5b9c35bbcc3ca62463c4c45))
+
 ## [1.10.3](https://github.com/dziksu/structsmith/compare/v1.10.2...v1.10.3) (2026-09-21)
 
 ### Build and Dependencies
