@@ -15,7 +15,7 @@
     "@structsmith/mcp": "workspace:*",
     "cors": "^2.8.5",
     "express": "^5.2.1",
-    "zod": "^4.5.4",
+    "zod": "^4.6.5",
     "@modelcontextprotocol/sdk": "^1.30.0"
   },
   "devDependencies": {
