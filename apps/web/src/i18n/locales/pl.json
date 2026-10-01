@@ -1,4 +1,25 @@
 {
+  "navigation": {
+    "title": "Nawigacja po diagramach",
+    "back": "Wstecz",
+    "openDetails": "Otwórz szczegóły",
+    "openHint_one": "Otwórz widok szczegółowy (kliknij obiekt dwukrotnie)",
+    "openHint_few": "Wybierz spośród {{count}} widoków szczegółowych (kliknij obiekt dwukrotnie)",
+    "openHint_many": "Wybierz spośród {{count}} widoków szczegółowych (kliknij obiekt dwukrotnie)",
+    "openHint_other": "Wybierz spośród {{count}} widoków szczegółowych (kliknij obiekt dwukrotnie)",
+    "createHint": "Otwórz szczegóły — w razie potrzeby utwórz widok",
+    "createDetails": "Utwórz widok szczegółowy",
+    "chooseView": "Wybierz widok szczegółowy",
+    "chooseDescription": "Wybierz widok wnętrza obiektu {{name}}.",
+    "noView": "{{name}} nie ma jeszcze widoku szczegółowego. Utwórz go z istniejących elementów modelu lub anuluj, aby kontynuować przeglądanie.",
+    "defaultName": "{{name}} — {{kind}}",
+    "seedContents": "Uwzględnij elementy podrzędne i połączone otoczenie",
+    "seedDescription_one": "1 istniejący element. Odznacz tę opcję, aby rozpocząć od pustego widoku.",
+    "seedDescription_few": "{{count}} istniejące elementy. Odznacz tę opcję, aby rozpocząć od pustego widoku.",
+    "seedDescription_many": "{{count}} istniejących elementów. Odznacz tę opcję, aby rozpocząć od pustego widoku.",
+    "seedDescription_other": "{{count}} istniejących elementów. Odznacz tę opcję, aby rozpocząć od pustego widoku.",
+    "doubleClick": "Dwukrotne kliknięcie systemu lub kontenera"
+  },
   "common": {
     "add": "Dodaj",
     "apply": "Zastosuj",
@@ -473,6 +494,8 @@
   "views": {
     "create": "Nowy widok",
     "name": "Nazwa",
+    "viewName": "Nazwa widoku",
+    "renamed": "Zmieniono nazwę widoku",
     "kind": "Rodzaj",
     "scope": "Element zakresu",
     "seed": "Zacznij od",

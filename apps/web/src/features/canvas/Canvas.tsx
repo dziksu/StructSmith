@@ -32,6 +32,7 @@ import { hasPrimaryModifier, primaryModifierKeyCode } from "@/lib/platform";
 import { invalidateWorkspace } from "@/lib/query";
 import { useEditorStore } from "@/store/editor";
 import { useHistoryStore } from "@/store/history";
+import type { ViewLocation } from "../navigation/history";
 import { useCopyAgentReference } from "../reference/useCopyAgentReference";
 import { BoundaryNode } from "./BoundaryNode";
 import { buildPasteOperations, createDiagramClipboard, type DiagramCopyMode } from "./clipboard";
@@ -67,6 +68,9 @@ interface CanvasProps {
   boundaries: readonly ArchitectureBoundary[];
   relationships: readonly ArchitectureRelationship[];
   records: readonly ArchitectureRecord[];
+  initialLocation?: ViewLocation;
+  onOpenDetails: (elementId: string) => void;
+  canOpenDetails: (elementId: string) => boolean;
 }
 
 export function Canvas({
@@ -76,6 +80,9 @@ export function Canvas({
   boundaries,
   relationships,
   records,
+  initialLocation,
+  onOpenDetails,
+  canOpenDetails,
 }: CanvasProps) {
   const { t } = useTranslation();
   const flow = useReactFlow();
@@ -104,15 +111,33 @@ export function Canvas({
     [elements],
   );
 
-  const [nodes, setNodes] = useState<FlowNode[]>(graph.nodes);
+  const restoredSelection = useRef(initialLocation?.selection);
+  const [nodes, setNodes] = useState<FlowNode[]>(() =>
+    graph.nodes.map((node) => ({
+      ...node,
+      selected:
+        initialLocation?.selection.type === "element"
+          ? initialLocation.selection.id === node.id
+          : initialLocation?.selection.type === "elements" &&
+            initialLocation.selection.ids.includes(node.id),
+    })),
+  );
   // React Flow keeps selection *inside* the elements array, so edges must be
   // state with an onEdgesChange handler — a plain prop can never be selected.
-  const [edges, setEdges] = useState<FlowEdge[]>(graph.edges);
+  const [edges, setEdges] = useState<FlowEdge[]>(() =>
+    graph.edges.map((edge) => ({
+      ...edge,
+      selected:
+        initialLocation?.selection.type === "relationship" &&
+        initialLocation.selection.id === relationshipIdOf(edge),
+    })),
+  );
   const [menu, setMenu] = useState<{ x: number; y: number; items: ContextMenuItem[] } | null>(null);
   const pendingLayout = useRef(new Map<string, { x: number; y: number }>());
   const layoutTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const dragOrigins = useRef(new Map<string, { x: number; y: number }>());
   const layoutSaveQueue = useRef<Promise<void>>(Promise.resolve());
+  const ignoreDetailsUntil = useRef(0);
 
   // A rebuild happens after every mutation; carry the current selection over so
   // the highlight does not blink off while the inspector still shows the item.
@@ -142,13 +167,16 @@ export function Canvas({
    */
   const nodesInitialized = useNodesInitialized();
   const fittedViewId = useRef<string | null>(null);
+  const initialViewport = useRef(initialLocation?.viewport);
 
   useEffect(() => {
-    if (!nodesInitialized || nodes.length === 0) return;
+    if (!flow.viewportInitialized || (nodes.length > 0 && !nodesInitialized)) return;
     if (fittedViewId.current === view.id) return;
     fittedViewId.current = view.id;
-    void flow.fitView({ padding: 0.25, maxZoom: 1, duration: 250 });
-  }, [nodesInitialized, nodes.length, view.id, flow]);
+    if (initialViewport.current) void flow.setViewport(initialViewport.current);
+    else if (nodes.length > 0) void flow.fitView({ padding: 0.25, maxZoom: 1, duration: 250 });
+    if (restoredSelection.current) select(restoredSelection.current);
+  }, [nodesInitialized, nodes.length, view.id, flow, select]);
 
   /**
    * Selecting an element outside the canvas (model tree, command palette) has
@@ -373,6 +401,7 @@ export function Canvas({
 
   const onSelectionChange = useCallback(
     ({ nodes: selectedNodes, edges: selectedEdges }: OnSelectionChangeParams) => {
+      if (fittedViewId.current !== view.id) return;
       const elementNodes = selectedNodes.filter((node) => node.type === "element");
       if (elementNodes.length > 1) {
         select({ type: "elements", ids: elementNodes.map((node) => node.id).sort() });
@@ -395,7 +424,7 @@ export function Canvas({
         clearSelection();
       }
     },
-    [clearSelection, select],
+    [clearSelection, select, view.id],
   );
 
   const onNodeClick = useCallback<NodeMouseHandler>(
@@ -409,6 +438,7 @@ export function Canvas({
         return;
       }
       if (!connectFrom) return;
+      ignoreDetailsUntil.current = Date.now() + 600;
       createRelationship(connectFrom, node.id);
       setConnectFrom(null);
     },
@@ -563,10 +593,23 @@ export function Canvas({
       // Right-click and right-button panning must never activate a boundary.
       // Boundaries remain selectable with an intentional left click.
       if (node.type === "boundary") {
-        setMenu(null);
+        const elementId = node.data.elementId;
+        const element = elementId ? elementsById.get(String(elementId)) : undefined;
+        setMenu(
+          element && canOpenDetails(element.id) && !connectFrom
+            ? {
+                x: event.clientX,
+                y: event.clientY,
+                items: [
+                  { label: t("navigation.openDetails"), onSelect: () => onOpenDetails(element.id) },
+                ],
+              }
+            : null,
+        );
         return;
       }
       const elementId = node.id;
+      const element = elementsById.get(elementId);
       const selectedElementIds = nodes
         .filter((candidate) => candidate.type === "element" && candidate.selected)
         .map((candidate) => candidate.id);
@@ -585,6 +628,9 @@ export function Canvas({
         x: event.clientX,
         y: event.clientY,
         items: [
+          ...(element && canOpenDetails(element.id) && !connectFrom
+            ? [{ label: t("navigation.openDetails"), onSelect: () => onOpenDetails(elementId) }]
+            : []),
           {
             label: t("contextMenu.edit"),
             onSelect: () => select({ type: "element", id: elementId }),
@@ -627,6 +673,9 @@ export function Canvas({
       });
     },
     [
+      connectFrom,
+      canOpenDetails,
+      onOpenDetails,
       copyReference,
       copyElementsToClipboard,
       deleteFromModel,
@@ -870,6 +919,21 @@ export function Canvas({
         onConnect={onConnect}
         onSelectionChange={onSelectionChange}
         onNodeClick={onNodeClick}
+        onNodeDoubleClick={(event, node) => {
+          if (
+            connectFrom ||
+            Date.now() < ignoreDetailsUntil.current ||
+            event.ctrlKey ||
+            event.metaKey ||
+            event.altKey ||
+            event.shiftKey ||
+            (event.target as HTMLElement).closest("button, input, textarea, a, .react-flow__handle")
+          )
+            return;
+          const elementId = node.type === "boundary" ? node.data.elementId : node.id;
+          if (elementId) onOpenDetails(String(elementId));
+        }}
+        zoomOnDoubleClick={false}
         onNodeContextMenu={onNodeContextMenu}
         onEdgeContextMenu={onEdgeContextMenu}
         onPaneClick={() => {
@@ -894,7 +958,8 @@ export function Canvas({
         snapGrid={[16, 16]}
         minZoom={0.15}
         maxZoom={2.5}
-        fitView
+        defaultViewport={initialViewport.current}
+        fitView={!initialViewport.current}
         fitViewOptions={{ padding: 0.25, maxZoom: 1 }}
         proOptions={{ hideAttribution: false }}
         deleteKeyCode={["Delete", "Backspace"]}

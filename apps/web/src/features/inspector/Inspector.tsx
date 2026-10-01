@@ -32,6 +32,7 @@ import { useDebouncedCallback } from "@/hooks/useDebouncedCallback";
 import { cn } from "@/lib/utils";
 import { useEditorStore } from "@/store/editor";
 import { iconFor } from "../icons";
+import { DetailViewAction } from "../navigation/DetailNavigation";
 import { CopyReferenceButton } from "../reference/CopyReferenceButton";
 import { PropertyEditor } from "./PropertyEditor";
 import { TagEditor } from "./TagEditor";
@@ -83,6 +84,7 @@ export function Inspector({
 
       <ScrollArea className="flex-1">
         <div className="space-y-4 p-3 pb-10">
+          {element && <DetailViewAction elementId={element.id} />}
           {element && (
             <ElementInspector
               key={element.id}
@@ -206,6 +208,13 @@ export function Inspector({
               key={view.id}
               view={view}
               workspaceId={workspaceId}
+              renamePending={applyOperations.isPending}
+              onRename={(name) =>
+                applyOperations.mutate({
+                  label: t("views.renamed"),
+                  operations: [{ op: "updateView", viewId: view.id, data: { name } }],
+                })
+              }
               onPatch={(settings) =>
                 applyOperations.mutate({
                   label: settings.autoLayoutAlgorithm
@@ -863,13 +872,25 @@ function RelationshipInspector({
 function ViewInspector({
   view,
   workspaceId,
+  renamePending,
+  onRename,
   onPatch,
 }: {
   view: ViewDetail;
   workspaceId: string;
+  renamePending: boolean;
+  onRename: (name: string) => void;
   onPatch: (settings: Partial<ViewDetail["settings"]>) => void;
 }) {
   const { t } = useTranslation();
+  const [name, setName] = useState(view.name);
+  useEffect(() => setName(view.name), [view.name]);
+
+  const commitName = () => {
+    const value = name.trim();
+    setName(value || view.name);
+    if (value && value !== view.name && !renamePending) onRename(value);
+  };
 
   return (
     <div className="space-y-4">
@@ -888,6 +909,28 @@ function ViewInspector({
         />
       </div>
       <p className="text-xs text-muted-foreground">{t("inspector.nothingSelected")}</p>
+
+      <div className="space-y-1">
+        <Label htmlFor="view-name">{t("views.viewName")}</Label>
+        <Input
+          id="view-name"
+          value={name}
+          maxLength={200}
+          disabled={renamePending}
+          onChange={(event) => setName(event.target.value)}
+          onBlur={commitName}
+          onKeyDown={(event) => {
+            if (event.key === "Enter") {
+              event.preventDefault();
+              event.currentTarget.blur();
+            } else if (event.key === "Escape") {
+              event.preventDefault();
+              event.stopPropagation();
+              setName(view.name);
+            }
+          }}
+        />
+      </div>
 
       <div className="space-y-3 border-t border-border pt-3">
         <Label>{t("inspector.viewSettings")}</Label>

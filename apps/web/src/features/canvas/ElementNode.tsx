@@ -4,6 +4,7 @@ import { memo } from "react";
 import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/utils";
 import { iconFor } from "../icons";
+import { DetailViewAction } from "../navigation/DetailNavigation";
 import type { ElementNodeData } from "./graph";
 
 /** Custom node (spec §33) — icon, name, technology and a small kind/role badge. */
@@ -74,6 +75,7 @@ function ElementNodeComponent({ data, selected }: NodeProps & { data: ElementNod
             />
           )}
           {locked && <Lock className="h-3 w-3 shrink-0 text-muted-foreground" />}
+          <DetailViewAction elementId={element.id} compact />
         </div>
 
         {showDescriptions && element.description?.trim() && (

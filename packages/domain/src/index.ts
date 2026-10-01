@@ -1,4 +1,5 @@
 export * from "./context";
+export * from "./detail-views";
 export * from "./engine";
 export * from "./errors";
 export * from "./export";
