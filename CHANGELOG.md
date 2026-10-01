@@ -1,5 +1,36 @@
 # Changelog
 
+## [1.10.4](https://github.com/dziksu/structsmith/compare/v1.10.3...v1.10.4) (2026-09-26)
+
+### Build and Dependencies
+
+* **deps-dev:** bump the dev-dependencies group with 2 updates ([#85](https://github.com/dziksu/structsmith/issues/85)) ([04c2a21](https://github.com/dziksu/structsmith/commit/04c2a211f84717fbc7e95bd05721eef6e9f728d9))
+* **deps:** bump react-i18next in the i18n group ([#83](https://github.com/dziksu/structsmith/issues/83)) ([9fc8037](https://github.com/dziksu/structsmith/commit/9fc8037f0e9ec0a8535b246f0fc1db11d7c91d52))
+* **deps:** bump tailwind-merge from 3.6.0 to 3.7.0 ([#86](https://github.com/dziksu/structsmith/issues/86)) ([326caf4](https://github.com/dziksu/structsmith/commit/326caf4941126be99573b5a17a411046d70efdae))
+* **deps:** bump the tanstack group with 2 updates ([#84](https://github.com/dziksu/structsmith/issues/84)) ([4814e2c](https://github.com/dziksu/structsmith/commit/4814e2ca7d4d7549be6da63b1cb4c17655547f28))
+* **deps:** bump zod from 4.5.4 to 4.6.5 ([#87](https://github.com/dziksu/structsmith/issues/87)) ([3e8c13b](https://github.com/dziksu/structsmith/commit/3e8c13b3b2e31e8bd5b9c35bbcc3ca62463c4c45))
+
+## [1.10.3](https://github.com/dziksu/structsmith/compare/v1.10.2...v1.10.3) (2026-09-21)
+
+### Build and Dependencies
+
+* **deps-dev:** bump the dev-dependencies group across 1 directory with 2 updates ([#79](https://github.com/dziksu/structsmith/issues/79)) ([676bcd8](https://github.com/dziksu/structsmith/commit/676bcd8622996592da201a56f6174ba948ca6921))
+* **deps:** bump react-dropzone from 20.1.1 to 20.1.2 ([#80](https://github.com/dziksu/structsmith/issues/80)) ([92f875a](https://github.com/dziksu/structsmith/commit/92f875aa8e3f9e98d084a668d8a489bcceaf83b2))
+
+## [1.10.2](https://github.com/dziksu/structsmith/compare/v1.10.1...v1.10.2) (2026-09-20)
+
+### Build and Dependencies
+
+* **deps:** bump @tanstack/react-router in the tanstack group ([#78](https://github.com/dziksu/structsmith/issues/78)) ([da726e5](https://github.com/dziksu/structsmith/commit/da726e5f3617d61f6fa98aa06268659b5ecd1ca0))
+* **deps:** bump react-i18next in the i18n group ([#76](https://github.com/dziksu/structsmith/issues/76)) ([9ce5a99](https://github.com/dziksu/structsmith/commit/9ce5a9930878b71f48bbe4dbd9d58a0a80fd3cf8))
+* **deps:** bump the react group with 4 updates ([#77](https://github.com/dziksu/structsmith/issues/77)) ([b11f6fa](https://github.com/dziksu/structsmith/commit/b11f6fa991b3842f51a2f38db051cfd34fd7c30c))
+
+## [1.10.1](https://github.com/dziksu/structsmith/compare/v1.10.0...v1.10.1) (2026-09-18)
+
+### Bug Fixes
+
+* **security:** require patched MCP SDK ([#73](https://github.com/dziksu/structsmith/issues/73)) ([1c939d4](https://github.com/dziksu/structsmith/commit/1c939d4e90ea3a5c5dafd2c69b3c8d3116a7c9f3))
+
 ## [1.10.0](https://github.com/dziksu/structsmith/compare/v1.9.3...v1.10.0) (2026-09-11)
 
 ### Features
