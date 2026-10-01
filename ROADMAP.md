@@ -40,14 +40,14 @@ understand what connects to each object, and return without losing their place.
 - [x] **NAV-3: Create useful scoped views.** When no detail view exists, offer
   creation with relevant children and connected context. Keep an empty-view
   option and respect the workspace's modelling rules.
+- [ ] **NAV-4: Explain objects on the canvas.** Display a compact responsibility
+  description using existing metadata, with full details in the inspector.
 - [ ] **NAV-5: Inspect contents in place.** Offer an explicit expand/collapse
   action for one hierarchy level while preserving the surrounding diagram.
   Start with temporary exploration, preserve system-level relationship endpoints,
   and restore the previous layout on collapse. Embedding an exact saved view is
   a separate follow-up requiring rules for external context and duplicate objects.
   Keep Ctrl/Cmd-click reserved for selection.
-- [ ] **NAV-4: Explain objects on the canvas.** Display a compact responsibility
-  description using existing metadata, with full details in the inspector.
 - [ ] **DEP-1: Inspect connections.** Show incoming/outgoing relationships and
   distinguish direct connections from connections involving descendants.
 - [ ] **DEP-2: Explore dependencies across the model.** Add a focused one-hop

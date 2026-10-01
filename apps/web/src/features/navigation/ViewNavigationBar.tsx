@@ -1,5 +1,5 @@
 import type { ArchitectureElement, ArchitectureView } from "@structsmith/contracts";
-import { ArrowLeft, ChevronRight } from "lucide-react";
+import { ArrowLeft, ChevronRight, Settings2 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import type { ViewLocation } from "./history";
@@ -10,12 +10,14 @@ export function ViewNavigationBar({
   views,
   back,
   onBack,
+  onEditView,
 }: {
   current: ArchitectureView | null;
   elements: readonly ArchitectureElement[];
   views: readonly ArchitectureView[];
   back: readonly ViewLocation[];
   onBack: (index: number) => void;
+  onEditView: () => void;
 }) {
   const { t } = useTranslation();
   const trail = back.flatMap((entry, index) => {
@@ -63,6 +65,18 @@ export function ViewNavigationBar({
         <span aria-current="page" className="shrink-0 font-medium">
           {current?.name}
         </span>
+        {current && (
+          <Button
+            size="icon"
+            variant="ghost"
+            className="h-7 w-7 shrink-0"
+            aria-label={t("inspector.viewSettings")}
+            title={t("inspector.viewSettings")}
+            onClick={onEditView}
+          >
+            <Settings2 className="h-3.5 w-3.5" />
+          </Button>
+        )}
       </div>
       {scope.length > 0 && (
         <span

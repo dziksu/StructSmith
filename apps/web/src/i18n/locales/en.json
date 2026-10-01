@@ -486,6 +486,8 @@
   "views": {
     "create": "New view",
     "name": "Name",
+    "viewName": "View name",
+    "renamed": "View renamed",
     "kind": "Kind",
     "scope": "Scope element",
     "seed": "Start with",

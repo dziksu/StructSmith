@@ -333,6 +333,15 @@ function StudioContent({
                   views={viewList}
                   back={navigation.back}
                   onBack={goBack}
+                  onEditView={() => {
+                    flow.setNodes((nodes) =>
+                      nodes.map((node) => (node.selected ? { ...node, selected: false } : node)),
+                    );
+                    flow.setEdges((edges) =>
+                      edges.map((edge) => (edge.selected ? { ...edge, selected: false } : edge)),
+                    );
+                    useEditorStore.getState().clearSelection();
+                  }}
                 />
                 <div className="min-h-0 flex-1 bg-canvas">
                   {view.data ? (

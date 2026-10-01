@@ -494,6 +494,8 @@
   "views": {
     "create": "Nowy widok",
     "name": "Nazwa",
+    "viewName": "Nazwa widoku",
+    "renamed": "Zmieniono nazwę widoku",
     "kind": "Rodzaj",
     "scope": "Element zakresu",
     "seed": "Zacznij od",

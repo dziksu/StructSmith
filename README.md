@@ -525,6 +525,10 @@ view with one level of children and their connected context, or start empty.
 within the current workspace session. Browsing existing views does not change
 the model. Ctrl/Cmd-click remains multi-selection.
 
+Use **View settings** beside the current view's name to edit its name in the
+inspector. Enter or leaving the field saves; Escape cancels. Renaming preserves
+the view's ID, links, scope, and layout, and supports undo/redo.
+
 The next improvements focus on dependency exploration, inline expansion, and visual
 overlays. Later milestones add message flows, offline presentations, visual change
 review, and saved proposals.
