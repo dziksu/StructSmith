@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.11.0](https://github.com/dziksu/structsmith/compare/v1.10.4...v1.11.0) (2026-10-01)
+
+### Features
+
+* edit view names from view settings ([26acebe](https://github.com/dziksu/structsmith/commit/26acebed152c70739a43f1ea18bc65c3a75627c5))
+* navigate to scoped detail views and restore context ([3947dad](https://github.com/dziksu/structsmith/commit/3947dadd5c7ecea6ac1ead846e83d1e7b62f92ff))
+
 ## [1.10.4](https://github.com/dziksu/structsmith/compare/v1.10.3...v1.10.4) (2026-09-26)
 
 ### Build and Dependencies
