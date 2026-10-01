@@ -20,6 +20,7 @@ export function KeyboardShortcutsDialog() {
     [t("shortcuts.showShortcuts"), `${primary} /`],
     [t("shortcuts.selectAll"), `${primary} A`],
     [t("shortcuts.addToSelection"), `${primary} + ${t("shortcuts.click")}`],
+    [t("navigation.openDetails"), t("navigation.doubleClick")],
     [t("shortcuts.marqueeSelection"), `${primary} + ${t("shortcuts.dragCanvas")}`],
     [t("shortcuts.copyWithConnections"), `${primary} C`],
     [t("shortcuts.paste"), `${primary} V`],

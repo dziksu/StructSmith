@@ -3,7 +3,7 @@
 Make software architecture easier to explore, explain, and evolve, while keeping
 StructSmith local, portable, and usable through both the editor and an AI client.
 
-Updated: 8 September 2026. All items below are planned; milestone numbers indicate
+Updated: 1 October 2026. Unchecked items below are planned; milestone numbers indicate
 delivery order, not release versions or committed dates. Revisit priorities after
 each milestone using feedback from onboarding, design reviews, and presales work.
 
@@ -32,14 +32,20 @@ and proposals. Re-estimate each milestone when implementation begins.
 An architect should be able to move from a system to its containers and components,
 understand what connects to each object, and return without losing their place.
 
-- [ ] **NAV-1: Open details from a diagram.** Add an explicit action on systems
+- [x] **NAV-1: Open details from a diagram.** Add an explicit action on systems
   and containers, with double-click as an optional shortcut. Open an existing
   scoped view; show a chooser when several match.
-- [ ] **NAV-2: Preserve navigation context.** Add scope breadcrumbs and back
+- [x] **NAV-2: Preserve navigation context.** Add scope breadcrumbs and back
   navigation that restores the previous diagram, viewport, and selection.
-- [ ] **NAV-3: Create useful scoped views.** When no detail view exists, offer
+- [x] **NAV-3: Create useful scoped views.** When no detail view exists, offer
   creation with relevant children and connected context. Keep an empty-view
   option and respect the workspace's modelling rules.
+- [ ] **NAV-5: Inspect contents in place.** Offer an explicit expand/collapse
+  action for one hierarchy level while preserving the surrounding diagram.
+  Start with temporary exploration, preserve system-level relationship endpoints,
+  and restore the previous layout on collapse. Embedding an exact saved view is
+  a separate follow-up requiring rules for external context and duplicate objects.
+  Keep Ctrl/Cmd-click reserved for selection.
 - [ ] **NAV-4: Explain objects on the canvas.** Display a compact responsibility
   description using existing metadata, with full details in the inspector.
 - [ ] **DEP-1: Inspect connections.** Show incoming/outgoing relationships and
@@ -230,6 +236,6 @@ change. Measure completion time, navigation mistakes, unanswered questions, and
 extra diagrams needed. Establish a baseline before claiming improvements; keep
 these evaluations local unless the user explicitly chooses to share results.
 
-The next implementation task is **NAV-1: open an existing scoped detail view from
-a system or container**, including a chooser for multiple matches and a clear
-empty state. Ship that usable slice, then extend it through the first milestone.
+Detail navigation, return context, and explicit scoped-view creation are implemented.
+Next, complete object explanations and dependency inspection. Inline expansion
+remains a separate interaction with its own layout and relationship requirements.

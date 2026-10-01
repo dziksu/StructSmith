@@ -32,6 +32,7 @@ import { useDebouncedCallback } from "@/hooks/useDebouncedCallback";
 import { cn } from "@/lib/utils";
 import { useEditorStore } from "@/store/editor";
 import { iconFor } from "../icons";
+import { DetailViewAction } from "../navigation/DetailNavigation";
 import { CopyReferenceButton } from "../reference/CopyReferenceButton";
 import { PropertyEditor } from "./PropertyEditor";
 import { TagEditor } from "./TagEditor";
@@ -83,6 +84,7 @@ export function Inspector({
 
       <ScrollArea className="flex-1">
         <div className="space-y-4 p-3 pb-10">
+          {element && <DetailViewAction elementId={element.id} />}
           {element && (
             <ElementInspector
               key={element.id}
