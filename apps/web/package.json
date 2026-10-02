@@ -38,7 +38,7 @@
     "react-dom": "^19.3.0",
     "react-dropzone": "^20.1.2",
     "react-i18next": "^17.0.15",
-    "react-resizable-panels": "^4.12.4",
+    "react-resizable-panels": "^4.14.1",
     "sonner": "^2.0.8",
     "tailwind-merge": "^3.7.0",
     "zod": "^4.6.5",
