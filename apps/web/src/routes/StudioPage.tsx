@@ -1,5 +1,6 @@
+import { detailViewKind, detailViewsFor } from "@structsmith/domain";
 import { ReactFlowProvider, useReactFlow } from "@xyflow/react";
-import { useEffect, useMemo, useRef } from "react";
+import { type Dispatch, type SetStateAction, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Group, Panel, Separator } from "react-resizable-panels";
 import { toast } from "sonner";
@@ -10,6 +11,15 @@ import { ElementPalette } from "@/features/command/ElementPalette";
 import { KeyboardShortcutsDialog } from "@/features/command/KeyboardShortcutsDialog";
 import { Explorer } from "@/features/explorer/Explorer";
 import { Inspector } from "@/features/inspector/Inspector";
+import { DetailNavigationContext } from "@/features/navigation/DetailNavigation";
+import { DetailViewDialog } from "@/features/navigation/DetailViewDialog";
+import {
+  emptyNavigation,
+  returnToView,
+  type ViewNavigation,
+  visitView,
+} from "@/features/navigation/history";
+import { ViewNavigationBar } from "@/features/navigation/ViewNavigationBar";
 import { BottomPanel } from "@/features/panels/BottomPanel";
 import { StatusBar } from "@/features/panels/StatusBar";
 import { TopBar } from "@/features/topbar/TopBar";
@@ -41,9 +51,26 @@ interface StudioPageProps {
 }
 
 export function StudioPage(props: StudioPageProps) {
+  return <WorkspaceStudio key={props.workspaceId} {...props} />;
+}
+
+function WorkspaceStudio(props: StudioPageProps) {
+  const [navigation, setNavigation] = useState(emptyNavigation);
+  const [navigationReset, setNavigationReset] = useState(0);
+  const resetHistory = useHistoryStore((state) => state.reset);
+  const clearSelection = useEditorStore((state) => state.clearSelection);
+  useEffect(() => {
+    resetHistory();
+    clearSelection();
+  }, [resetHistory, clearSelection]);
   return (
-    <ReactFlowProvider>
-      <StudioContent {...props} />
+    <ReactFlowProvider key={`${props.viewId ?? "initial"}:${navigationReset}`}>
+      <StudioContent
+        {...props}
+        navigation={navigation}
+        setNavigation={setNavigation}
+        resetNavigation={() => setNavigationReset((value) => value + 1)}
+      />
     </ReactFlowProvider>
   );
 }
@@ -55,7 +82,14 @@ function StudioContent({
   onNavigate,
   onOpenMcp,
   onGoHome,
-}: StudioPageProps) {
+  navigation,
+  setNavigation,
+  resetNavigation,
+}: StudioPageProps & {
+  navigation: ViewNavigation;
+  setNavigation: Dispatch<SetStateAction<ViewNavigation>>;
+  resetNavigation: () => void;
+}) {
   const { t } = useTranslation();
   const flow = useReactFlow();
 
@@ -76,7 +110,6 @@ function StudioContent({
   const view = useView(activeViewId);
   const applyOperations = useApplyOperations(workspaceId);
   const history = useHistory(workspaceId);
-  const resetHistory = useHistoryStore((state) => state.reset);
 
   const clearSelection = useEditorStore((state) => state.clearSelection);
   const selection = useEditorStore((state) => state.selection);
@@ -86,16 +119,10 @@ function StudioContent({
   const setCommandOpen = useEditorStore((state) => state.setCommandOpen);
   const setShortcutsOpen = useEditorStore((state) => state.setShortcutsOpen);
   const handledReference = useRef<string | null>(null);
+  const [detailElementId, setDetailElementId] = useState<string | null>(null);
+  const connectFrom = useEditorStore((state) => state.connectFrom);
 
   useWorkspaceEvents(workspaceId);
-
-  // The undo stack holds snapshot ids of one workspace, so switching workspaces
-  // has to reset it — otherwise undo would restore into the wrong workspace.
-  // biome-ignore lint/correctness/useExhaustiveDependencies: workspaceId is the trigger, not a value the effect reads.
-  useEffect(() => {
-    resetHistory();
-    clearSelection();
-  }, [workspaceId, resetHistory, clearSelection]);
 
   useEffect(() => {
     if (!viewId && activeViewId) onNavigate(workspaceId, activeViewId);
@@ -124,9 +151,59 @@ function StudioContent({
   const relationships = useMemo(() => model.data?.relationships ?? [], [model.data]);
   const recordList = useMemo(() => records.data ?? [], [records.data]);
   const viewList = useMemo(() => views.data ?? [], [views.data]);
-  const activeView = viewList.find((item) => item.id === activeViewId) ?? null;
+  const activeView = view.data ?? viewList.find((item) => item.id === activeViewId) ?? null;
 
-  const selectView = (nextViewId: string): void => onNavigate(workspaceId, nextViewId);
+  const currentLocation = () =>
+    activeViewId
+      ? {
+          viewId: activeViewId,
+          viewport: flow.getViewport(),
+          selection: useEditorStore.getState().selection,
+        }
+      : null;
+  const selectView = (nextViewId: string): void => {
+    if (nextViewId === activeViewId) return;
+    const current = currentLocation();
+    if (current) setNavigation((state) => visitView(state, current, nextViewId));
+    clearSelection();
+    setDetailElementId(null);
+    onNavigate(workspaceId, nextViewId);
+  };
+  const goBack = (index: number): void => {
+    const target = navigation.back[index];
+    const current = currentLocation();
+    if (!target || !current || !viewList.some((item) => item.id === target.viewId)) return;
+    setNavigation((state) => returnToView(state, current, index));
+    if (target.viewId === activeViewId) resetNavigation();
+    clearSelection();
+    setDetailElementId(null);
+    onNavigate(workspaceId, target.viewId);
+  };
+  const openDetails = (elementId: string): void => {
+    if (connectFrom) return;
+    const element = elements.find((item) => item.id === elementId);
+    if (!element || !detailViewKind(element)) return;
+    select({ type: "element", id: element.id });
+    const candidates = detailViewsFor(element, viewList, activeViewId);
+    if (candidates.length === 1 && candidates[0]) selectView(candidates[0].id);
+    else if (
+      candidates.length > 0 ||
+      activeView?.scopeElementId !== element.id ||
+      activeView.kind !== detailViewKind(element)
+    )
+      setDetailElementId(elementId);
+  };
+  const canOpenDetails = (elementId: string): boolean => {
+    const element = elements.find((item) => item.id === elementId);
+    return Boolean(
+      element &&
+        detailViewKind(element) &&
+        (activeView?.scopeElementId !== element.id ||
+          activeView.kind !== detailViewKind(element) ||
+          detailViewsFor(element, viewList, activeViewId).length > 0),
+    );
+  };
+  const detailElement = elements.find((element) => element.id === detailElementId);
 
   const autoLayout = (
     algorithm: "dagre" | "force" | "radial" | "grid" = view.data?.settings.autoLayoutAlgorithm ??
@@ -209,112 +286,163 @@ function StudioContent({
   }
 
   return (
-    <div className="flex h-full flex-col">
-      <TopBar
-        productName={settings.data?.productName ?? "StructSmith"}
-        workspace={workspace.data}
-        workspaces={workspaces.data ?? []}
-        views={viewList}
-        activeView={activeView}
-        canUndo={history.canUndo}
-        canRedo={history.canRedo}
-        mcpReadOnly={settings.data?.mcpReadOnly ?? false}
-        onSelectWorkspace={(id) => onNavigate(id, null)}
-        onSelectView={selectView}
-        onAutoLayout={autoLayout}
-        onFitView={fitView}
-        onUndo={() => void history.undo()}
-        onRedo={() => void history.redo()}
-        onOpenMcp={onOpenMcp}
-        onGoHome={onGoHome}
-      />
+    <DetailNavigationContext.Provider
+      value={{
+        elements,
+        views: viewList,
+        currentViewId: activeViewId,
+        enabled: !connectFrom,
+        openDetails,
+      }}
+    >
+      <div className="flex h-full flex-col">
+        <TopBar
+          productName={settings.data?.productName ?? "StructSmith"}
+          workspace={workspace.data}
+          workspaces={workspaces.data ?? []}
+          views={viewList}
+          activeView={activeView}
+          canUndo={history.canUndo}
+          canRedo={history.canRedo}
+          mcpReadOnly={settings.data?.mcpReadOnly ?? false}
+          onSelectWorkspace={(id) => onNavigate(id, null)}
+          onSelectView={selectView}
+          onAutoLayout={autoLayout}
+          onFitView={fitView}
+          onUndo={() => void history.undo()}
+          onRedo={() => void history.redo()}
+          onOpenMcp={onOpenMcp}
+          onGoHome={onGoHome}
+        />
 
-      <div className="min-h-0 flex-1">
-        <Group orientation="horizontal">
-          <Panel defaultSize="19%" minSize="12%" maxSize="34%">
-            <Explorer
-              workspaceId={workspaceId}
-              elements={elements}
-              boundaries={boundaries}
-              views={viewList}
-              records={recordList}
-              view={view.data ?? null}
-              activeViewId={activeViewId}
-              onSelectView={selectView}
-            />
-          </Panel>
-          <Separator className="w-px bg-border transition-colors hover:bg-primary/40" />
+        <div className="min-h-0 flex-1">
+          <Group orientation="horizontal">
+            <Panel defaultSize="19%" minSize="12%" maxSize="34%">
+              <Explorer
+                workspaceId={workspaceId}
+                elements={elements}
+                boundaries={boundaries}
+                views={viewList}
+                records={recordList}
+                view={view.data ?? null}
+                activeViewId={activeViewId}
+                onSelectView={selectView}
+              />
+            </Panel>
+            <Separator className="w-px bg-border transition-colors hover:bg-primary/40" />
 
-          <Panel minSize="30%">
-            <div className="flex h-full flex-col">
-              <div className="min-h-0 flex-1 bg-canvas">
-                {view.data ? (
-                  <Canvas
-                    key={view.data.id}
-                    workspaceId={workspaceId}
-                    view={view.data}
-                    elements={elements}
-                    boundaries={boundaries}
-                    relationships={relationships}
-                    records={recordList}
-                  />
-                ) : (
-                  <div className="flex h-full flex-col items-center justify-center gap-1 text-center">
-                    <p className="text-sm font-medium">{t("explorer.emptyViews")}</p>
-                    <p className="max-w-xs text-xs text-muted-foreground">
-                      {t("canvas.emptyHint")}
-                    </p>
-                  </div>
-                )}
+            <Panel minSize="30%">
+              <div className="flex h-full flex-col">
+                <ViewNavigationBar
+                  current={activeView}
+                  elements={elements}
+                  views={viewList}
+                  back={navigation.back}
+                  onBack={goBack}
+                  onEditView={() => {
+                    flow.setNodes((nodes) =>
+                      nodes.map((node) => (node.selected ? { ...node, selected: false } : node)),
+                    );
+                    flow.setEdges((edges) =>
+                      edges.map((edge) => (edge.selected ? { ...edge, selected: false } : edge)),
+                    );
+                    useEditorStore.getState().clearSelection();
+                  }}
+                />
+                <div className="min-h-0 flex-1 bg-canvas">
+                  {view.data ? (
+                    <Canvas
+                      key={view.data.id}
+                      workspaceId={workspaceId}
+                      view={view.data}
+                      elements={elements}
+                      boundaries={boundaries}
+                      relationships={relationships}
+                      records={recordList}
+                      initialLocation={navigation.saved[view.data.id]}
+                      onOpenDetails={openDetails}
+                      canOpenDetails={canOpenDetails}
+                    />
+                  ) : (
+                    <div
+                      className="flex h-full flex-col items-center justify-center gap-1 text-center"
+                      role="status"
+                    >
+                      <p className="text-sm font-medium">
+                        {t(
+                          activeViewId && view.isPending ? "common.loading" : "explorer.emptyViews",
+                        )}
+                      </p>
+                      {!(activeViewId && view.isPending) && (
+                        <p className="max-w-xs text-xs text-muted-foreground">
+                          {t("canvas.emptyHint")}
+                        </p>
+                      )}
+                    </div>
+                  )}
+                </div>
+                <BottomPanel workspaceId={workspaceId} />
               </div>
-              <BottomPanel workspaceId={workspaceId} />
-            </div>
-          </Panel>
+            </Panel>
 
-          <Separator className="w-px bg-border transition-colors hover:bg-primary/40" />
-          <Panel defaultSize="22%" minSize="14%" maxSize="40%">
-            <Inspector
-              workspaceId={workspaceId}
-              elements={elements}
-              boundaries={boundaries}
-              relationships={relationships}
-              records={recordList}
-              view={view.data ?? null}
-            />
-          </Panel>
-        </Group>
+            <Separator className="w-px bg-border transition-colors hover:bg-primary/40" />
+            <Panel defaultSize="22%" minSize="14%" maxSize="40%">
+              <Inspector
+                workspaceId={workspaceId}
+                elements={elements}
+                boundaries={boundaries}
+                relationships={relationships}
+                records={recordList}
+                view={view.data ?? null}
+              />
+            </Panel>
+          </Group>
+        </div>
+
+        <StatusBar
+          revision={model.data.revision}
+          elementCount={elements.length}
+          boundaryCount={boundaries.length}
+          relationshipCount={relationships.length}
+          validation={validation.data}
+          mcpReady
+          mcpReadOnly={settings.data?.mcpReadOnly ?? false}
+        />
+
+        <ElementPalette workspaceId={workspaceId} view={view.data ?? null} />
+        <KeyboardShortcutsDialog />
+        {detailElement && (
+          <DetailViewDialog
+            key={detailElement.id}
+            workspaceId={workspaceId}
+            element={detailElement}
+            elements={elements}
+            relationships={relationships}
+            views={viewList}
+            currentViewId={activeViewId}
+            onClose={() => setDetailElementId(null)}
+            onOpenView={selectView}
+          />
+        )}
+        <CommandPalette
+          elements={elements}
+          relationships={relationships}
+          views={viewList}
+          records={recordList}
+          activeViewId={activeViewId}
+          onSelectView={selectView}
+          viewContains={(elementId) =>
+            (view.data?.elements ?? []).some(
+              (entry) => entry.elementId === elementId && !entry.hidden,
+            )
+          }
+          findViewWith={(elementId) =>
+            viewList.find((candidate) =>
+              candidate.elements.some((entry) => entry.elementId === elementId && !entry.hidden),
+            )?.id ?? null
+          }
+        />
       </div>
-
-      <StatusBar
-        revision={model.data.revision}
-        elementCount={elements.length}
-        boundaryCount={boundaries.length}
-        relationshipCount={relationships.length}
-        validation={validation.data}
-        mcpReady
-        mcpReadOnly={settings.data?.mcpReadOnly ?? false}
-      />
-
-      <ElementPalette workspaceId={workspaceId} view={view.data ?? null} />
-      <KeyboardShortcutsDialog />
-      <CommandPalette
-        elements={elements}
-        relationships={relationships}
-        views={viewList}
-        records={recordList}
-        activeViewId={activeViewId}
-        onSelectView={selectView}
-        viewContains={(elementId) =>
-          (view.data?.elements ?? []).some(
-            (entry) => entry.elementId === elementId && !entry.hidden,
-          )
-        }
-        findViewWith={(elementId) =>
-          viewList.find((candidate) =>
-            candidate.elements.some((entry) => entry.elementId === elementId && !entry.hidden),
-          )?.id ?? null
-        }
-      />
-    </div>
+    </DetailNavigationContext.Provider>
   );
 }

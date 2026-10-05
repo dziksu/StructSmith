@@ -1,5 +1,18 @@
 # Changelog
 
+## [1.11.1](https://github.com/dziksu/structsmith/compare/v1.11.0...v1.11.1) (2026-10-05)
+
+### Build and Dependencies
+
+* **deps:** consolidate dependency updates from [#91](https://github.com/dziksu/structsmith/issues/91)–[#95](https://github.com/dziksu/structsmith/issues/95) ([#96](https://github.com/dziksu/structsmith/issues/96)) ([19e478f](https://github.com/dziksu/structsmith/commit/19e478fe03ed0be6290ee1577be900cd66a86acd))
+
+## [1.11.0](https://github.com/dziksu/structsmith/compare/v1.10.4...v1.11.0) (2026-10-01)
+
+### Features
+
+* edit view names from view settings ([26acebe](https://github.com/dziksu/structsmith/commit/26acebed152c70739a43f1ea18bc65c3a75627c5))
+* navigate to scoped detail views and restore context ([3947dad](https://github.com/dziksu/structsmith/commit/3947dadd5c7ecea6ac1ead846e83d1e7b62f92ff))
+
 ## [1.10.4](https://github.com/dziksu/structsmith/compare/v1.10.3...v1.10.4) (2026-09-26)
 
 ### Build and Dependencies

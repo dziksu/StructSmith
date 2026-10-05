@@ -587,7 +587,20 @@ bun run mcp:stdio   # MCP over stdio
 
 ## Roadmap
 
-The next improvements focus on C4 navigation, dependency exploration, and visual
+Systems and containers now offer **Open details** on their cards, in the inspector,
+and in the context menu. Double-click is a shortcut. A system opens its scoped
+container view; a container opens its scoped component view. Multiple matching
+views show a chooser. When none exists, an explicit creation dialog can seed a
+view with one level of children and their connected context, or start empty.
+**Back** and the navigation trail restore the previous zoom, pan, and selection
+within the current workspace session. Browsing existing views does not change
+the model. Ctrl/Cmd-click remains multi-selection.
+
+Use **View settings** beside the current view's name to edit its name in the
+inspector. Enter or leaving the field saves; Escape cancels. Renaming preserves
+the view's ID, links, scope, and layout, and supports undo/redo.
+
+The next improvements focus on dependency exploration, inline expansion, and visual
 overlays. Later milestones add message flows, offline presentations, visual change
 review, and saved proposals.
 

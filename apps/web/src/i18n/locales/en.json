@@ -1,4 +1,21 @@
 {
+  "navigation": {
+    "title": "Diagram navigation",
+    "back": "Back",
+    "openDetails": "Open details",
+    "openHint_one": "Open detail view (double-click the object)",
+    "openHint_other": "Choose from {{count}} detail views (double-click the object)",
+    "createHint": "Open details — create a view if needed",
+    "createDetails": "Create detail view",
+    "chooseView": "Choose a detail view",
+    "chooseDescription": "Select a view of the contents of {{name}}.",
+    "noView": "{{name}} has no detail view yet. Create one using existing model elements, or cancel to keep exploring.",
+    "defaultName": "{{name}} — {{kind}}",
+    "seedContents": "Include children and connected context",
+    "seedDescription_one": "1 existing element. Clear this option to start with an empty view.",
+    "seedDescription_other": "{{count}} existing elements. Clear this option to start with an empty view.",
+    "doubleClick": "Double-click a system or container"
+  },
   "common": {
     "add": "Add",
     "apply": "Apply",
@@ -482,6 +499,8 @@
   "views": {
     "create": "New view",
     "name": "Name",
+    "viewName": "View name",
+    "renamed": "View renamed",
     "kind": "Kind",
     "scope": "Scope element",
     "seed": "Start with",

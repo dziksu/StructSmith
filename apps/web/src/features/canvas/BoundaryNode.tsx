@@ -2,6 +2,7 @@ import type { NodeProps } from "@xyflow/react";
 import { memo } from "react";
 import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/utils";
+import { DetailViewAction } from "../navigation/DetailNavigation";
 import type { BoundaryNodeData } from "./graph";
 
 /** A semantic boundary rendered from the live footprint of its visible members. */
@@ -53,6 +54,7 @@ function BoundaryNodeComponent({ data, selected }: NodeProps & { data: BoundaryN
               ? t(`kinds.${data.kind}`)
               : t(`boundaries.layer.${data.layer}`)}
         </span>
+        {data.elementId && <DetailViewAction elementId={data.elementId} compact />}
       </div>
     </div>
   );
