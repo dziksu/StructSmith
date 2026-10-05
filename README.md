@@ -411,7 +411,9 @@ with revision checks, activity and snapshots; the diagram updates through the
 existing event stream. General topics cannot edit projects. **Stop** interrupts a
 turn but does not roll back changes already applied.
 
-The chat gear configures the executable path, optional model and default agent.
+The chat gear configures the executable path, optional model, Codex reasoning
+effort (thinking level), and default agent. Reasoning defaults to the CLI's built-in
+behavior; available levels follow the selected model's local Codex catalog.
 The topic gear configures its title and optional absolute source directory for
 reading local code. Agent authentication stays with the installed CLI; sign in
 in your terminal first. History and settings are saved under `data/agent-chat`.

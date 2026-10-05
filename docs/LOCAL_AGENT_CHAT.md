@@ -40,6 +40,15 @@ standalone `copilot` program, rather than the older `gh copilot` extension.
   model for each provider. A blank model uses the provider's default. Codex runs
   with `--ignore-user-config` to keep unrelated MCP servers out of this chat;
   select a model here to override its built-in default.
+- **Codex reasoning effort**: choose **Default** or an explicit thinking level in
+  Agent settings. It applies to all Codex topics and is passed as
+  `-c 'model_reasoning_effort="high"'` (with the selected level). **Default** adds
+  no override and keeps the CLI's built-in behavior. The select uses supported
+  levels from the local `$CODEX_HOME/models_cache.json` catalog, or
+  `~/.codex/models_cache.json` when `CODEX_HOME` is unset. If a model is not in the
+  catalog, standard levels remain available with a compatibility hint; CLI errors
+  appear in the conversation. Changing to a model that cannot use the selected
+  level resets it to **Default**. Older saved settings also use **Default**.
 - **Topic settings**: title and optional absolute source directory on the server.
   The directory is for reading source code. Architecture editing happens through
   MCP, and this initial version does not offer source file edits or shell approval

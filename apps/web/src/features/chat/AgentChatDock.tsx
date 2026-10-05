@@ -572,6 +572,7 @@ export function AgentChatDock() {
       {settingsOpen && settings.data && (
         <AgentSettingsDialog
           settings={settings.data.settings}
+          codexModels={settings.data.codexModels}
           onClose={() => setSettingsOpen(false)}
           onSave={() => void cache.invalidateQueries({ queryKey: ["agent-settings"] })}
         />

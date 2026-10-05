@@ -11,6 +11,22 @@ export const ChatContextSchema = z.object({
   viewId: z.string().max(200).optional(),
 });
 export type ChatContext = z.infer<typeof ChatContextSchema>;
+export const CodexReasoningEffortSchema = z.enum([
+  "none",
+  "minimal",
+  "low",
+  "medium",
+  "high",
+  "xhigh",
+  "max",
+  "ultra",
+]);
+export type CodexReasoningEffort = z.infer<typeof CodexReasoningEffortSchema>;
+export const CodexModelSchema = z.object({
+  id: z.string(),
+  reasoningEfforts: z.array(CodexReasoningEffortSchema).min(1),
+});
+export type CodexModel = z.infer<typeof CodexModelSchema>;
 const ProviderSettingsSchema = z.object({
   executable: z.string().trim().min(1).max(2000),
   model: z.string().trim().max(200).default(""),
@@ -18,7 +34,11 @@ const ProviderSettingsSchema = z.object({
 export const AgentSettingsSchema = z.object({
   defaultProvider: AgentProviderSchema.default("codex"),
   providers: z.object({
-    codex: ProviderSettingsSchema,
+    codex: ProviderSettingsSchema.extend({
+      reasoningEffort: z
+        .union([z.literal("default"), CodexReasoningEffortSchema])
+        .default("default"),
+    }),
     claude: ProviderSettingsSchema,
     copilot: ProviderSettingsSchema,
   }),
@@ -27,7 +47,7 @@ export type AgentSettings = z.infer<typeof AgentSettingsSchema>;
 export const defaultAgentSettings: AgentSettings = {
   defaultProvider: "codex",
   providers: {
-    codex: { executable: "codex", model: "" },
+    codex: { executable: "codex", model: "", reasoningEffort: "default" },
     claude: { executable: "claude", model: "" },
     copilot: { executable: "copilot", model: "" },
   },
@@ -81,4 +101,10 @@ export interface AgentAvailability {
   provider: AgentProvider;
   available: boolean;
   executable: string;
+}
+export interface AgentSettingsResponse {
+  settings: AgentSettings;
+  availability: AgentAvailability[];
+  readOnly: boolean;
+  codexModels: CodexModel[];
 }

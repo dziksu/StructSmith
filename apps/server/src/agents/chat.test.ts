@@ -3,7 +3,7 @@ import { once } from "node:events";
 import { chmodSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { defaultAgentSettings } from "@structsmith/contracts";
+import { AgentSettingsSchema, defaultAgentSettings } from "@structsmith/contracts";
 import express from "express";
 import { createTestContext, createWorkspace } from "../../../../tests/helpers";
 import { createApp } from "../app";
@@ -11,6 +11,7 @@ import { createAppContext } from "../bootstrap";
 import { loadConfig } from "../config";
 import { errorMiddleware } from "../http-errors";
 import { agentChatRoutes, localAgentAccess } from "../routes/agent-chat";
+import { readCodexModels } from "./codex-models";
 import { agentInvocation, parseAgentLine } from "./providers";
 import { AgentChatService } from "./service";
 
@@ -87,13 +88,16 @@ test("local CLI conversations persist, retain project/context on provider change
   const service = new AgentChatService(services, directory, false);
   const fake = join(directory, "fake-agent");
   const capture = join(directory, "prompt.txt");
+  const capturedArgs = join(directory, "args.txt");
   writeFileSync(
     fake,
-    `#!/bin/sh\ncat > '${capture}'\nprintf '%s\\n' '{"type":"item.completed","item":{"type":"agent_message","text":"Odpowiedź testowa"}}'\n`,
+    `#!/bin/sh\nprintf '%s\\n' "$@" > '${capturedArgs}'\ncat > '${capture}'\nprintf '%s\\n' '{"type":"item.completed","item":{"type":"agent_message","text":"Odpowiedź testowa"}}'\n`,
   );
   chmodSync(fake, 0o700);
   const settings = structuredClone(defaultAgentSettings);
   settings.providers.codex.executable = fake;
+  settings.providers.codex.model = "gpt-6.1-sol";
+  settings.providers.codex.reasoningEffort = "high";
   service.setSettings(settings);
   try {
     const chat = service.create({ workspaceId: project.id });
@@ -113,6 +117,8 @@ test("local CLI conversations persist, retain project/context on provider change
     });
     expect(readFileSync(capture, "utf8")).toContain(project.id);
     expect(readFileSync(capture, "utf8")).toContain("not-a-shell-command");
+    expect(readFileSync(capturedArgs, "utf8")).toContain("--model\ngpt-6.1-sol\n");
+    expect(readFileSync(capturedArgs, "utf8")).toContain('-c\nmodel_reasoning_effort="high"\n');
     service.update(chat.id, { provider: "claude" });
     expect(service.get(chat.id).workspaceId).toBe(project.id);
     service.update(chat.id, { provider: "codex" });
@@ -183,6 +189,19 @@ test("CLI arguments and provider events preserve text and errors without invokin
   expect(invocation.stdin).toBe(prompt);
   expect(invocation.args).toContain("read-only");
   expect(invocation.args).not.toContain("--dangerously-bypass-approvals-and-sandbox");
+  expect(invocation.args.some((arg) => arg.startsWith("model_reasoning_effort="))).toBe(false);
+  const settings = structuredClone(defaultAgentSettings);
+  settings.providers.codex.reasoningEffort = "ultra";
+  expect(agentInvocation(chat, settings, prompt, "http://localhost/mcp").args).toContain(
+    'model_reasoning_effort="ultra"',
+  );
+  for (const provider of ["claude", "copilot"] as const) {
+    expect(
+      agentInvocation({ ...chat, provider }, settings, prompt, "http://localhost/mcp").args.some(
+        (arg) => arg.startsWith("model_reasoning_effort="),
+      ),
+    ).toBe(false);
+  }
   expect(
     parseAgentLine("codex", '{"type":"turn.failed","error":{"message":"Login required"}}'),
   ).toEqual({ error: "Login required" });
@@ -202,6 +221,48 @@ test("CLI arguments and provider events preserve text and errors without invokin
   expect(parseAgentLine("copilot", "Plain reply").text).toBe("Plain reply\n");
 });
 
+test("legacy settings keep CLI defaults and invalid reasoning levels are rejected", () => {
+  const legacy = JSON.parse(JSON.stringify(defaultAgentSettings));
+  delete legacy.providers.codex.reasoningEffort;
+  expect(AgentSettingsSchema.parse(legacy).providers.codex.reasoningEffort).toBe("default");
+  legacy.providers.codex.reasoningEffort = "arbitrary-value";
+  expect(AgentSettingsSchema.safeParse(legacy).success).toBe(false);
+});
+
+test("Codex catalog exposes only model IDs and supported reasoning levels with safe fallback", () => {
+  const directory = mkdtempSync(join(tmpdir(), "structsmith-codex-models-"));
+  const file = join(directory, "models_cache.json");
+  try {
+    expect(readCodexModels(file)).toEqual([]);
+    writeFileSync(
+      file,
+      JSON.stringify({
+        models: [
+          {
+            slug: "gpt-6.1-sol",
+            supported_reasoning_levels: [{ effort: "low" }, { effort: "ultra" }],
+            extra: "not exposed",
+          },
+          {
+            slug: "gpt-6-luna",
+            supported_reasoning_levels: [{ effort: "low" }, { effort: "max" }],
+          },
+          { slug: "future", supported_reasoning_levels: [{ effort: "unknown-level" }] },
+          { bad: "entry" },
+        ],
+      }),
+    );
+    expect(readCodexModels(file)).toEqual([
+      { id: "gpt-6.1-sol", reasoningEfforts: ["low", "ultra"] },
+      { id: "gpt-6-luna", reasoningEfforts: ["low", "max"] },
+    ]);
+    writeFileSync(file, "invalid JSON");
+    expect(readCodexModels(file)).toEqual([]);
+  } finally {
+    rmSync(directory, { recursive: true, force: true });
+  }
+});
+
 test("REST chat rejects foreign origins and disabled execution and persists through validated DTOs", async () => {
   const directory = mkdtempSync(join(tmpdir(), "structsmith-chat-http-"));
   const { services, close } = createTestContext();
@@ -218,6 +279,28 @@ test("REST chat rejects foreign origins and disabled execution and persists thro
     const address = server.address();
     if (!address || typeof address === "string") throw new Error("No server address");
     const endpoint = `http://127.0.0.1:${address.port}`;
+    const settings = structuredClone(defaultAgentSettings);
+    settings.providers.codex.reasoningEffort = "max";
+    const saved = await fetch(`${endpoint}/api/agent-chat/settings`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(settings),
+    });
+    expect(saved.status).toBe(200);
+    expect(await saved.json()).toMatchObject({ providers: { codex: { reasoningEffort: "max" } } });
+    const invalidEffort = await fetch(`${endpoint}/api/agent-chat/settings`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        ...settings,
+        providers: {
+          ...settings.providers,
+          codex: { ...settings.providers.codex, reasoningEffort: "not-an-effort" },
+        },
+      }),
+    });
+    expect(invalidEffort.status).toBe(400);
+    expect(service.getSettings().providers.codex.reasoningEffort).toBe("max");
     expect(
       (
         await fetch(`${endpoint}/api/agent-chat/settings`, {

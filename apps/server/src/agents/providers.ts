@@ -17,6 +17,7 @@ export function agentInvocation(
   const model = config.model ? ["--model", config.model] : [];
   const mcp = JSON.stringify({ mcpServers: { structsmith: { type: "http", url: mcpUrl } } });
   if (chat.provider === "codex") {
+    const effort = settings.providers.codex.reasoningEffort;
     return {
       command: config.executable,
       args: [
@@ -36,6 +37,7 @@ export function agentInvocation(
         "-c",
         'mcp_servers.structsmith.default_tools_approval_mode="approve"',
         ...model,
+        ...(effort === "default" ? [] : ["-c", `model_reasoning_effort=${JSON.stringify(effort)}`]),
         "-",
       ],
       stdin: prompt,

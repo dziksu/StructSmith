@@ -1,8 +1,8 @@
 import type {
-  AgentAvailability,
   AgentChat,
   AgentChatSummary,
   AgentSettings,
+  AgentSettingsResponse,
   CreateAgentChat,
   SendAgentMessage,
   UpdateAgentChat,
@@ -14,10 +14,7 @@ const send = (method: string, body?: unknown): RequestInit => ({
   ...(body === undefined ? {} : { body: JSON.stringify(body) }),
 });
 export const chatApi = {
-  settings: () =>
-    request<{ settings: AgentSettings; availability: AgentAvailability[]; readOnly: boolean }>(
-      "/agent-chat/settings",
-    ),
+  settings: () => request<AgentSettingsResponse>("/agent-chat/settings"),
   saveSettings: (settings: AgentSettings) =>
     request<AgentSettings>("/agent-chat/settings", send("PUT", settings)),
   list: () => request<AgentChatSummary[]>("/agent-chat/chats"),
