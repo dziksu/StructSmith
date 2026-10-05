@@ -12,11 +12,13 @@ import {
   Dialog,
   DialogContent,
   DialogDescription,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   Select,
   SelectContent,
@@ -84,101 +86,125 @@ export function AgentSettingsDialog({
         if (!open) onClose();
       }}
     >
-      <DialogContent className="max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
+      <DialogContent className="grid max-h-[calc(100dvh-2rem)] w-[calc(100%-2rem)] grid-rows-[auto_minmax(0,1fr)_auto] overflow-hidden p-0 sm:max-h-[90dvh]">
+        <DialogHeader className="mb-0 px-6 pb-5 pt-6">
           <DialogTitle>{t("chat.settings")}</DialogTitle>
           <DialogDescription>{t("chat.settingsHint")}</DialogDescription>
         </DialogHeader>
-        <Label htmlFor="agent-default">{t("chat.defaultProvider")}</Label>
-        <Select
-          value={draft.defaultProvider}
-          onValueChange={(value) =>
-            setDraft({
-              ...draft,
-              defaultProvider: value as AgentSettings["defaultProvider"],
-            })
-          }
-        >
-          <SelectTrigger id="agent-default">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            {Object.entries(providerNames).map(([id, name]) => (
-              <SelectItem key={id} value={id}>
-                {name}
-              </SelectItem>
+        <ScrollArea className="min-h-0">
+          <div className="space-y-6 px-6 pb-2">
+            <div className="grid gap-1.5">
+              <Label htmlFor="agent-default">{t("chat.defaultProvider")}</Label>
+              <Select
+                value={draft.defaultProvider}
+                onValueChange={(value) =>
+                  setDraft({
+                    ...draft,
+                    defaultProvider: value as AgentSettings["defaultProvider"],
+                  })
+                }
+              >
+                <SelectTrigger id="agent-default">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {Object.entries(providerNames).map(([id, name]) => (
+                    <SelectItem key={id} value={id}>
+                      {name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            {(["codex", "claude", "copilot"] as const).map((provider) => (
+              <fieldset key={provider} className="min-w-0">
+                <legend className="mb-3 p-0 text-sm font-semibold">
+                  {providerNames[provider]}
+                </legend>
+                <div className="grid gap-3">
+                  <div className="grid gap-1.5">
+                    <Label htmlFor={`agent-path-${provider}`}>{t("chat.executable")}</Label>
+                    <Input
+                      id={`agent-path-${provider}`}
+                      value={draft.providers[provider].executable}
+                      onChange={(event) =>
+                        setDraft({
+                          ...draft,
+                          providers: {
+                            ...draft.providers,
+                            [provider]: {
+                              ...draft.providers[provider],
+                              executable: event.target.value,
+                            },
+                          },
+                        })
+                      }
+                    />
+                  </div>
+                  <div className="grid gap-1.5">
+                    <Label htmlFor={`agent-model-${provider}`}>{t("chat.model")}</Label>
+                    <Input
+                      id={`agent-model-${provider}`}
+                      placeholder={t("chat.defaultModel")}
+                      value={draft.providers[provider].model}
+                      onChange={(event) => changeModel(provider, event.target.value)}
+                    />
+                  </div>
+                  {provider === "codex" && (
+                    <div className="grid gap-1.5">
+                      <Label htmlFor="agent-reasoning-codex">{t("chat.reasoningEffort")}</Label>
+                      <Select
+                        value={draft.providers.codex.reasoningEffort}
+                        onValueChange={(value) =>
+                          setDraft({
+                            ...draft,
+                            providers: {
+                              ...draft.providers,
+                              codex: {
+                                ...draft.providers.codex,
+                                reasoningEffort:
+                                  value as AgentSettings["providers"]["codex"]["reasoningEffort"],
+                              },
+                            },
+                          })
+                        }
+                      >
+                        <SelectTrigger
+                          id="agent-reasoning-codex"
+                          aria-describedby="agent-reasoning-hint"
+                        >
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="default">
+                            {t("chat.defaultReasoningEffort")}
+                          </SelectItem>
+                          {reasoningEfforts.map((effort) => (
+                            <SelectItem key={effort} value={effort}>
+                              {t(`chat.reasoningLevels.${effort}`)}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <p id="agent-reasoning-hint" className="text-xs text-muted-foreground">
+                        {t("chat.reasoningHint")}
+                        {!modelCapabilities && <> {t("chat.reasoningCatalogMissing")}</>}
+                      </p>
+                    </div>
+                  )}
+                </div>
+              </fieldset>
             ))}
-          </SelectContent>
-        </Select>
-        {(["codex", "claude", "copilot"] as const).map((provider) => (
-          <fieldset key={provider} className="space-y-2 rounded-md border p-3">
-            <legend className="px-1 text-sm font-semibold">{providerNames[provider]}</legend>
-            <Label htmlFor={`agent-path-${provider}`}>{t("chat.executable")}</Label>
-            <Input
-              id={`agent-path-${provider}`}
-              value={draft.providers[provider].executable}
-              onChange={(event) =>
-                setDraft({
-                  ...draft,
-                  providers: {
-                    ...draft.providers,
-                    [provider]: { ...draft.providers[provider], executable: event.target.value },
-                  },
-                })
-              }
-            />
-            <Label htmlFor={`agent-model-${provider}`}>{t("chat.model")}</Label>
-            <Input
-              id={`agent-model-${provider}`}
-              placeholder={t("chat.defaultModel")}
-              value={draft.providers[provider].model}
-              onChange={(event) => changeModel(provider, event.target.value)}
-            />
-            {provider === "codex" && (
-              <>
-                <Label htmlFor="agent-reasoning-codex">{t("chat.reasoningEffort")}</Label>
-                <Select
-                  value={draft.providers.codex.reasoningEffort}
-                  onValueChange={(value) =>
-                    setDraft({
-                      ...draft,
-                      providers: {
-                        ...draft.providers,
-                        codex: {
-                          ...draft.providers.codex,
-                          reasoningEffort:
-                            value as AgentSettings["providers"]["codex"]["reasoningEffort"],
-                        },
-                      },
-                    })
-                  }
-                >
-                  <SelectTrigger id="agent-reasoning-codex" aria-describedby="agent-reasoning-hint">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="default">{t("chat.defaultReasoningEffort")}</SelectItem>
-                    {reasoningEfforts.map((effort) => (
-                      <SelectItem key={effort} value={effort}>
-                        {t(`chat.reasoningLevels.${effort}`)}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <p id="agent-reasoning-hint" className="text-xs text-muted-foreground">
-                  {t("chat.reasoningHint")}
-                  {!modelCapabilities && <> {t("chat.reasoningCatalogMissing")}</>}
-                </p>
-              </>
-            )}
-          </fieldset>
-        ))}
-        <Button
-          disabled={saving || Object.values(draft.providers).some((p) => !p.executable.trim())}
-          onClick={() => void save()}
-        >
-          {t("common.save")}
-        </Button>
+          </div>
+        </ScrollArea>
+        <DialogFooter className="mt-0 px-6 pb-6 pt-4">
+          <Button
+            disabled={saving || Object.values(draft.providers).some((p) => !p.executable.trim())}
+            onClick={() => void save()}
+          >
+            {t("common.save")}
+          </Button>
+        </DialogFooter>
       </DialogContent>
     </Dialog>
   );
