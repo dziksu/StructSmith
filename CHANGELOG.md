@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.11.1](https://github.com/dziksu/structsmith/compare/v1.11.0...v1.11.1) (2026-10-05)
+
+### Build and Dependencies
+
+* **deps:** consolidate dependency updates from [#91](https://github.com/dziksu/structsmith/issues/91)–[#95](https://github.com/dziksu/structsmith/issues/95) ([#96](https://github.com/dziksu/structsmith/issues/96)) ([19e478f](https://github.com/dziksu/structsmith/commit/19e478fe03ed0be6290ee1577be900cd66a86acd))
+
 ## [1.11.0](https://github.com/dziksu/structsmith/compare/v1.10.4...v1.11.0) (2026-10-01)
 
 ### Features
