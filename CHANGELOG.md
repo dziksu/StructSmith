@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.13.0](https://github.com/dziksu/structsmith/compare/v1.12.0...v1.13.0) (2026-10-05)
+
+### Features
+
+* run Docker chat with host-installed agent CLIs ([59c8dbe](https://github.com/dziksu/structsmith/commit/59c8dbe7ce30954a7af503364c630a5e51465994))
+
 ## [1.12.0](https://github.com/dziksu/structsmith/compare/v1.11.1...v1.12.0) (2026-10-05)
 
 ### Features
