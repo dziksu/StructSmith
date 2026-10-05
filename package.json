@@ -39,7 +39,9 @@
     "db:migrate": "bun run scripts/migrate.ts",
     "db:seed": "bun run scripts/seed.ts",
     "mcp:stdio": "bun apps/server/src/mcp-stdio.ts",
-    "release": "node scripts/release.ts"
+    "release": "node scripts/release.ts",
+    "docker:local": "bun run apps/server/src/local/index.ts",
+    "build:local": "bun run scripts/build-local-helper.ts"
   },
   "homepage": "https://dziksu.github.io/StructSmith/",
   "repository": {

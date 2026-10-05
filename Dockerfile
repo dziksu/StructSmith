@@ -36,6 +36,7 @@ ENV NODE_ENV=production \
     MIGRATIONS_DIR=/app/migrations \
     AUTH_MODE=none \
     MCP_READ_ONLY=false \
+    AGENT_CHAT_DIR=/data/agent-chat \
     SEED_EXAMPLE=true
 
 COPY --from=build /app/node_modules ./node_modules

@@ -57,7 +57,7 @@ import {StreamableHTTPClientTransport} from ${JSON.stringify(import.meta.resolve
     const address = server.address();
     if (!address || typeof address === "string") throw new Error("No server address");
     const base = `http://127.0.0.1:${address.port}`;
-    const chat = agents.create({ workspaceId: project.id });
+    const chat = await agents.create({ workspaceId: project.id });
     agents.update(chat.id, { mode: "edit" });
     const response = await fetch(`${base}/api/agent-chat/chats/${chat.id}/messages`, {
       method: "POST",
@@ -112,16 +112,16 @@ emit('item/completed',{item:{id:'answer',type:'agentMessage',text:'Odpowiedź te
   settings.providers.codex.reasoningEffort = "high";
   service.setSettings(settings);
   try {
-    const chat = service.create({ workspaceId: project.id });
+    const chat = await service.create({ workspaceId: project.id });
     const context = { type: "workspace" as const, targetId: project.id, label: project.name };
-    service.send(
+    await service.send(
       chat.id,
       { text: "Pytanie z $(echo not-a-shell-command)", context },
       "http://127.0.0.1:3000",
     );
-    expect(() => service.send(chat.id, { text: "Concurrent turn" }, "http://localhost")).toThrow(
-      "still running",
-    );
+    await expect(
+      service.send(chat.id, { text: "Concurrent turn" }, "http://localhost"),
+    ).rejects.toThrow("still running");
     expect(() => service.update(chat.id, { provider: "claude" })).toThrow("still running");
     expect(() => service.update(chat.id, { archived: true })).toThrow("still running");
     expect(() => service.update(chat.id, { title: "Rename during run" })).toThrow("still running");
@@ -155,7 +155,7 @@ emit('item/completed',{item:{id:'answer',type:'agentMessage',text:'Odpowiedź te
     service.update(chat.id, { provider: "claude" });
     expect(service.get(chat.id).workspaceId).toBe(project.id);
     service.update(chat.id, { provider: "codex" });
-    service.send(chat.id, { text: "Continue" }, "http://127.0.0.1:3000");
+    await service.send(chat.id, { text: "Continue" }, "http://127.0.0.1:3000");
     await completed(service, chat.id);
     expect(readFileSync(capture, "utf8")).toContain("Odpowiedź testowa");
     const messages = structuredClone(service.get(chat.id).messages);
@@ -165,9 +165,9 @@ emit('item/completed',{item:{id:'answer',type:'agentMessage',text:'Odpowiedź te
       archived: true,
       workspaceId: project.id,
     });
-    expect(() => service.send(chat.id, { text: "Archived turn" }, "http://localhost")).toThrow(
-      "Restore",
-    );
+    await expect(
+      service.send(chat.id, { text: "Archived turn" }, "http://localhost"),
+    ).rejects.toThrow("Restore");
     expect(service.get(chat.id).messages).toEqual(messages);
     const restored = new AgentChatService(services, directory, false);
     expect(restored.get(chat.id).messages).toHaveLength(4);
@@ -181,10 +181,10 @@ emit('item/completed',{item:{id:'answer',type:'agentMessage',text:'Odpowiedź te
     expect(service.get(chat.id).messages).toEqual(messages);
     expect(new AgentChatService(services, directory, false).get(chat.id).archived).toBe(false);
     writeFileSync(fake, "#!/bin/sh\ncat >/dev/null\nsleep 30\n");
-    service.send(chat.id, { text: "Stop me" }, "http://localhost:3000");
+    await service.send(chat.id, { text: "Stop me" }, "http://localhost:3000");
     service.stop(chat.id);
     expect((await completed(service, chat.id)).messages.at(-1)?.status).toBe("cancelled");
-    const general = service.create({});
+    const general = await service.create({});
     expect(() => service.update(general.id, { mode: "edit" })).toThrow("Choose a project");
     expect(() => service.update(chat.id, { directory: "relative-path" })).toThrow(
       "absolute directory",
@@ -192,7 +192,7 @@ emit('item/completed',{item:{id:'answer',type:'agentMessage',text:'Odpowiedź te
     settings.providers.codex.executable = "/missing/cli";
     service.setSettings(settings);
     const before = service.get(chat.id).messages.length;
-    expect(() => service.send(chat.id, { text: "Missing" }, "http://localhost")).toThrow(
+    await expect(service.send(chat.id, { text: "Missing" }, "http://localhost")).rejects.toThrow(
       "CLI not found",
     );
     expect(service.get(chat.id).messages).toHaveLength(before);
@@ -209,10 +209,10 @@ test("topic order persists, preserves hidden slots, and stays stable when topics
   const project = createWorkspace(services);
   try {
     const service = new AgentChatService(services, directory, false);
-    const first = service.create({ workspaceId: project.id });
-    const hidden = service.create({});
-    const second = service.create({ workspaceId: project.id });
-    const archived = service.create({});
+    const first = await service.create({ workspaceId: project.id });
+    const hidden = await service.create({});
+    const second = await service.create({ workspaceId: project.id });
+    const archived = await service.create({});
     service.update(archived.id, { archived: true });
     expect(service.list().map((topic) => topic.id)).toEqual([
       archived.id,
@@ -240,7 +240,7 @@ test("topic order persists, preserves hidden slots, and stays stable when topics
     expect(() => restored.reorder({ topicIds: [] })).toThrow("distinct");
     expect(() => restored.reorder({ topicIds: [second.id, "missing"] })).toThrow("not found");
     expect(readFileSync(join(directory, "chats.json"), "utf8")).toBe(stored);
-    const newest = restored.create({});
+    const newest = await restored.create({});
     restored.delete(hidden.id);
     expect(
       new AgentChatService(services, directory, false).list().map((topic) => topic.id),
@@ -251,13 +251,13 @@ test("topic order persists, preserves hidden slots, and stays stable when topics
   }
 });
 
-test("legacy topics keep their recency order when manual ordering is introduced", () => {
+test("legacy topics keep their recency order when manual ordering is introduced", async () => {
   const directory = mkdtempSync(join(tmpdir(), "structsmith-chat-legacy-order-"));
   const { services, close } = createTestContext();
   try {
     const service = new AgentChatService(services, directory, false);
-    const first = service.create({});
-    const second = service.create({});
+    const first = await service.create({});
+    const second = await service.create({});
     const file = join(directory, "chats.json");
     const legacy = JSON.parse(readFileSync(file, "utf8"));
     delete legacy.topicOrder;
@@ -281,7 +281,7 @@ test("restart marks interrupted responses failed rather than leaving chat stuck"
   const { services, close } = createTestContext();
   try {
     const service = new AgentChatService(services, directory, false);
-    const chat = service.create({});
+    const chat = await service.create({});
     const data = JSON.parse(readFileSync(join(directory, "chats.json"), "utf8"));
     delete data.chats[0].archived;
     data.chats[0].messages = [
@@ -453,7 +453,7 @@ test("REST chat rejects foreign origins and disabled execution and persists thro
       title: "Architecture questions",
       archived: false,
     });
-    const another = service.create({});
+    const another = await service.create({});
     const orderedIds = [created.id, another.id];
     const reordered = await fetch(`${endpoint}/api/agent-chat/chats/order`, {
       method: "PUT",

@@ -1,8 +1,11 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import {
+  type ApplyOperationsRequest,
   ApplyOperationsRequestSchema,
+  type ChatContext,
   PRODUCT,
   ReferenceTargetKindSchema,
+  type Workspace,
 } from "@structsmith/contracts";
 import { badRequest, type Services } from "@structsmith/domain";
 import { z } from "zod";
@@ -10,9 +13,46 @@ import { modelingGuide } from "./guide";
 import { workspaceInspection } from "./inspection";
 import { resolveReference } from "./reference";
 
+type Awaitable<T> = T | Promise<T>;
+
+/** Native and host-helper chats share one scoped tool surface. */
+export interface ChatModelBackend {
+  getWorkspace(id: string): Awaitable<Workspace>;
+  listWorkspaces(): Awaitable<Workspace[]>;
+  guide(): Awaitable<unknown>;
+  inspect(id: string, options: { includeLayouts?: boolean }): Awaitable<unknown>;
+  validate(id: string): Awaitable<unknown>;
+  resolve(id: string, type: ChatContext["type"], targetId: string): Awaitable<unknown>;
+  preview(id: string, input: ApplyOperationsRequest): Awaitable<unknown>;
+  apply(id: string, input: ApplyOperationsRequest): Awaitable<unknown>;
+}
+
+export function localChatBackend(services: Services): ChatModelBackend {
+  return {
+    getWorkspace: (id) => services.workspaces.get(id),
+    listWorkspaces: () => services.workspaces.list(),
+    guide: modelingGuide,
+    inspect: (id, options) => workspaceInspection(services, id, options),
+    validate: (id) => services.model.validate(id),
+    resolve: (id, type, targetId) => resolveReference(services, id, type, targetId),
+    preview: (id, input) =>
+      services.model.previewOperations(id, ApplyOperationsRequestSchema.parse(input)),
+    apply: (id, input) =>
+      services.model.applyOperations(id, ApplyOperationsRequestSchema.parse(input), "mcp"),
+  };
+}
+
 /** A small, scoped surface for the in-app chat. It cannot mutate another project. */
 export function createChatMcpServer(
   services: Services,
+  workspaceId: string | null,
+  readOnly: boolean,
+): McpServer {
+  return createBackendChatMcpServer(localChatBackend(services), workspaceId, readOnly);
+}
+
+export function createBackendChatMcpServer(
+  backend: ChatModelBackend,
   workspaceId: string | null,
   readOnly: boolean,
 ): McpServer {
@@ -32,11 +72,11 @@ export function createChatMcpServer(
     return id;
   };
   const annotations = { readOnlyHint: true, openWorldHint: false };
-  server.registerTool("modeling_guide", { inputSchema: {}, annotations }, () =>
-    json(modelingGuide()),
+  server.registerTool("modeling_guide", { inputSchema: {}, annotations }, async () =>
+    json(await backend.guide()),
   );
-  server.registerTool("workspace_list", { inputSchema: {}, annotations }, () =>
-    json(workspaceId ? [services.workspaces.get(workspaceId)] : services.workspaces.list()),
+  server.registerTool("workspace_list", { inputSchema: {}, annotations }, async () =>
+    json(workspaceId ? [await backend.getWorkspace(workspaceId)] : await backend.listWorkspaces()),
   );
   server.registerTool(
     "workspace_inspect",
@@ -44,7 +84,7 @@ export function createChatMcpServer(
       inputSchema: { workspaceId: z.string(), includeLayouts: z.boolean().optional() },
       annotations,
     },
-    (input) => json(workspaceInspection(services, scopedId(input.workspaceId), input)),
+    async (input) => json(await backend.inspect(scopedId(input.workspaceId), input)),
   );
   server.registerTool(
     "model_validate",
@@ -52,7 +92,7 @@ export function createChatMcpServer(
       inputSchema: { workspaceId: z.string() },
       annotations,
     },
-    (input) => json(services.model.validate(scopedId(input.workspaceId))),
+    async (input) => json(await backend.validate(scopedId(input.workspaceId))),
   );
   server.registerTool(
     "reference_resolve",
@@ -64,12 +104,14 @@ export function createChatMcpServer(
       },
       annotations,
     },
-    (input) =>
-      json(resolveReference(services, scopedId(input.workspaceId), input.type, input.targetId)),
+    async (input) =>
+      json(await backend.resolve(scopedId(input.workspaceId), input.type, input.targetId)),
   );
   const schema = { workspaceId: z.string(), ...ApplyOperationsRequestSchema.shape };
-  server.registerTool("model_preview_operations", { inputSchema: schema, annotations }, (input) =>
-    json(services.model.previewOperations(scopedId(input.workspaceId), input)),
+  server.registerTool(
+    "model_preview_operations",
+    { inputSchema: schema, annotations },
+    async (input) => json(await backend.preview(scopedId(input.workspaceId), input)),
   );
   if (workspaceId && !readOnly) {
     server.registerTool(
@@ -78,7 +120,7 @@ export function createChatMcpServer(
         inputSchema: { ...schema, expectedRevision: z.number().int().nonnegative() },
         annotations: { readOnlyHint: false, destructiveHint: true, openWorldHint: false },
       },
-      (input) => json(services.model.applyOperations(scopedId(input.workspaceId), input, "mcp")),
+      async (input) => json(await backend.apply(scopedId(input.workspaceId), input)),
     );
   }
   return server;

@@ -18,7 +18,12 @@ import {
   type UpdateAgentChat,
 } from "@structsmith/contracts";
 import { badRequest, DomainError, type Services } from "@structsmith/domain";
-import { createChatMcpServer, McpHttpHandler } from "@structsmith/mcp";
+import {
+  type ChatModelBackend,
+  createBackendChatMcpServer,
+  localChatBackend,
+  McpHttpHandler,
+} from "@structsmith/mcp";
 import { z } from "zod";
 import { CodexSession } from "./codex-session";
 import { AgentOutputParser, agentErrorMessage, agentInvocation, object } from "./providers";
@@ -33,6 +38,7 @@ interface Run {
   mcp: McpHttpHandler;
   key: string;
   stop: (reason: string) => void;
+  done: Promise<void>;
 }
 
 export class AgentChatService {
@@ -40,15 +46,21 @@ export class AgentChatService {
   private readonly chats: AgentChat[];
   private topicOrder: string[];
   private readonly runs = new Map<string, Run>();
+  private readonly stopping = new Set<Promise<void>>();
+  private readonly starting = new Set<string>();
+  private readonly cancelledStarts = new Set<string>();
+  private closing = false;
+  private readonly backend: ChatModelBackend;
   private readonly listeners = new Map<string, Set<(event: AgentChatStreamEvent) => void>>();
   private readonly file: string;
   private readonly scratch: string;
 
   constructor(
-    private readonly services: Services,
+    services: Services | ChatModelBackend,
     directory: string,
     private readonly readOnly: boolean,
   ) {
+    this.backend = "workspaces" in services ? localChatBackend(services) : services;
     mkdirSync(directory, { recursive: true, mode: 0o700 });
     this.file = join(directory, "chats.json");
     this.scratch = join(directory, "scratch");
@@ -106,7 +118,10 @@ export class AgentChatService {
   list(): AgentChatSummary[] {
     const positions = new Map(this.topicOrder.map((id, index) => [id, index]));
     return this.chats
-      .map(({ messages: _messages, ...chat }) => ({ ...chat, running: this.runs.has(chat.id) }))
+      .map(({ messages: _messages, ...chat }) => ({
+        ...chat,
+        running: this.runs.has(chat.id) || this.starting.has(chat.id),
+      }))
       .sort((a, b) => (positions.get(a.id) ?? 0) - (positions.get(b.id) ?? 0));
   }
   reorder({ topicIds }: ReorderAgentChats): AgentChatSummary[] {
@@ -141,7 +156,7 @@ export class AgentChatService {
     for (const listener of this.listeners.get(id) ?? []) listener(event);
   }
   private idle(id: string): AgentChat {
-    if (this.runs.has(id))
+    if (this.runs.has(id) || this.starting.has(id))
       throw new DomainError("BAD_REQUEST", "The agent is still running in this chat.", 409);
     return this.get(id);
   }
@@ -151,8 +166,10 @@ export class AgentChatService {
       throw badRequest("Choose an existing absolute directory on the StructSmith server.");
     }
   }
-  create(input: CreateAgentChat): AgentChat {
-    const workspace = input.workspaceId ? this.services.workspaces.get(input.workspaceId) : null;
+  async create(input: CreateAgentChat): Promise<AgentChat> {
+    if (this.closing) throw badRequest("StructSmith is shutting down.");
+    const workspace = input.workspaceId ? await this.backend.getWorkspace(input.workspaceId) : null;
+    if (this.closing) throw badRequest("StructSmith is shutting down.");
     if (input.context && !workspace) throw badRequest("An item context needs a project.");
     this.checkDirectory(input.directory ?? "");
     const now = new Date().toISOString();
@@ -197,12 +214,27 @@ export class AgentChatService {
     return [...this.runs.values()].find((run) => run.key === key)?.mcp;
   }
 
-  send(id: string, input: SendAgentMessage, baseUrl: string): AgentChat {
+  async send(id: string, input: SendAgentMessage, baseUrl: string): Promise<AgentChat> {
+    if (this.closing) throw badRequest("StructSmith is shutting down.");
     const chat = this.idle(id);
     if (chat.archived) throw badRequest("Restore this archived topic before sending a message.");
-    if (this.runs.size >= 3) throw badRequest("At most three agents can run at once.");
-    if (chat.workspaceId) this.services.workspaces.get(chat.workspaceId);
+    if (this.runs.size + this.starting.size >= 3)
+      throw badRequest("At most three agents can run at once.");
     if (input.context && !chat.workspaceId) throw badRequest("An item context needs a project.");
+    this.starting.add(id);
+    try {
+      if (chat.workspaceId) await this.backend.getWorkspace(chat.workspaceId);
+      if (this.closing || this.cancelledStarts.has(id))
+        throw badRequest("Agent startup was cancelled.");
+      return this.start(id, input, baseUrl);
+    } finally {
+      this.starting.delete(id);
+      this.cancelledStarts.delete(id);
+    }
+  }
+
+  private start(id: string, input: SendAgentMessage, baseUrl: string): AgentChat {
+    const chat = this.get(id);
     this.checkDirectory(chat.directory);
     const executable = this.settings.providers[chat.provider].executable;
     if (!Bun.which(executable))
@@ -228,8 +260,8 @@ export class AgentChatService {
     const key = randomUUID();
     const mcpUrl = `${baseUrl}/api/agent-chat/mcp/${key}`;
     const readOnly = this.readOnly || chat.mode === "ask" || !chat.workspaceId;
-    const mcp = new McpHttpHandler({ services: this.services, readOnly }, () =>
-      createChatMcpServer(this.services, chat.workspaceId, readOnly),
+    const mcp = new McpHttpHandler(null, () =>
+      createBackendChatMcpServer(this.backend, chat.workspaceId, readOnly),
     );
     const invocation = agentInvocation(chat, this.settings, prompt, mcpUrl);
     const env: NodeJS.ProcessEnv = { ...process.env, NO_COLOR: "1" };
@@ -296,8 +328,14 @@ export class AgentChatService {
       const run = this.runs.get(id);
       if (run) run.key = "";
       kill("SIGTERM");
-      killTimer = setTimeout(() => kill("SIGKILL"), 2000);
-      killTimer.unref();
+      const finished = new Promise<void>((resolve) => {
+        killTimer = setTimeout(() => {
+          kill("SIGKILL");
+          resolve();
+        }, 2000);
+      });
+      this.stopping.add(finished);
+      void finished.then(() => this.stopping.delete(finished));
       void mcp.closeAll();
     };
     const timeout = setTimeout(() => stop("The agent exceeded the 10 minute time limit."), 600000);
@@ -347,7 +385,11 @@ export class AgentChatService {
         }, 50);
       saveSoon();
     };
-    this.runs.set(id, { process: child, mcp, key, stop });
+    let resolveDone: () => void = () => undefined;
+    const done = new Promise<void>((resolve) => {
+      resolveDone = resolve;
+    });
+    this.runs.set(id, { process: child, mcp, key, stop, done });
     child.stdout.setEncoding("utf8");
     child.stderr.setEncoding("utf8");
     child.stdout.on("data", (chunk: string) => {
@@ -401,6 +443,7 @@ export class AgentChatService {
       this.save();
       clearTimeout(publishTimer);
       publishAnswer();
+      resolveDone();
     });
     this.save();
     this.publish(id, { type: "snapshot", chat });
@@ -410,13 +453,21 @@ export class AgentChatService {
   }
   stop(id: string): AgentChat {
     const chat = this.get(id);
+    if (this.starting.has(id)) this.cancelledStarts.add(id);
     this.runs.get(id)?.stop("cancelled");
     return chat;
   }
   async close(): Promise<void> {
+    this.closing = true;
     const runs = [...this.runs.values()];
     for (const run of runs) run.stop("StructSmith is shutting down.");
-    await Promise.all(runs.map((run) => run.mcp.closeAll()));
+    await Promise.all([
+      ...this.stopping,
+      ...runs.map(async (run) => {
+        await run.done;
+        await run.mcp.closeAll();
+      }),
+    ]);
     this.listeners.clear();
   }
 }

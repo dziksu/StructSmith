@@ -66,6 +66,64 @@ docker run -d --name structsmith \
 Then open <http://localhost:8090>. No repository clone or local build is needed.
 Your workspaces persist in the `structsmith-data` Docker volume.
 
+Choose the launcher below if you want the built-in chat to use CLIs installed on
+your computer. Plain `docker run` and Compose run the server inside the container,
+which cannot execute the host's programs or use its CLI login automatically.
+
+### Docker with host-installed agents, without cloning
+
+On macOS or Linux with glibc (arm64/x64), install Docker, curl and at least one signed-in
+Codex, Claude Code or Copilot CLI. The local launcher downloads the matching
+Docker release and runs chat on your computer:
+
+```bash
+curl -fsSL https://github.com/dziksu/StructSmith/releases/latest/download/structsmith-local-install.sh | sh
+```
+
+The release installer verifies the binary's SHA-256 checksum. No Git clone,
+Node.js or Bun installation is required. **These assets become available after
+this change ships in a GitHub release; older releases do not contain them.**
+
+Open <http://localhost:8090> and choose **Agent settings** to select your installed
+CLI, model and reasoning effort. The launcher uses port 8090 for UI/chat and
+8091 for the private Docker backend, both on loopback. It reuses the
+`structsmith-data` volume, keeps chat under `~/.local/share/structsmith/chat`, and
+leaves CLI credentials on the host. An optional source directory is a host path.
+Stop an existing instance using those ports or the same data volume before
+starting this mode. For a Compose deployment, pass its actual volume name with
+`--volume NAME` if you want to reuse the existing model.
+
+The browser talks to the localhost helper. It serves chat directly and proxies
+the editor to Docker; agent changes still pass through the domain's MCP tools,
+revision checks and snapshots. No agent credentials or host executable need to
+be mounted into the container.
+
+Keep its terminal open. Ctrl+C stops the helper, active agents and managed
+container; it retains the model volume and chat history. Subsequent starts use:
+
+```bash
+~/.local/share/structsmith/structsmith-local
+```
+
+For a different port, pass `--port 8095` (the backend uses 8096). In another
+terminal, `~/.local/share/structsmith/structsmith-local status` or `stop` controls
+the saved profile. Use `--volume NAME` to select another Docker model volume,
+`--read-only` to disable architecture changes, or `--help` for all options.
+The launcher refuses to replace containers that belong to another deployment.
+It also refuses a volume used by another running container. To upgrade, stop the
+launcher and rerun the installer command; the downloaded helper and image share
+the same release version, while the existing model and conversations are retained.
+
+For testing changes from a checkout, build the matching local image and start it:
+
+```bash
+docker build -t structsmith-local:dev .
+bun run docker:local --image structsmith-local:dev
+```
+
+`bun run docker:local` by itself uses the version pinned release image.
+The helper and image versions must match. More details are in the [local chat guide](docs/LOCAL_AGENT_CHAT.md).
+
 ### Build from source with Docker Compose
 
 ```bash
@@ -455,12 +513,14 @@ response. **Stop** interrupts the turn while preserving partial output and any
 architecture changes already applied.
 
 Agent authentication stays with the installed CLI; sign in in your terminal first.
-History, settings, topic order and archive status are saved under `data/agent-chat`
-(configurable with `AGENT_CHAT_DIR`). Set `AGENT_CHAT_ENABLED=false` to disable the
-CLI chat bridge.
+For native development, history, settings, topic order and archive status are saved
+under `data/agent-chat` (configurable with `AGENT_CHAT_DIR`). The local Docker launcher
+saves them under `~/.local/share/structsmith/chat`. Set `AGENT_CHAT_ENABLED=false`
+on a native backend to disable its CLI chat bridge.
 
-This feature requires a localhost connection and a recent CLI version. A Docker
-container sees its own installed programs and paths, not the host's CLI. See the
+This feature requires a localhost connection and a recent CLI version. Use the
+local launcher above for a Docker deployment with host-installed agents. A plain
+`docker run` or Compose deployment sees only programs installed inside its container. See the
 [local chat guide](docs/LOCAL_AGENT_CHAT.md) for testing and implementation details.
 
 ### Mermaid import
@@ -534,7 +594,7 @@ to `supportedLanguages`. No copy is hard-coded in components.
 | `SEED_EXAMPLE` | `true` | Seed the example workspace on first boot |
 | `APP_NAME` | `StructSmith` | Product name shown in the UI |
 | `AGENT_CHAT_ENABLED` | `true` | Enable the localhost-only CLI chat bridge |
-| `AGENT_CHAT_DIR` | `./data/agent-chat` | Local chat history, settings and empty working directory |
+| `AGENT_CHAT_DIR` | `./data/agent-chat` (`/data/agent-chat` in Docker) | Local chat history, settings and empty working directory |
 
 In token mode, `/api` and `/mcp` require `Authorization: Bearer <APP_TOKEN>`; `/health`
 stays public. There is no user system — this is a local/self-hosted tool.
