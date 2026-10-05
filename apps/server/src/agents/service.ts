@@ -12,6 +12,7 @@ import {
   AgentSettingsSchema,
   type CreateAgentChat,
   defaultAgentSettings,
+  type ReorderAgentChats,
   type SendAgentMessage,
   type UpdateAgentChat,
 } from "@structsmith/contracts";
@@ -20,7 +21,11 @@ import { createChatMcpServer, McpHttpHandler } from "@structsmith/mcp";
 import { z } from "zod";
 import { agentInvocation, parseAgentLine } from "./providers";
 
-const StoreSchema = z.object({ settings: AgentSettingsSchema, chats: z.array(AgentChatSchema) });
+const StoreSchema = z.object({
+  settings: AgentSettingsSchema,
+  chats: z.array(AgentChatSchema),
+  topicOrder: z.array(z.string()).optional(),
+});
 interface Run {
   process: ChildProcessWithoutNullStreams;
   mcp: McpHttpHandler;
@@ -31,6 +36,7 @@ interface Run {
 export class AgentChatService {
   private settings: AgentSettings;
   private readonly chats: AgentChat[];
+  private topicOrder: string[];
   private readonly runs = new Map<string, Run>();
   private readonly file: string;
   private readonly scratch: string;
@@ -49,6 +55,14 @@ export class AgentChatService {
       : { settings: structuredClone(defaultAgentSettings), chats: [] };
     this.settings = data.settings;
     this.chats = data.chats;
+    // Existing stores start in their previous recency order, then keep the user's order.
+    const legacyOrder = [...this.chats]
+      .sort((a, b) => b.updatedAt.localeCompare(a.updatedAt))
+      .map((chat) => chat.id);
+    const knownIds = new Set(legacyOrder);
+    this.topicOrder = [...new Set([...(data.topicOrder ?? []), ...legacyOrder])].filter((id) =>
+      knownIds.has(id),
+    );
     for (const chat of this.chats) {
       if (this.readOnly) chat.mode = "ask";
       for (const message of chat.messages) {
@@ -63,9 +77,11 @@ export class AgentChatService {
 
   private save(): void {
     const temp = `${this.file}.tmp`;
-    writeFileSync(temp, JSON.stringify({ settings: this.settings, chats: this.chats }), {
-      mode: 0o600,
-    });
+    writeFileSync(
+      temp,
+      JSON.stringify({ settings: this.settings, chats: this.chats, topicOrder: this.topicOrder }),
+      { mode: 0o600 },
+    );
     renameSync(temp, this.file);
   }
 
@@ -84,9 +100,23 @@ export class AgentChatService {
     });
   }
   list(): AgentChatSummary[] {
+    const positions = new Map(this.topicOrder.map((id, index) => [id, index]));
     return this.chats
       .map(({ messages: _messages, ...chat }) => ({ ...chat, running: this.runs.has(chat.id) }))
-      .sort((a, b) => b.updatedAt.localeCompare(a.updatedAt));
+      .sort((a, b) => (positions.get(a.id) ?? 0) - (positions.get(b.id) ?? 0));
+  }
+  reorder({ topicIds }: ReorderAgentChats): AgentChatSummary[] {
+    const selected = new Set(topicIds);
+    if (!topicIds.length || selected.size !== topicIds.length)
+      throw badRequest("Choose distinct topics to reorder.");
+    for (const id of topicIds) this.get(id);
+    let index = 0;
+    // A filtered list only replaces its own slots; hidden topics keep their positions.
+    this.topicOrder = this.topicOrder.map((id) =>
+      selected.has(id) ? (topicIds[index++] ?? id) : id,
+    );
+    this.save();
+    return this.list();
   }
   get(id: string): AgentChat {
     const chat = this.chats.find((chat) => chat.id === id);
@@ -123,6 +153,7 @@ export class AgentChatService {
       messages: [],
     };
     this.chats.push(chat);
+    this.topicOrder.unshift(chat.id);
     this.save();
     return chat;
   }
@@ -141,6 +172,7 @@ export class AgentChatService {
       this.chats.findIndex((chat) => chat.id === id),
       1,
     );
+    this.topicOrder = this.topicOrder.filter((topicId) => topicId !== id);
     this.save();
   }
   mcp(key: string): McpHttpHandler | undefined {

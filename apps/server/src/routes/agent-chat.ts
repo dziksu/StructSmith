@@ -2,6 +2,7 @@ import {
   type AgentSettingsResponse,
   AgentSettingsSchema,
   CreateAgentChatSchema,
+  ReorderAgentChatsSchema,
   SendAgentMessageSchema,
   UpdateAgentChatSchema,
 } from "@structsmith/contracts";
@@ -82,6 +83,10 @@ export function agentChatRoutes(service: AgentChatService, config: AppConfig): R
     handler((req, res) =>
       res.status(201).json(service.create(CreateAgentChatSchema.parse(req.body))),
     ),
+  );
+  router.put(
+    "/chats/order",
+    handler((req, res) => res.json(service.reorder(ReorderAgentChatsSchema.parse(req.body)))),
   );
   router.get(
     "/chats/:id",

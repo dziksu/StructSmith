@@ -40,7 +40,8 @@ import { cn } from "@/lib/utils";
 import { AgentSettingsDialog, providerNames } from "./AgentSettingsDialog";
 import { chatApi } from "./api";
 import { useChatStore } from "./store";
-import { RenameTopicDialog, TopicActions } from "./TopicActions";
+import { RenameTopicDialog } from "./TopicActions";
+import { TopicList } from "./TopicList";
 
 const errorMessage = (error: unknown) => (error instanceof Error ? error.message : String(error));
 
@@ -59,6 +60,7 @@ export function AgentChatDock() {
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [detailsOpen, setDetailsOpen] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [reordering, setReordering] = useState(false);
   const composer = useRef<HTMLTextAreaElement>(null);
   const end = useRef<HTMLDivElement>(null);
   const handledRequest = useRef<number | null>(null);
@@ -129,6 +131,32 @@ export function AgentChatDock() {
   const update = (input: Parameters<typeof chatApi.update>[1]) => {
     if (activeId) return updateTopic(activeId, input);
     return Promise.resolve(false);
+  };
+  const reorderTopics = async (topicIds: string[]) => {
+    if (reordering) return;
+    setReordering(true);
+    const previous = cache.getQueryData<AgentChatSummary[]>(["agent-chats"]);
+    try {
+      await cache.cancelQueries({ queryKey: ["agent-chats"] });
+      if (previous) {
+        const byId = new Map(previous.map((topic) => [topic.id, topic]));
+        const selected = new Set(topicIds);
+        let index = 0;
+        cache.setQueryData(
+          ["agent-chats"],
+          previous.map((topic) =>
+            selected.has(topic.id) ? (byId.get(topicIds[index++] ?? "") ?? topic) : topic,
+          ),
+        );
+      }
+      cache.setQueryData(["agent-chats"], await chatApi.reorder({ topicIds }));
+    } catch (error) {
+      cache.setQueryData(["agent-chats"], previous);
+      toast.error(errorMessage(error));
+    } finally {
+      setReordering(false);
+      refresh();
+    }
   };
   const archiveTopic = async (id: string, archived: boolean) => {
     if (!(await updateTopic(id, { archived }))) return;
@@ -279,7 +307,7 @@ export function AgentChatDock() {
                   <Button
                     size="sm"
                     className="w-full gap-1"
-                    disabled={busy}
+                    disabled={busy || reordering}
                     onClick={() => {
                       setBusy(true);
                       void create(
@@ -327,50 +355,18 @@ export function AgentChatDock() {
                       {topics.isError && (
                         <p className="p-2 text-xs text-destructive">{errorMessage(topics.error)}</p>
                       )}
-                      {filtered
-                        .filter((topic) => topic.archived === (status === "archived"))
-                        .map((topic) => (
-                          <div
-                            key={topic.id}
-                            className={cn(
-                              "mb-1 flex rounded-md hover:bg-accent",
-                              activeId === topic.id && "bg-accent",
-                            )}
-                          >
-                            <Button
-                              type="button"
-                              variant="ghost"
-                              disabled={busy}
-                              onClick={() => choose(topic.id)}
-                              aria-pressed={activeId === topic.id}
-                              className="h-auto min-w-0 flex-1 flex-col items-start gap-0 p-2 text-left"
-                            >
-                              <span className="flex w-full items-center gap-1 text-xs font-medium">
-                                {topic.running && (
-                                  <Loader2 className="h-3 w-3 shrink-0 animate-spin" />
-                                )}
-                                <span
-                                  className="truncate"
-                                  title={topic.title || t("chat.untitled")}
-                                >
-                                  {topic.title || t("chat.untitled")}
-                                </span>
-                              </span>
-                              <span className="mt-1 block w-full truncate text-[10px] text-muted-foreground">
-                                {topic.workspaceName ?? t("chat.general")}
-                              </span>
-                              <span className="text-[10px] text-muted-foreground">
-                                {providerNames[topic.provider]}
-                              </span>
-                            </Button>
-                            <TopicActions
-                              topic={topic}
-                              disabled={busy}
-                              onRename={() => setRenaming(topic)}
-                              onArchive={() => void archiveTopic(topic.id, !topic.archived)}
-                            />
-                          </div>
-                        ))}
+                      <TopicList
+                        topics={filtered.filter(
+                          (topic) => topic.archived === (status === "archived"),
+                        )}
+                        activeId={activeId}
+                        disabled={busy}
+                        reordering={reordering}
+                        onChoose={choose}
+                        onRename={setRenaming}
+                        onArchive={(topic) => void archiveTopic(topic.id, !topic.archived)}
+                        onReorder={reorderTopics}
+                      />
                       {!topics.isLoading &&
                         !filtered.some((topic) => topic.archived === (status === "archived")) && (
                           <p className="p-2 text-xs text-muted-foreground">

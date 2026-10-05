@@ -4,6 +4,7 @@ import type {
   AgentSettings,
   AgentSettingsResponse,
   CreateAgentChat,
+  ReorderAgentChats,
   SendAgentMessage,
   UpdateAgentChat,
 } from "@structsmith/contracts";
@@ -18,6 +19,8 @@ export const chatApi = {
   saveSettings: (settings: AgentSettings) =>
     request<AgentSettings>("/agent-chat/settings", send("PUT", settings)),
   list: () => request<AgentChatSummary[]>("/agent-chat/chats"),
+  reorder: (input: ReorderAgentChats) =>
+    request<AgentChatSummary[]>("/agent-chat/chats/order", send("PUT", input)),
   get: (id: string) => request<AgentChat>(`/agent-chat/chats/${id}`),
   create: (input: CreateAgentChat) => request<AgentChat>("/agent-chat/chats", send("POST", input)),
   update: (id: string, input: UpdateAgentChat) =>

@@ -67,6 +67,14 @@ export const UpdateAgentChatSchema = z.object({
   directory: z.string().trim().max(2000).optional(),
 });
 export type UpdateAgentChat = z.infer<typeof UpdateAgentChatSchema>;
+export const ReorderAgentChatsSchema = z.object({
+  topicIds: z
+    .array(z.string().min(1).max(200))
+    .min(1)
+    .max(10000)
+    .refine((ids) => new Set(ids).size === ids.length, "Topic IDs must be unique."),
+});
+export type ReorderAgentChats = z.infer<typeof ReorderAgentChatsSchema>;
 export const SendAgentMessageSchema = z.object({
   text: z.string().trim().min(1).max(20000),
   context: ChatContextSchema.optional(),

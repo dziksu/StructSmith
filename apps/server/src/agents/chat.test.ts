@@ -172,6 +172,79 @@ test("local CLI conversations persist, retain project/context on provider change
   }
 });
 
+test("topic order persists, preserves hidden slots, and stays stable when topics change", async () => {
+  const directory = mkdtempSync(join(tmpdir(), "structsmith-chat-order-"));
+  const { services, close } = createTestContext();
+  const project = createWorkspace(services);
+  try {
+    const service = new AgentChatService(services, directory, false);
+    const first = service.create({ workspaceId: project.id });
+    const hidden = service.create({});
+    const second = service.create({ workspaceId: project.id });
+    const archived = service.create({});
+    service.update(archived.id, { archived: true });
+    expect(service.list().map((topic) => topic.id)).toEqual([
+      archived.id,
+      second.id,
+      hidden.id,
+      first.id,
+    ]);
+    const ordered = [archived.id, first.id, hidden.id, second.id];
+    expect(service.reorder({ topicIds: [first.id, second.id] }).map((topic) => topic.id)).toEqual(
+      ordered,
+    );
+    service.update(second.id, { title: "Renamed without moving", provider: "claude" });
+    service.update(first.id, { archived: true });
+    expect(service.list().map((topic) => topic.id)).toEqual(ordered);
+    const restored = new AgentChatService(services, directory, false);
+    expect(restored.list().map((topic) => topic.id)).toEqual(ordered);
+    expect(restored.get(second.id)).toMatchObject({
+      title: "Renamed without moving",
+      provider: "claude",
+      workspaceId: project.id,
+      messages: [],
+    });
+    const stored = readFileSync(join(directory, "chats.json"), "utf8");
+    expect(() => restored.reorder({ topicIds: [first.id, first.id] })).toThrow("distinct");
+    expect(() => restored.reorder({ topicIds: [] })).toThrow("distinct");
+    expect(() => restored.reorder({ topicIds: [second.id, "missing"] })).toThrow("not found");
+    expect(readFileSync(join(directory, "chats.json"), "utf8")).toBe(stored);
+    const newest = restored.create({});
+    restored.delete(hidden.id);
+    expect(
+      new AgentChatService(services, directory, false).list().map((topic) => topic.id),
+    ).toEqual([newest.id, archived.id, first.id, second.id]);
+  } finally {
+    close();
+    rmSync(directory, { recursive: true, force: true });
+  }
+});
+
+test("legacy topics keep their recency order when manual ordering is introduced", () => {
+  const directory = mkdtempSync(join(tmpdir(), "structsmith-chat-legacy-order-"));
+  const { services, close } = createTestContext();
+  try {
+    const service = new AgentChatService(services, directory, false);
+    const first = service.create({});
+    const second = service.create({});
+    const file = join(directory, "chats.json");
+    const legacy = JSON.parse(readFileSync(file, "utf8"));
+    delete legacy.topicOrder;
+    legacy.chats[0].updatedAt = "2026-10-05T10:00:00.000Z";
+    legacy.chats[1].updatedAt = "2026-10-04T10:00:00.000Z";
+    writeFileSync(file, JSON.stringify(legacy));
+    const restored = new AgentChatService(services, directory, false);
+    expect(restored.list().map((topic) => topic.id)).toEqual([first.id, second.id]);
+    restored.reorder({ topicIds: [second.id, first.id] });
+    expect(
+      new AgentChatService(services, directory, false).list().map((topic) => topic.id),
+    ).toEqual([second.id, first.id]);
+  } finally {
+    close();
+    rmSync(directory, { recursive: true, force: true });
+  }
+});
+
 test("restart marks interrupted responses failed rather than leaving chat stuck", async () => {
   const directory = mkdtempSync(join(tmpdir(), "structsmith-chat-restart-"));
   const { services, close } = createTestContext();
@@ -373,13 +446,31 @@ test("REST chat rejects foreign origins and disabled execution and persists thro
       title: "Architecture questions",
       archived: false,
     });
+    const another = service.create({});
+    const orderedIds = [created.id, another.id];
+    const reordered = await fetch(`${endpoint}/api/agent-chat/chats/order`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ topicIds: orderedIds }),
+    });
+    expect(reordered.status).toBe(200);
+    expect((await reordered.json()).map((topic: { id: string }) => topic.id)).toEqual(orderedIds);
+    for (const topicIds of [[created.id, created.id], ["missing"], []]) {
+      const invalidOrder = await fetch(`${endpoint}/api/agent-chat/chats/order`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ topicIds }),
+      });
+      expect([400, 404]).toContain(invalidOrder.status);
+      expect(service.list().map((topic) => topic.id)).toEqual(orderedIds);
+    }
     const invalid = await fetch(`${endpoint}/api/agent-chat/chats`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ provider: "arbitrary-program" }),
     });
     expect(invalid.status).toBe(400);
-    expect(service.list()).toHaveLength(1);
+    expect(service.list()).toHaveLength(2);
   } finally {
     server.closeAllConnections();
     await new Promise<void>((resolve) => server.close(() => resolve()));
