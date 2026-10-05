@@ -5,6 +5,9 @@ running StructSmith. It supports Codex, Claude Code and GitHub Copilot. The serv
 launches the selected executable directly, with argument arrays and pipes, and
 never interpolates messages into shell commands.
 
+For the technical design, protocols, implementation problems and a step-by-step
+porting plan, see the [implementation guide in Polish](AGENT_CHAT_IMPLEMENTATION_PL.md).
+
 ## Try it locally
 
 1. Run `bun run dev` from the `codex/local-agent-chat` branch. Use
@@ -114,9 +117,78 @@ Interactive permission dialogs are not supported.
 Stop ends the CLI process group on macOS/Linux, with a kill fallback. Already
 committed architecture changes remain available for review/restoration in snapshots.
 
-A Docker deployment does not automatically access host-installed CLIs or host
-paths. Use the native source setup for local development. For a remote deployment,
-leave the CLI bridge disabled and use an external MCP client instead.
+## Docker with agents on the host
+
+The local launcher keeps the full UI, domain and model database in Docker while
+running `AgentChatService` and the native agent processes on the host. Install
+Docker, curl and your preferred signed-in CLI on macOS/Linux arm64 or x64, then:
+
+```bash
+curl -fsSL https://github.com/dziksu/StructSmith/releases/latest/download/structsmith-local-install.sh | sh
+```
+
+The binary/checksums/installer are attached by CI after the matching Docker image
+is published. The command is available starting with the release containing this
+change, not in older releases. Bun is compiled into the executable; neither Bun,
+Node.js nor a repository checkout is needed. Linux binaries require glibc.
+
+The installer writes a versioned binary and shortcut under
+`~/.local/share/structsmith`. Run that `structsmith-local` shortcut again to start,
+or with `status`/`stop` in another terminal. The helper stays in the foreground;
+Ctrl+C cancels active agents and removes its container, retaining the named data
+volume and host chat history. It validates container ID/ownership before cleanup.
+A killed helper can recover its own leftover container on the next start.
+
+Defaults are UI/chat on `http://localhost:8090`, token-authenticated Docker on
+`127.0.0.1:8091`, container `structsmith-local`, volume `structsmith-data`, and
+host history/settings in `~/.local/share/structsmith/chat`. `local.json` holds a
+random backend token (mode 0600); a profile lock prevents two helpers writing the
+same history. Ports occupied by other applications cause an error. No other
+container is stopped automatically. `--data-dir PATH` selects a separate private
+profile; `--port`, `--backend-port`, `--container`, `--volume`, `--read-only` and
+`--no-open` are also available. Multiple profiles need distinct ports, container names and model volumes.
+The launcher refuses a volume used by another running container. To install the binary elsewhere, set `STRUCTSMITH_LOCAL_DIR` for the
+installer and pass the matching `--data-dir` when launching it.
+
+The helper proxies non-chat REST, assets, public MCP and model SSE without
+buffering responses. It injects the private backend token; native agents receive
+only a temporary scoped host MCP URL. `/api/mcp-info` advertises the helper's local
+MCP endpoint. Chat reads/operations go through `RemoteChatBackend` to Docker's
+REST/MCP, preserving domain revision checks, snapshots, activity and UI events.
+All helper routes enforce loopback socket, localhost Host/Origin and reject
+cross-site browser requests. Docker itself has `AGENT_CHAT_ENABLED=false` in this
+mode. There is no Docker gateway whitelist, credential mount or Docker socket
+mount in the container.
+
+Agents use the host PATH and CLI authentication. Source directories are host
+paths; no bind mount into Docker is necessary. Model selection, reasoning effort,
+streaming, topic ordering, archive/rename and Stop use the existing chat UI.
+Agent provider authentication and interactive approvals remain CLI concerns.
+
+The helper and Docker image must have the same product version. It uses a version
+pinned GHCR tag rather than `latest`; updating by rerunning the installer downloads
+the newly released pair. The launcher expects a local Docker engine (Docker
+Desktop/Colima or native Linux Docker), not a daemon running on another machine.
+Windows and non-glibc Linux are not packaged in this initial mode.
+
+For source development or packaging:
+
+```bash
+docker build -t structsmith-local:dev .
+bun run docker:local --image structsmith-local:dev
+bun run build:local
+# Build all four release targets:
+bun run build:local --all
+# Test an already built image with a disposable volume and fake native CLI:
+bun scripts/smoke-local-helper.ts IMAGE
+```
+
+A plain Docker deployment still cannot start host-installed CLI programs. Its
+chat history defaults to `/data/agent-chat` in the persistent volume, but the
+stock image contains no agent CLIs and the local guard rejects a Docker bridge
+peer. For remote deployments, keep the CLI bridge disabled and use an external
+MCP client. The detailed guide records the
+[original Docker findings and the new architecture](AGENT_CHAT_IMPLEMENTATION_PL.md#docker-i-agent-na-hoście).
 
 ## Provider adapters
 

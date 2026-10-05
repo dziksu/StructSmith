@@ -88,8 +88,8 @@ export function agentChatRoutes(service: AgentChatService, config: AppConfig): R
   );
   router.post(
     "/chats",
-    handler((req, res) =>
-      res.status(201).json(service.create(CreateAgentChatSchema.parse(req.body))),
+    handler(async (req, res) =>
+      res.status(201).json(await service.create(CreateAgentChatSchema.parse(req.body))),
     ),
   );
   router.put(
@@ -159,13 +159,13 @@ export function agentChatRoutes(service: AgentChatService, config: AppConfig): R
   );
   router.post(
     "/chats/:id/messages",
-    handler((req, res) => {
+    handler(async (req, res) => {
       // Use the listening port, never an untrusted Host or forwarded header, for the injected MCP URL.
       const port = req.socket.localPort ?? config.port;
       res
         .status(202)
         .json(
-          service.send(
+          await service.send(
             param(req, "id"),
             SendAgentMessageSchema.parse(req.body),
             `http://127.0.0.1:${port}`,

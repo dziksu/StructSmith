@@ -3,7 +3,7 @@ services:
     build: .
     image: ghcr.io/dziksu/structsmith:latest
     ports:
-      - "8090:8080"
+      - "127.0.0.1:8090:8080"
     volumes:
       - structsmith-data:/data
     environment:

@@ -23,7 +23,9 @@ bun run test       # domain and persistence tests
 bun run build      # production build of the UI
 ```
 
-CI runs exactly these four, plus a Docker image build. `bun run check:fix` applies
+CI runs these four, a standalone launcher build and a Docker image build.
+The Docker job also runs `scripts/smoke-local-helper.ts` against the compiled
+launcher and real container, using a fake host CLI without provider usage. `bun run check:fix` applies
 what can be fixed automatically.
 
 When updating dependencies, commit the regenerated `bun.lock` together with the
@@ -124,6 +126,13 @@ the development version in `package.json` is not the release baseline.
 The same workflow then publishes multi-architecture GHCR images tagged `latest`,
 `vX.Y.Z`, `vX.Y`, and `sha-…`, built from the tested commit. Release builds stamp
 the version into the shared product identity, including HTTP health and MCP.
+After image publication, CI compiles standalone local launchers for macOS/Linux
+arm64/x64, stamps the same product version, and attaches binaries, `SHA256SUMS`
+and a versioned installer to that GitHub release. `bun run build:local` builds the
+current platform; `--all` builds all four. The installer and executable require
+no repository or Bun runtime on the user's machine. Rerun the launcher asset job
+if it fails after image publication.
+
 No npm packages or automatic commits to protected `main` are published. GitHub
 release notes are the generated changelog; `CHANGELOG.md` remains manually maintained.
 
@@ -134,8 +143,8 @@ do not trigger another workflow. See the [GitHub plugin documentation](https://g
 
 If image publication fails after the release exists, rerun the failed image job,
 or rerun the full workflow for the same commit: its existing release tag is reused.
-The CI workflow can also be dispatched manually on `main`. Check both release and
-image jobs before announcing availability; release notes can exist before the image finishes.
+The CI workflow can also be dispatched manually on `main`. Check release, image and local-launcher
+asset jobs before announcing availability; release notes can exist before the image finishes.
 New tag-protection rules must allow the Actions token to create release tags.
 
 Node 24.10+ is required only for the release command; normal development still

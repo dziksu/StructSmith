@@ -18,7 +18,7 @@ export class McpHttpHandler {
   private readonly sessions = new Map<string, Session>();
 
   constructor(
-    private readonly options: McpServerOptions,
+    private readonly options: McpServerOptions | null,
     private readonly serverFactory?: () => McpServer,
   ) {}
 
@@ -71,7 +71,8 @@ export class McpHttpHandler {
       },
     });
 
-    const server = this.serverFactory?.() ?? createMcpServer(this.options);
+    const server = this.serverFactory?.() ?? (this.options && createMcpServer(this.options));
+    if (!server) throw new Error("An MCP server factory or domain services are required.");
 
     transport.onclose = () => {
       const closedId = transport.sessionId;

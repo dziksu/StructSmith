@@ -54,7 +54,7 @@ emit('item/completed',{item:{id:'a',type:'agentMessage',text:'Zażółć gęśl�
   const settings = structuredClone(defaultAgentSettings);
   settings.providers.codex.executable = fake;
   agents.setSettings(settings);
-  const chat = agents.create({});
+  const chat = await agents.create({});
   const olderText = "x".repeat(50000);
   chat.messages.push({
     id: "older",
@@ -98,7 +98,7 @@ emit('item/completed',{item:{id:'a',type:'agentMessage',text:'Zażółć gęśl�
       type: "snapshot",
       chat: { id: chat.id, messages: [expect.objectContaining({ text: olderText })] },
     });
-    agents.send(chat.id, { text: "Explain this" }, base);
+    await agents.send(chat.id, { text: "Explain this" }, base);
     await until(() =>
       first.events.some((event) => event.type === "message" && event.message.text === "Zażółć"),
     );
@@ -134,7 +134,7 @@ emit('item/completed',{item:{id:'a',type:'agentMessage',text:'Zażółć gęśl�
     expect(new AgentChatService(ctx.services, directory, false).get(chat.id).messages).toEqual(
       chat.messages,
     );
-    agents.send(chat.id, { text: "Stop this turn" }, base);
+    await agents.send(chat.id, { text: "Stop this turn" }, base);
     await until(() => chat.messages.at(-1)?.text === "Zażółć");
     expect(readFileSync(prompt, "utf8")).not.toContain("Readable summary");
     agents.stop(chat.id);
@@ -236,8 +236,8 @@ emit('turn/completed',{turn:{status:'failed',error:{message:'Quota exceeded'}}})
   settings.providers.codex.executable = fake;
   service.setSettings(settings);
   try {
-    const chat = service.create({});
-    service.send(chat.id, { text: "Explain" }, "http://localhost");
+    const chat = await service.create({});
+    await service.send(chat.id, { text: "Explain" }, "http://localhost");
     await until(() => chat.messages.at(-1)?.status !== "running");
     expect(chat.messages.at(-1)).toMatchObject({
       text: "Partial reply",
