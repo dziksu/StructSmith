@@ -25,8 +25,12 @@ never interpolates messages into shell commands.
    selected node. Check the diagram, activity and snapshots. The agent can also
    update relationships, views, boundaries and records through batch operations.
 6. Switch the provider and ask a follow-up. The topic's project and conversation
-   history remain the same. Try **Stop**, close/reopen the panel, navigate to
-   another project and reload the browser to check persistence.
+  history remain the same. Try **Stop**, close/reopen the panel, navigate to
+  another project and reload the browser to check persistence.
+7. Open the **…** menu beside a topic to **Rename** or **Archive** it. Archived
+   topics move to the **Archive** tab and keep their project and complete history.
+   Open one to read it or choose **Restore topic** to resume the conversation.
+   These actions are disabled while the agent is running in that topic.
 
 Sign in through the CLI in a terminal before testing. The app does not collect
 API keys or handle interactive terminal login or approval prompts. CLI errors,
@@ -77,6 +81,9 @@ location (default `data/agent-chat`, ignored by Git). History/settings live in
 `chats.json`, written atomically with private permissions. Restarted running turns
 become failed responses and can be continued with a new message. Empty topics,
 failed responses and completed conversations remain available until deleted.
+Renaming and archive status persist across restarts. Older saved topics default
+to active. Archived topics cannot accept messages until restored; archiving does
+not delete messages or undo architecture changes.
 
 To keep provider switching simple, each turn starts a fresh CLI invocation with
 the completed conversation history and latest attached context. This does not

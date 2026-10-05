@@ -1,7 +1,13 @@
-import type { AgentChat, AgentProvider, ChatContext } from "@structsmith/contracts";
+import type {
+  AgentChat,
+  AgentChatSummary,
+  AgentProvider,
+  ChatContext,
+} from "@structsmith/contracts";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
 import {
+  ArchiveRestore,
   ArrowUp,
   Check,
   FolderOpen,
@@ -27,12 +33,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import { useWorkspaces } from "@/hooks/useApi";
 import { cn } from "@/lib/utils";
 import { AgentSettingsDialog, providerNames } from "./AgentSettingsDialog";
 import { chatApi } from "./api";
 import { useChatStore } from "./store";
+import { RenameTopicDialog, TopicActions } from "./TopicActions";
 
 const errorMessage = (error: unknown) => (error instanceof Error ? error.message : String(error));
 
@@ -43,6 +51,8 @@ export function AgentChatDock() {
   const { open, setOpen, currentProject, request, clearRequest } = useChatStore();
   const [activeId, setActiveId] = useState<string | null>(null);
   const [scope, setScope] = useState("all");
+  const [topicStatus, setTopicStatus] = useState("active");
+  const [renaming, setRenaming] = useState<Pick<AgentChatSummary, "id" | "title"> | null>(null);
   const [newScope, setNewScope] = useState<string | null>(null);
   const [drafts, setDrafts] = useState<Record<string, string>>({});
   const [context, setContext] = useState<ChatContext | undefined>();
@@ -92,19 +102,45 @@ export function AgentChatDock() {
     accept(next);
     setContext(target);
     setScope("all");
+    setTopicStatus("active");
     setDetailsOpen(false);
     return next;
   };
-  const update = async (input: Parameters<typeof chatApi.update>[1]) => {
-    if (!activeId) return;
+  const updateTopic = async (id: string, input: Parameters<typeof chatApi.update>[1]) => {
     setBusy(true);
     try {
-      accept(await chatApi.update(activeId, input));
+      const next = await chatApi.update(id, input);
+      cache.setQueryData(["agent-chat", next.id], next);
+      const { messages: _messages, ...summary } = next;
+      cache.setQueryData<AgentChatSummary[]>(["agent-chats"], (items) =>
+        items?.map((topic) =>
+          topic.id === next.id ? { ...summary, running: topic.running } : topic,
+        ),
+      );
+      refresh();
+      return true;
     } catch (error) {
       toast.error(errorMessage(error));
+      return false;
     } finally {
       setBusy(false);
     }
+  };
+  const update = (input: Parameters<typeof chatApi.update>[1]) => {
+    if (activeId) return updateTopic(activeId, input);
+    return Promise.resolve(false);
+  };
+  const archiveTopic = async (id: string, archived: boolean) => {
+    if (!(await updateTopic(id, { archived }))) return;
+    if (archived && id === activeId) {
+      setActiveId(null);
+      setContext(undefined);
+      setDetailsOpen(false);
+    } else if (!archived) {
+      setTopicStatus("active");
+      choose(id);
+    }
+    toast.success(t(archived ? "chat.topicArchived" : "chat.topicRestored"));
   };
   useEffect(() => {
     if (open) composer.current?.focus();
@@ -115,7 +151,8 @@ export function AgentChatDock() {
     setBusy(true);
     const apply = async () => {
       try {
-        if (current?.workspaceId === request.workspaceId && !running) setContext(request.context);
+        if (current?.workspaceId === request.workspaceId && !current.archived && !running)
+          setContext(request.context);
         else await create(request.workspaceId, request.context);
         clearRequest();
         composer.current?.focus();
@@ -133,7 +170,7 @@ export function AgentChatDock() {
     end.current?.scrollIntoView({ block: "end" });
   }, [current?.messages.length, current?.messages.at(-1)?.text, current?.messages.at(-1)?.status]);
   const submit = async () => {
-    if (!current || !draft.trim() || running || busy) return;
+    if (!current || current.archived || !draft.trim() || running || busy) return;
     const id = current.id;
     setBusy(true);
     try {
@@ -272,37 +309,77 @@ export function AgentChatDock() {
                     </SelectContent>
                   </Select>
                 </div>
-                <div className="min-h-0 flex-1 overflow-y-auto p-2">
-                  {topics.isError && (
-                    <p className="p-2 text-xs text-destructive">{errorMessage(topics.error)}</p>
-                  )}
-                  {filtered.map((topic) => (
-                    <Button
-                      key={topic.id}
-                      type="button"
-                      variant="ghost"
-                      onClick={() => choose(topic.id)}
-                      className={cn(
-                        "mb-1 h-auto w-full flex-col items-start gap-0 p-2 text-left",
-                        activeId === topic.id && "bg-accent",
+                <Tabs
+                  value={topicStatus}
+                  onValueChange={setTopicStatus}
+                  className="flex min-h-0 flex-1 flex-col"
+                >
+                  <TabsList aria-label={t("chat.topicStatus")} className="shrink-0">
+                    <TabsTrigger value="active" className="flex-1 px-1">
+                      {t("chat.activeTopics")}
+                    </TabsTrigger>
+                    <TabsTrigger value="archived" className="flex-1 px-1">
+                      {t("chat.archivedTopics")}
+                    </TabsTrigger>
+                  </TabsList>
+                  {(["active", "archived"] as const).map((status) => (
+                    <TabsContent key={status} value={status} className="overflow-y-auto p-2">
+                      {topics.isError && (
+                        <p className="p-2 text-xs text-destructive">{errorMessage(topics.error)}</p>
                       )}
-                    >
-                      <span className="flex w-full items-center gap-1 text-xs font-medium">
-                        {topic.running && <Loader2 className="h-3 w-3 shrink-0 animate-spin" />}
-                        <span className="truncate">{topic.title || t("chat.untitled")}</span>
-                      </span>
-                      <span className="mt-1 block w-full truncate text-[10px] text-muted-foreground">
-                        {topic.workspaceName ?? t("chat.general")}
-                      </span>
-                      <span className="text-[10px] text-muted-foreground">
-                        {providerNames[topic.provider]}
-                      </span>
-                    </Button>
+                      {filtered
+                        .filter((topic) => topic.archived === (status === "archived"))
+                        .map((topic) => (
+                          <div
+                            key={topic.id}
+                            className={cn(
+                              "mb-1 flex rounded-md hover:bg-accent",
+                              activeId === topic.id && "bg-accent",
+                            )}
+                          >
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              disabled={busy}
+                              onClick={() => choose(topic.id)}
+                              aria-pressed={activeId === topic.id}
+                              className="h-auto min-w-0 flex-1 flex-col items-start gap-0 p-2 text-left"
+                            >
+                              <span className="flex w-full items-center gap-1 text-xs font-medium">
+                                {topic.running && (
+                                  <Loader2 className="h-3 w-3 shrink-0 animate-spin" />
+                                )}
+                                <span
+                                  className="truncate"
+                                  title={topic.title || t("chat.untitled")}
+                                >
+                                  {topic.title || t("chat.untitled")}
+                                </span>
+                              </span>
+                              <span className="mt-1 block w-full truncate text-[10px] text-muted-foreground">
+                                {topic.workspaceName ?? t("chat.general")}
+                              </span>
+                              <span className="text-[10px] text-muted-foreground">
+                                {providerNames[topic.provider]}
+                              </span>
+                            </Button>
+                            <TopicActions
+                              topic={topic}
+                              disabled={busy}
+                              onRename={() => setRenaming(topic)}
+                              onArchive={() => void archiveTopic(topic.id, !topic.archived)}
+                            />
+                          </div>
+                        ))}
+                      {!topics.isLoading &&
+                        !filtered.some((topic) => topic.archived === (status === "archived")) && (
+                          <p className="p-2 text-xs text-muted-foreground">
+                            {t(status === "archived" ? "chat.noArchivedTopics" : "chat.noTopics")}
+                          </p>
+                        )}
+                    </TabsContent>
                   ))}
-                  {!topics.isLoading && !filtered.length && (
-                    <p className="p-2 text-xs text-muted-foreground">{t("chat.noTopics")}</p>
-                  )}
-                </div>
+                </Tabs>
               </nav>
               {!current ? (
                 <div className="flex flex-1 flex-col items-center justify-center gap-3 p-6 text-center">
@@ -316,27 +393,35 @@ export function AgentChatDock() {
                 <section className="flex min-w-0 flex-1 flex-col">
                   <div className="space-y-2 border-b px-3 py-2">
                     <div className="flex items-center justify-between gap-2">
-                      <Button
-                        type="button"
-                        variant="link"
-                        disabled={
-                          !current.workspaceId ||
-                          !projectOptions.some((project) => project.id === current.workspaceId)
-                        }
-                        className="h-auto min-w-0 justify-start px-0 text-xs font-semibold"
-                        onClick={() => {
-                          if (current.workspaceId)
-                            void navigate({
-                              to: "/w/$workspaceId",
-                              params: { workspaceId: current.workspaceId },
-                            });
-                        }}
-                      >
-                        <FolderOpen className="h-3.5 w-3.5 shrink-0" />
-                        <span className="truncate">
-                          {current.workspaceName ?? t("chat.general")}
-                        </span>
-                      </Button>
+                      <div className="min-w-0 flex-1">
+                        <h3
+                          className="truncate text-sm font-semibold"
+                          title={current.title || t("chat.untitled")}
+                        >
+                          {current.title || t("chat.untitled")}
+                        </h3>
+                        <Button
+                          type="button"
+                          variant="link"
+                          disabled={
+                            !current.workspaceId ||
+                            !projectOptions.some((project) => project.id === current.workspaceId)
+                          }
+                          className="h-auto min-w-0 justify-start px-0 text-xs font-semibold"
+                          onClick={() => {
+                            if (current.workspaceId)
+                              void navigate({
+                                to: "/w/$workspaceId",
+                                params: { workspaceId: current.workspaceId },
+                              });
+                          }}
+                        >
+                          <FolderOpen className="h-3.5 w-3.5 shrink-0" />
+                          <span className="truncate">
+                            {current.workspaceName ?? t("chat.general")}
+                          </span>
+                        </Button>
+                      </div>
                       <Button
                         size="icon"
                         variant="ghost"
@@ -349,7 +434,7 @@ export function AgentChatDock() {
                     <div className="flex gap-2">
                       <Select
                         value={current.provider}
-                        disabled={running || busy}
+                        disabled={running || busy || current.archived}
                         onValueChange={(value) => void update({ provider: value as AgentProvider })}
                       >
                         <SelectTrigger
@@ -368,7 +453,7 @@ export function AgentChatDock() {
                       </Select>
                       <Select
                         value={current.mode}
-                        disabled={running || busy}
+                        disabled={running || busy || current.archived}
                         onValueChange={(value) => void update({ mode: value as AgentChat["mode"] })}
                       >
                         <SelectTrigger
@@ -484,85 +569,100 @@ export function AgentChatDock() {
                     ))}
                     <div ref={end} />
                   </div>
-                  <form
-                    className="space-y-2 border-t p-3"
-                    onSubmit={(event) => {
-                      event.preventDefault();
-                      void submit();
-                    }}
-                  >
-                    {context && (
-                      <Badge
-                        variant="primary"
-                        className="flex items-center justify-between gap-2 normal-case"
+                  {current.archived ? (
+                    <div className="space-y-2 border-t p-3">
+                      <p className="text-xs text-muted-foreground">{t("chat.archivedHint")}</p>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        disabled={busy}
+                        onClick={() => void archiveTopic(current.id, false)}
                       >
-                        <span className="truncate">
-                          {t("chat.context")}: {context.label ?? context.targetId}
-                        </span>
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="iconSm"
-                          className="h-5 w-5"
-                          aria-label={t("chat.removeContext")}
-                          onClick={() => setContext(undefined)}
-                        >
-                          <X className="h-3 w-3" />
-                        </Button>
-                      </Badge>
-                    )}
-                    <Textarea
-                      ref={composer}
-                      aria-label={t("chat.message")}
-                      placeholder={context ? t("chat.contextPlaceholder") : t("chat.placeholder")}
-                      className="min-h-20 max-h-40 resize-y text-sm"
-                      value={draft}
-                      maxLength={20000}
-                      onChange={(event) =>
-                        setDrafts((values) => ({ ...values, [current.id]: event.target.value }))
-                      }
-                      onKeyDown={(event) => {
-                        if (
-                          event.key === "Enter" &&
-                          !event.shiftKey &&
-                          !event.nativeEvent.isComposing
-                        ) {
-                          event.preventDefault();
-                          void submit();
-                        }
-                      }}
-                    />
-                    <div className="flex items-center justify-between gap-2">
-                      <span className="text-[10px] text-muted-foreground">
-                        {t("chat.sendHint")}
-                      </span>
-                      {running ? (
-                        <Button
-                          type="button"
-                          size="sm"
-                          variant="outline"
-                          onClick={() =>
-                            void chatApi
-                              .stop(current.id)
-                              .then(accept)
-                              .catch((error) => toast.error(errorMessage(error)))
-                          }
-                        >
-                          <Square className="mr-1 h-3 w-3" />
-                          {t("chat.stop")}
-                        </Button>
-                      ) : (
-                        <Button
-                          type="submit"
-                          size="sm"
-                          disabled={!draft.trim() || busy || !available?.available}
-                        >
-                          <ArrowUp className="mr-1 h-3.5 w-3.5" />
-                          {t("chat.send")}
-                        </Button>
-                      )}
+                        <ArchiveRestore className="mr-1 h-3.5 w-3.5" />
+                        {t("chat.restoreTopic")}
+                      </Button>
                     </div>
-                  </form>
+                  ) : (
+                    <form
+                      className="space-y-2 border-t p-3"
+                      onSubmit={(event) => {
+                        event.preventDefault();
+                        void submit();
+                      }}
+                    >
+                      {context && (
+                        <Badge
+                          variant="primary"
+                          className="flex items-center justify-between gap-2 normal-case"
+                        >
+                          <span className="truncate">
+                            {t("chat.context")}: {context.label ?? context.targetId}
+                          </span>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="iconSm"
+                            className="h-5 w-5"
+                            aria-label={t("chat.removeContext")}
+                            onClick={() => setContext(undefined)}
+                          >
+                            <X className="h-3 w-3" />
+                          </Button>
+                        </Badge>
+                      )}
+                      <Textarea
+                        ref={composer}
+                        aria-label={t("chat.message")}
+                        placeholder={context ? t("chat.contextPlaceholder") : t("chat.placeholder")}
+                        className="min-h-20 max-h-40 resize-y text-sm"
+                        value={draft}
+                        maxLength={20000}
+                        onChange={(event) =>
+                          setDrafts((values) => ({ ...values, [current.id]: event.target.value }))
+                        }
+                        onKeyDown={(event) => {
+                          if (
+                            event.key === "Enter" &&
+                            !event.shiftKey &&
+                            !event.nativeEvent.isComposing
+                          ) {
+                            event.preventDefault();
+                            void submit();
+                          }
+                        }}
+                      />
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="text-[10px] text-muted-foreground">
+                          {t("chat.sendHint")}
+                        </span>
+                        {running ? (
+                          <Button
+                            type="button"
+                            size="sm"
+                            variant="outline"
+                            onClick={() =>
+                              void chatApi
+                                .stop(current.id)
+                                .then(accept)
+                                .catch((error) => toast.error(errorMessage(error)))
+                            }
+                          >
+                            <Square className="mr-1 h-3 w-3" />
+                            {t("chat.stop")}
+                          </Button>
+                        ) : (
+                          <Button
+                            type="submit"
+                            size="sm"
+                            disabled={!draft.trim() || busy || !available?.available}
+                          >
+                            <ArrowUp className="mr-1 h-3.5 w-3.5" />
+                            {t("chat.send")}
+                          </Button>
+                        )}
+                      </div>
+                    </form>
+                  )}
                 </section>
               )}
             </div>
@@ -575,6 +675,15 @@ export function AgentChatDock() {
           codexModels={settings.data.codexModels}
           onClose={() => setSettingsOpen(false)}
           onSave={() => void cache.invalidateQueries({ queryKey: ["agent-settings"] })}
+        />
+      )}
+      {renaming && (
+        <RenameTopicDialog
+          key={renaming.id}
+          topic={renaming}
+          disabled={busy}
+          onClose={() => setRenaming(null)}
+          onSave={(title) => updateTopic(renaming.id, { title })}
         />
       )}
     </>
@@ -596,6 +705,7 @@ function TopicSettings({
   const [title, setTitle] = useState(chat.title);
   const [directory, setDirectory] = useState(chat.directory);
   const [confirmDelete, setConfirmDelete] = useState(false);
+  useEffect(() => setTitle(chat.title), [chat.title]);
   return (
     <div className="space-y-2 rounded-lg border bg-muted/20 p-2">
       <Label className="block" htmlFor="chat-topic-title">

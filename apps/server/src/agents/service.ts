@@ -112,6 +112,7 @@ export class AgentChatService {
     const chat: AgentChat = {
       id: randomUUID(),
       title: input.context?.label?.slice(0, 200) ?? "",
+      archived: false,
       workspaceId: workspace?.id ?? null,
       workspaceName: workspace?.name ?? null,
       provider: input.provider ?? this.settings.defaultProvider,
@@ -148,6 +149,7 @@ export class AgentChatService {
 
   send(id: string, input: SendAgentMessage, baseUrl: string): AgentChat {
     const chat = this.idle(id);
+    if (chat.archived) throw badRequest("Restore this archived topic before sending a message.");
     if (this.runs.size >= 3) throw badRequest("At most three agents can run at once.");
     if (chat.workspaceId) this.services.workspaces.get(chat.workspaceId);
     if (input.context && !chat.workspaceId) throw badRequest("An item context needs a project.");

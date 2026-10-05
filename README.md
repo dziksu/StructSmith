@@ -395,6 +395,7 @@ Errors always use the same envelope:
 - Light / dark / system themes, English and Polish UI
 - Built-in chat with local Codex, Claude Code and GitHub Copilot CLIs: project topics,
   general discussions, contextual node/relationship actions, and scoped architecture edits
+  with topic renaming, archiving and restoration
 
 ### Chat with local agents
 

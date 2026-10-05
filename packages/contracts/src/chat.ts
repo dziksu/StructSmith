@@ -61,6 +61,7 @@ export const CreateAgentChatSchema = z.object({
 export type CreateAgentChat = z.input<typeof CreateAgentChatSchema>;
 export const UpdateAgentChatSchema = z.object({
   title: z.string().trim().min(1).max(200).optional(),
+  archived: z.boolean().optional(),
   provider: AgentProviderSchema.optional(),
   mode: AgentModeSchema.optional(),
   directory: z.string().trim().max(2000).optional(),
@@ -86,6 +87,7 @@ export type AgentMessage = z.infer<typeof AgentMessageSchema>;
 export const AgentChatSchema = z.object({
   id: z.string(),
   title: z.string(),
+  archived: z.boolean().default(false),
   workspaceId: z.string().nullable(),
   workspaceName: z.string().nullable(),
   provider: AgentProviderSchema,

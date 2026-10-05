@@ -111,6 +111,8 @@ test("local CLI conversations persist, retain project/context on provider change
       "still running",
     );
     expect(() => service.update(chat.id, { provider: "claude" })).toThrow("still running");
+    expect(() => service.update(chat.id, { archived: true })).toThrow("still running");
+    expect(() => service.update(chat.id, { title: "Rename during run" })).toThrow("still running");
     expect((await completed(service, chat.id)).messages.at(-1)).toMatchObject({
       text: "Odpowiedź testowa",
       status: "complete",
@@ -125,9 +127,28 @@ test("local CLI conversations persist, retain project/context on provider change
     service.send(chat.id, { text: "Continue" }, "http://127.0.0.1:3000");
     await completed(service, chat.id);
     expect(readFileSync(capture, "utf8")).toContain("Odpowiedź testowa");
+    const messages = structuredClone(service.get(chat.id).messages);
+    service.update(chat.id, { title: "Invoice architecture review", archived: true });
+    expect(service.list().find((topic) => topic.id === chat.id)).toMatchObject({
+      title: "Invoice architecture review",
+      archived: true,
+      workspaceId: project.id,
+    });
+    expect(() => service.send(chat.id, { text: "Archived turn" }, "http://localhost")).toThrow(
+      "Restore",
+    );
+    expect(service.get(chat.id).messages).toEqual(messages);
     const restored = new AgentChatService(services, directory, false);
     expect(restored.get(chat.id).messages).toHaveLength(4);
+    expect(restored.get(chat.id)).toMatchObject({
+      title: "Invoice architecture review",
+      archived: true,
+      workspaceId: project.id,
+    });
     expect(restored.getSettings()).toEqual(settings);
+    service.update(chat.id, { archived: false });
+    expect(service.get(chat.id).messages).toEqual(messages);
+    expect(new AgentChatService(services, directory, false).get(chat.id).archived).toBe(false);
     writeFileSync(fake, "#!/bin/sh\ncat >/dev/null\nsleep 30\n");
     service.send(chat.id, { text: "Stop me" }, "http://localhost:3000");
     service.stop(chat.id);
@@ -158,6 +179,7 @@ test("restart marks interrupted responses failed rather than leaving chat stuck"
     const service = new AgentChatService(services, directory, false);
     const chat = service.create({});
     const data = JSON.parse(readFileSync(join(directory, "chats.json"), "utf8"));
+    delete data.chats[0].archived;
     data.chats[0].messages = [
       {
         id: "m",
@@ -171,6 +193,7 @@ test("restart marks interrupted responses failed rather than leaving chat stuck"
     writeFileSync(join(directory, "chats.json"), JSON.stringify(data));
     const restored = new AgentChatService(services, directory, false);
     expect(restored.get(chat.id).messages[0]).toMatchObject({ status: "failed", text: "Partial" });
+    expect(restored.get(chat.id).archived).toBe(false);
   } finally {
     close();
     rmSync(directory, { recursive: true, force: true });
@@ -315,10 +338,40 @@ test("REST chat rejects foreign origins and disabled execution and persists thro
       body: JSON.stringify({ workspaceId: null, provider: "claude" }),
     });
     expect(response.status).toBe(201);
-    expect(await response.json()).toMatchObject({
+    const created = await response.json();
+    expect(created).toMatchObject({
       workspaceId: null,
       provider: "claude",
       mode: "ask",
+      archived: false,
+    });
+    const topicUrl = `${endpoint}/api/agent-chat/chats/${created.id}`;
+    const renamed = await fetch(topicUrl, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ title: "  Architecture questions  ", archived: true }),
+    });
+    expect(renamed.status).toBe(200);
+    expect(await renamed.json()).toMatchObject({ title: "Architecture questions", archived: true });
+    const invalidRename = await fetch(topicUrl, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ title: "   ", archived: false }),
+    });
+    expect(invalidRename.status).toBe(400);
+    expect(service.get(created.id)).toMatchObject({
+      title: "Architecture questions",
+      archived: true,
+    });
+    const restoredTopic = await fetch(topicUrl, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ archived: false }),
+    });
+    expect(restoredTopic.status).toBe(200);
+    expect(await restoredTopic.json()).toMatchObject({
+      title: "Architecture questions",
+      archived: false,
     });
     const invalid = await fetch(`${endpoint}/api/agent-chat/chats`, {
       method: "POST",
