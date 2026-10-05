@@ -24,9 +24,14 @@ export const CodexReasoningEffortSchema = z.enum([
 export type CodexReasoningEffort = z.infer<typeof CodexReasoningEffortSchema>;
 export const CodexModelSchema = z.object({
   id: z.string(),
-  reasoningEfforts: z.array(CodexReasoningEffortSchema).min(1),
+  displayName: z.string().optional(),
+  isDefault: z.boolean().optional(),
+  reasoningEfforts: z.array(CodexReasoningEffortSchema),
 });
 export type CodexModel = z.infer<typeof CodexModelSchema>;
+export const CodexModelsQuerySchema = z.object({
+  executable: z.string().trim().min(1).max(2000),
+});
 const ProviderSettingsSchema = z.object({
   executable: z.string().trim().min(1).max(2000),
   model: z.string().trim().max(200).default(""),
@@ -127,5 +132,4 @@ export interface AgentSettingsResponse {
   settings: AgentSettings;
   availability: AgentAvailability[];
   readOnly: boolean;
-  codexModels: CodexModel[];
 }

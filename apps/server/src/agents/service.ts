@@ -21,7 +21,7 @@ import { badRequest, DomainError, type Services } from "@structsmith/domain";
 import { createChatMcpServer, McpHttpHandler } from "@structsmith/mcp";
 import { z } from "zod";
 import { CodexSession } from "./codex-session";
-import { AgentOutputParser, agentInvocation, object } from "./providers";
+import { AgentOutputParser, agentErrorMessage, agentInvocation, object } from "./providers";
 
 const StoreSchema = z.object({
   settings: AgentSettingsSchema,
@@ -69,6 +69,7 @@ export class AgentChatService {
     for (const chat of this.chats) {
       if (this.readOnly) chat.mode = "ask";
       for (const message of chat.messages) {
+        if (message.error) message.error = agentErrorMessage(message.error);
         if (message.status === "running") {
           message.status = "failed";
           message.error = "StructSmith restarted. Send another message to continue.";
@@ -392,6 +393,7 @@ export class AgentChatService {
         answer.error = answer.error ?? stopped ?? stderr.trim() ?? `CLI exited with code ${code}.`;
       if (answer.status === "failed" && !answer.error)
         answer.error = `CLI exited with code ${code} without a response. Check login and CLI version in your terminal.`;
+      if (answer.error) answer.error = agentErrorMessage(answer.error);
       answer.progress = undefined;
       chat.updatedAt = new Date().toISOString();
       this.runs.delete(id);

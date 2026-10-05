@@ -6,6 +6,20 @@ export interface AgentInvocation {
   stdin: string;
 }
 
+export const codexAppServerArgs = [
+  "app-server",
+  "-c",
+  "features.hooks=false",
+  "-c",
+  "features.plugins=false",
+  "-c",
+  "features.apps=false",
+  "-c",
+  "apps._default.enabled=false",
+  "-c",
+  "notify=[]",
+];
+
 /** Argument arrays only: prompts, model names and paths never go through a shell. */
 export function agentInvocation(
   chat: AgentChat,
@@ -19,19 +33,7 @@ export function agentInvocation(
   if (chat.provider === "codex") {
     return {
       command: config.executable,
-      args: [
-        "app-server",
-        "-c",
-        "features.hooks=false",
-        "-c",
-        "features.plugins=false",
-        "-c",
-        "features.apps=false",
-        "-c",
-        "apps._default.enabled=false",
-        "-c",
-        "notify=[]",
-      ],
+      args: [...codexAppServerArgs],
       stdin: prompt,
     };
   }
@@ -88,6 +90,26 @@ type ObjectValue = Record<string, unknown>;
 export const object = (value: unknown): ObjectValue =>
   value !== null && typeof value === "object" ? (value as ObjectValue) : {};
 
+/** CLI errors can contain multiple nested JSON envelopes instead of readable text. */
+export function agentErrorMessage(value: unknown, depth = 0): string {
+  if (depth > 5) return typeof value === "string" ? value : "The agent failed.";
+  if (typeof value === "string") {
+    const text = value.trim();
+    try {
+      const parsed: unknown = JSON.parse(text);
+      if (object(parsed).message || object(parsed).error)
+        return agentErrorMessage(parsed, depth + 1);
+    } catch {
+      // Most CLI errors are already plain text.
+    }
+    return text;
+  }
+  const error = object(value);
+  if (error.message) return agentErrorMessage(error.message, depth + 1);
+  if (error.error) return agentErrorMessage(error.error, depth + 1);
+  return "The agent failed.";
+}
+
 export interface AgentOutput {
   text?: string;
   reasoning?: string;
@@ -135,7 +157,7 @@ export class AgentOutputParser {
       if (event.method === "item/started" && item.type === "mcpToolCall")
         output.progress = `StructSmith: ${item.tool ?? "tool"}`;
       if (event.method === "error" && !params.willRetry)
-        output.error = String(object(params.error).message ?? "Codex failed.");
+        output.error = agentErrorMessage(params.error ?? "Codex failed.");
     } else if (this.provider === "claude") {
       // Subagent content belongs to a tool result, not to the parent assistant's reply.
       if (event.parent_tool_use_id) return output;

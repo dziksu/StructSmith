@@ -1,7 +1,12 @@
 import { chmodSync, writeFileSync } from "node:fs";
 
 /** Exercises the same child-process stdio boundary as the installed Codex CLI. */
-export function fakeCodex(path: string, turn: string, setup = ""): void {
+export function fakeCodex(
+  path: string,
+  turn: string,
+  setup = "",
+  catalog = "console.log(JSON.stringify({id:request.id,result:{data:[],nextCursor:null}}));",
+): void {
   writeFileSync(
     path,
     `#!${process.execPath}
@@ -13,6 +18,7 @@ let threadParams;
 for await (const line of createInterface({input:process.stdin})) {
   const request = JSON.parse(line);
   const params = request.params;
+  if (request.method === 'model/list') { ${catalog} }
   if (request.method === 'initialize') console.log(JSON.stringify({id:request.id,result:{}}));
   if (request.method === 'config/read') console.log(JSON.stringify({id:request.id,result:{config:{mcp_servers:{'unrelated.with.dot':{url:'http://invalid'}},plugins:{'unrelated.with.dot':{enabled:true}}}}}));
   if (request.method === 'thread/start') {

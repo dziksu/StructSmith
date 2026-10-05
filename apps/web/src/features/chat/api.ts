@@ -4,6 +4,7 @@ import type {
   AgentChatSummary,
   AgentSettings,
   AgentSettingsResponse,
+  CodexModel,
   CreateAgentChat,
   ReorderAgentChats,
   SendAgentMessage,
@@ -18,6 +19,10 @@ const send = (method: string, body?: unknown): RequestInit => ({
 });
 export const chatApi = {
   settings: () => request<AgentSettingsResponse>("/agent-chat/settings"),
+  codexModels: (executable: string, signal?: AbortSignal) =>
+    request<CodexModel[]>(`/agent-chat/codex/models?executable=${encodeURIComponent(executable)}`, {
+      signal,
+    }),
   saveSettings: (settings: AgentSettings) =>
     request<AgentSettings>("/agent-chat/settings", send("PUT", settings)),
   list: () => request<AgentChatSummary[]>("/agent-chat/chats"),

@@ -11,7 +11,6 @@ import { createAppContext } from "../bootstrap";
 import { loadConfig } from "../config";
 import { errorMiddleware } from "../http-errors";
 import { agentChatRoutes, localAgentAccess } from "../routes/agent-chat";
-import { readCodexModels } from "./codex-models";
 import { AgentOutputParser, agentInvocation } from "./providers";
 import { AgentChatService } from "./service";
 import { fakeCodex } from "./test-cli";
@@ -365,40 +364,6 @@ test("legacy settings keep CLI defaults and invalid reasoning levels are rejecte
   expect(AgentSettingsSchema.parse(legacy).providers.codex.reasoningEffort).toBe("default");
   legacy.providers.codex.reasoningEffort = "arbitrary-value";
   expect(AgentSettingsSchema.safeParse(legacy).success).toBe(false);
-});
-
-test("Codex catalog exposes only model IDs and supported reasoning levels with safe fallback", () => {
-  const directory = mkdtempSync(join(tmpdir(), "structsmith-codex-models-"));
-  const file = join(directory, "models_cache.json");
-  try {
-    expect(readCodexModels(file)).toEqual([]);
-    writeFileSync(
-      file,
-      JSON.stringify({
-        models: [
-          {
-            slug: "gpt-6.1-sol",
-            supported_reasoning_levels: [{ effort: "low" }, { effort: "ultra" }],
-            extra: "not exposed",
-          },
-          {
-            slug: "gpt-6-luna",
-            supported_reasoning_levels: [{ effort: "low" }, { effort: "max" }],
-          },
-          { slug: "future", supported_reasoning_levels: [{ effort: "unknown-level" }] },
-          { bad: "entry" },
-        ],
-      }),
-    );
-    expect(readCodexModels(file)).toEqual([
-      { id: "gpt-6.1-sol", reasoningEfforts: ["low", "ultra"] },
-      { id: "gpt-6-luna", reasoningEfforts: ["low", "max"] },
-    ]);
-    writeFileSync(file, "invalid JSON");
-    expect(readCodexModels(file)).toEqual([]);
-  } finally {
-    rmSync(directory, { recursive: true, force: true });
-  }
 });
 
 test("REST chat rejects foreign origins and disabled execution and persists through validated DTOs", async () => {

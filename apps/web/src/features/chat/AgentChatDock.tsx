@@ -578,9 +578,20 @@ export function AgentChatDock() {
                           </p>
                         )}
                         {message.error && (
-                          <p className="mt-2 whitespace-pre-wrap break-words text-xs text-destructive">
-                            {message.error}
-                          </p>
+                          <div className="mt-2 space-y-2">
+                            <p className="whitespace-pre-wrap break-words text-xs text-destructive">
+                              {message.error}
+                            </p>
+                            {message.provider === "codex" && (
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => setSettingsOpen(true)}
+                              >
+                                {t("chat.settings")}
+                              </Button>
+                            )}
+                          </div>
                         )}
                         {message.status === "cancelled" && (
                           <p className="mt-2 text-xs text-muted-foreground">
@@ -694,7 +705,6 @@ export function AgentChatDock() {
       {settingsOpen && settings.data && (
         <AgentSettingsDialog
           settings={settings.data.settings}
-          codexModels={settings.data.codexModels}
           onClose={() => setSettingsOpen(false)}
           onSave={() => void cache.invalidateQueries({ queryKey: ["agent-settings"] })}
         />

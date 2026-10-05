@@ -41,15 +41,23 @@ standalone `copilot` program, rather than the older `gh copilot` extension.
 ## Scope and settings
 
 - **Agent settings**: default provider for new topics, executable and optional
-  model for each provider. A blank model uses the CLI's configured default. Codex
+  model for each provider. Codex offers a shared UI select populated from the
+  configured executable's `app-server` `model/list` RPC, including pagination and
+  supported reasoning levels. **Use CLI default** adds no model override;
+  **Custom model ID…** allows an explicit identifier. Refresh the list after
+  changing the executable, upgrading the CLI or switching accounts. Model discovery
+  never starts a thread or inference and has a bounded timeout. The CLI catalog can
+  differ from the desktop app and does not guarantee account entitlement; inference
+  can still reject a listed model. Other providers accept a model ID input.
+  A blank model uses the CLI's configured default. Codex
   disables unrelated MCP servers, plugins, hooks and connected apps for this
   ephemeral chat session without changing the user's CLI configuration.
 - **Codex reasoning effort**: choose **Default** or an explicit thinking level in
   Agent settings. It applies to all Codex topics and is passed as the app-server
   turn's `effort` parameter. **Default** adds no override and keeps the CLI's
   configured behavior. The select uses supported
-  levels from the local `$CODEX_HOME/models_cache.json` catalog, or
-  `~/.codex/models_cache.json` when `CODEX_HOME` is unset. If a model is not in the
+  levels from the configured executable's `model/list` response. It does not read
+  the desktop app's shared `models_cache.json`. If a model is not in the
   catalog, standard levels remain available with a compatibility hint; CLI errors
   appear in the conversation. Changing to a model that cannot use the selected
   level resets it to **Default**. Older saved settings also use **Default**.
@@ -100,6 +108,8 @@ Readable reasoning exposed by the CLI is saved separately and shown in a
 collapsed **Reasoning** panel (Codex supplies reasoning summaries). Opaque or
 encrypted reasoning and tool input JSON are never shown as assistant text.
 Full-message events reconcile streamed blocks by ID instead of duplicating them.
+Nested JSON error envelopes are unwrapped into readable provider messages; Codex
+errors offer an **Agent settings** button to adjust the model before another turn.
 Interactive permission dialogs are not supported.
 Stop ends the CLI process group on macOS/Linux, with a kill fallback. Already
 committed architecture changes remain available for review/restoration in snapshots.

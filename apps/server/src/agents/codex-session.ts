@@ -1,6 +1,6 @@
 import { randomUUID } from "node:crypto";
 import type { AgentSettings } from "@structsmith/contracts";
-import { object } from "./providers";
+import { agentErrorMessage, object } from "./providers";
 
 // config/read includes null defaults; JSON-to-TOML overrides cannot round-trip those nulls.
 const configValue = (value: unknown): unknown => {
@@ -55,7 +55,7 @@ export class CodexSession {
         return;
       }
       if (event.error) {
-        this.finish(String(object(event.error).message ?? "Codex protocol request failed."));
+        this.finish(agentErrorMessage(event.error));
         return;
       }
       const result = object(event.result);
@@ -143,7 +143,7 @@ export class CodexSession {
       this.finish(
         turn.status === "completed"
           ? undefined
-          : String(object(turn.error).message ?? `Codex turn ${turn.status ?? "failed"}.`),
+          : agentErrorMessage(turn.error ?? `Codex turn ${turn.status ?? "failed"}.`),
       );
     }
   }

@@ -1,9 +1,6 @@
-import type {
-  AgentProvider,
-  AgentSettings,
-  CodexModel,
-  CodexReasoningEffort,
-} from "@structsmith/contracts";
+import type { AgentProvider, AgentSettings, CodexReasoningEffort } from "@structsmith/contracts";
+import { useQuery } from "@tanstack/react-query";
+import { Loader2, RefreshCw } from "lucide-react";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
@@ -33,21 +30,32 @@ const fallbackEfforts: CodexReasoningEffort[] = ["low", "medium", "high", "xhigh
 
 export function AgentSettingsDialog({
   settings,
-  codexModels,
   onClose,
   onSave,
 }: {
   settings: AgentSettings;
-  codexModels: CodexModel[];
   onClose: () => void;
   onSave: () => void;
 }) {
   const { t } = useTranslation();
   const [draft, setDraft] = useState(settings);
   const [saving, setSaving] = useState(false);
+  const [catalogExecutable, setCatalogExecutable] = useState(settings.providers.codex.executable);
+  const [customModel, setCustomModel] = useState(false);
+  const catalog = useQuery({
+    queryKey: ["agent-codex-models", catalogExecutable],
+    queryFn: ({ signal }) => chatApi.codexModels(catalogExecutable, signal),
+    enabled: Boolean(catalogExecutable.trim()),
+    retry: false,
+    refetchOnWindowFocus: false,
+  });
+  const catalogStale = draft.providers.codex.executable.trim() !== catalogExecutable;
+  const codexModels = catalogStale ? [] : (catalog.data ?? []);
   const modelCapabilities = codexModels.find(
     (model) => model.id === draft.providers.codex.model.trim(),
   );
+  const customModelActive =
+    customModel || Boolean(draft.providers.codex.model && !modelCapabilities);
   const reasoningEfforts = modelCapabilities?.reasoningEfforts ?? fallbackEfforts;
   const changeModel = (provider: AgentProvider, model: string) => {
     setDraft((previous) => {
@@ -143,12 +151,102 @@ export function AgentSettingsDialog({
                   </div>
                   <div className="grid gap-1.5">
                     <Label htmlFor={`agent-model-${provider}`}>{t("chat.model")}</Label>
-                    <Input
-                      id={`agent-model-${provider}`}
-                      placeholder={t("chat.defaultModel")}
-                      value={draft.providers[provider].model}
-                      onChange={(event) => changeModel(provider, event.target.value)}
-                    />
+                    {provider === "codex" ? (
+                      <>
+                        <div className="flex gap-2">
+                          <Select
+                            value={
+                              customModelActive
+                                ? "__custom__"
+                                : draft.providers.codex.model || "__default__"
+                            }
+                            onValueChange={(value) => {
+                              setCustomModel(value === "__custom__");
+                              if (value !== "__custom__")
+                                changeModel("codex", value === "__default__" ? "" : value);
+                            }}
+                          >
+                            <SelectTrigger
+                              id="agent-model-codex"
+                              aria-describedby="agent-model-hint"
+                            >
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="__default__">{t("chat.defaultModel")}</SelectItem>
+                              {codexModels.map((model) => (
+                                <SelectItem key={model.id} value={model.id}>
+                                  {model.displayName ?? model.id}
+                                </SelectItem>
+                              ))}
+                              <SelectItem value="__custom__">{t("chat.customModel")}</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="icon"
+                            className="shrink-0"
+                            aria-label={t("chat.refreshModels")}
+                            title={t("chat.refreshModels")}
+                            disabled={
+                              !draft.providers.codex.executable.trim() ||
+                              (catalog.isFetching && !catalogStale)
+                            }
+                            onClick={() => {
+                              if (catalogStale)
+                                setCatalogExecutable(draft.providers.codex.executable.trim());
+                              else void catalog.refetch();
+                            }}
+                          >
+                            {catalog.isFetching && !catalogStale ? (
+                              <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                            ) : (
+                              <RefreshCw className="h-3.5 w-3.5" />
+                            )}
+                          </Button>
+                        </div>
+                        {customModelActive && (
+                          <>
+                            <Label className="sr-only" htmlFor="agent-model-custom-codex">
+                              {t("chat.customModel")}
+                            </Label>
+                            <Input
+                              id="agent-model-custom-codex"
+                              placeholder={t("chat.modelId")}
+                              value={draft.providers.codex.model}
+                              onChange={(event) => changeModel("codex", event.target.value)}
+                              aria-describedby="agent-model-hint"
+                            />
+                          </>
+                        )}
+                        <p
+                          id="agent-model-hint"
+                          className="text-xs text-muted-foreground"
+                          aria-live="polite"
+                        >
+                          {t(
+                            catalogStale
+                              ? "chat.modelsPathChanged"
+                              : catalog.isFetching
+                                ? "chat.modelsLoading"
+                                : catalog.isError || !codexModels.length
+                                  ? "chat.modelsUnavailable"
+                                  : "chat.modelsHint",
+                          )}
+                          {draft.providers.codex.model &&
+                            !modelCapabilities &&
+                            !catalog.isFetching && <> {t("chat.modelNotListed")}</>}
+                        </p>
+                      </>
+                    ) : (
+                      <Input
+                        id={`agent-model-${provider}`}
+                        placeholder={t("chat.defaultModel")}
+                        value={draft.providers[provider].model}
+                        onChange={(event) => changeModel(provider, event.target.value)}
+                      />
+                    )}
                   </div>
                   {provider === "codex" && (
                     <div className="grid gap-1.5">

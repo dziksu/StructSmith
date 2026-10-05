@@ -2,13 +2,14 @@ import {
   type AgentChatStreamEvent,
   type AgentSettingsResponse,
   AgentSettingsSchema,
+  CodexModelsQuerySchema,
   CreateAgentChatSchema,
   ReorderAgentChatsSchema,
   SendAgentMessageSchema,
   UpdateAgentChatSchema,
 } from "@structsmith/contracts";
 import { type RequestHandler, Router } from "express";
-import { readCodexModels } from "../agents/codex-models";
+import { listCodexModels } from "../agents/codex-models";
 import type { AgentChatService } from "../agents/service";
 import type { AppConfig } from "../config";
 import { handler } from "../http-errors";
@@ -66,10 +67,16 @@ export function agentChatRoutes(service: AgentChatService, config: AppConfig): R
       res.json({
         settings: service.getSettings(),
         availability: service.availability(),
-        codexModels: readCodexModels(),
         readOnly: config.mcpReadOnly,
       } satisfies AgentSettingsResponse),
     ),
+  );
+  router.get(
+    "/codex/models",
+    handler(async (req, res) => {
+      const { executable } = CodexModelsQuerySchema.parse(req.query);
+      res.json(await listCodexModels(executable));
+    }),
   );
   router.put(
     "/settings",
