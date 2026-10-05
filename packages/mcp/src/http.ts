@@ -1,5 +1,6 @@
 import { randomUUID } from "node:crypto";
 import type { IncomingMessage, ServerResponse } from "node:http";
+import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
 import { isInitializeRequest } from "@modelcontextprotocol/sdk/types.js";
 import { createMcpServer, type McpServerOptions } from "./server";
@@ -16,7 +17,10 @@ interface Session {
 export class McpHttpHandler {
   private readonly sessions = new Map<string, Session>();
 
-  constructor(private readonly options: McpServerOptions) {}
+  constructor(
+    private readonly options: McpServerOptions,
+    private readonly serverFactory?: () => McpServer,
+  ) {}
 
   get sessionCount(): number {
     return this.sessions.size;
@@ -67,7 +71,7 @@ export class McpHttpHandler {
       },
     });
 
-    const server = createMcpServer(this.options);
+    const server = this.serverFactory?.() ?? createMcpServer(this.options);
 
     transport.onclose = () => {
       const closedId = transport.sessionId;

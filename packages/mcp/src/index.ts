@@ -1,4 +1,5 @@
 export * from "./catalog";
+export * from "./chat";
 export * from "./guide";
 export * from "./http";
 export * from "./inspection";

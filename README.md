@@ -393,6 +393,75 @@ Errors always use the same envelope:
 - Snapshots with restore; undo/redo (`⌘Z` / `⌘⇧Z`) rides on them
 - Command palette (`⌘K`), `F` to fit the view, `Delete`, `Escape`
 - Light / dark / system themes, English and Polish UI
+- Built-in chat with local Codex, Claude Code and GitHub Copilot CLIs: project topics,
+  general discussions, contextual node/relationship actions, scoped architecture edits,
+  model and Codex thinking settings, streamed replies with collapsible reasoning,
+  and topic renaming, archiving, restoration and drag-and-drop ordering
+
+### Chat with local agents
+
+Run StructSmith from source on the same machine as your signed-in CLI (`bun run dev`).
+Open **Agent chat** using the bubble in the lower right, select a project or
+**General · no project**, and create a topic. A project here is a StructSmith
+workspace; each topic shows its project and keeps that assignment when you navigate
+elsewhere. Right-click a node or relationship and choose **Ask agent about this**
+to attach it as a context chip; the inspector, view and record reference controls
+also offer a chat button. Review the prompt, then press **Send** or Enter.
+Shift+Enter adds a new line.
+
+Choose **Codex**, **Claude Code** or **GitHub Copilot** inside the topic. **Ask** is
+the default. **Edit architecture** enables MCP changes in that topic's project,
+with revision checks, activity and snapshots; the diagram updates through the
+existing event stream. General topics cannot edit projects. Switching agents keeps
+the topic's conversation and project.
+
+Open the chat gear to configure **Agent settings**:
+
+| Setting | Behavior |
+| --- | --- |
+| Default agent | Provider used for new topics; existing topics keep their selected agent |
+| CLI executable | Command or absolute path for each provider, such as `codex`, `claude` or `copilot` |
+| Model | Codex offers a list from the configured CLI plus a custom model ID; other providers accept an optional model ID. Use the CLI default to keep its configured model |
+| Codex reasoning effort | Thinking level for Codex; **Default** keeps the CLI's configured behavior |
+
+Model and reasoning settings apply to subsequent turns across that provider's topics.
+Refresh the Codex model list after changing its executable, updating the CLI or
+switching CLI accounts. The list comes from `codex app-server` and may differ from
+the desktop app's models; account access is still checked when a turn runs.
+Available Codex thinking levels follow the selected model's CLI catalog. For a
+custom model outside the catalog, compatibility depends on the installed CLI and model;
+changing to a known model that cannot use the selected level resets it to **Default**.
+The topic gear configures its title and optional absolute source directory on the
+server for reading local code.
+
+Manage topics from the sidebar:
+
+- **Rename:** open the topic's **…** menu and choose **Rename**.
+- **Archive / restore:** choose **Archive** to keep the history and project in the
+  **Archive** tab. Use **Restore topic** there to continue the conversation.
+  Renaming and archiving are disabled while that topic's agent is running.
+- **Reorder:** hold the topic body for about 350 ms, outside the **…** action button,
+  then drag it with a mouse or touch. With keyboard focus on the topic, press Space,
+  use the up/down arrows and press Space to drop; Escape cancels. The saved order
+  survives reloads and server restarts, including when topics receive new messages.
+
+Replies stream into the conversation as the CLI produces them. Readable reasoning
+exposed by the CLI appears in a collapsed **Reasoning** panel; Codex provides
+reasoning summaries. Expand it to follow updates live. Both the reply and available
+reasoning are saved with the topic. Scrolling up keeps your reading position;
+returning near the bottom resumes following the response. Closing the chat or
+switching topics keeps the agent running, and reopening retrieves its current
+response. **Stop** interrupts the turn while preserving partial output and any
+architecture changes already applied.
+
+Agent authentication stays with the installed CLI; sign in in your terminal first.
+History, settings, topic order and archive status are saved under `data/agent-chat`
+(configurable with `AGENT_CHAT_DIR`). Set `AGENT_CHAT_ENABLED=false` to disable the
+CLI chat bridge.
+
+This feature requires a localhost connection and a recent CLI version. A Docker
+container sees its own installed programs and paths, not the host's CLI. See the
+[local chat guide](docs/LOCAL_AGENT_CHAT.md) for testing and implementation details.
 
 ### Mermaid import
 
@@ -464,6 +533,8 @@ to `supportedLanguages`. No copy is hard-coded in components.
 | `MCP_READ_ONLY` | `false` | When `true`, MCP exposes no mutating tools |
 | `SEED_EXAMPLE` | `true` | Seed the example workspace on first boot |
 | `APP_NAME` | `StructSmith` | Product name shown in the UI |
+| `AGENT_CHAT_ENABLED` | `true` | Enable the localhost-only CLI chat bridge |
+| `AGENT_CHAT_DIR` | `./data/agent-chat` | Local chat history, settings and empty working directory |
 
 In token mode, `/api` and `/mcp` require `Authorization: Bearer <APP_TOKEN>`; `/health`
 stays public. There is no user system — this is a local/self-hosted tool.
