@@ -6,6 +6,7 @@ import {
   type AgentAvailability,
   type AgentChat,
   AgentChatSchema,
+  type AgentChatStreamEvent,
   type AgentChatSummary,
   type AgentMessage,
   type AgentSettings,
@@ -19,7 +20,8 @@ import {
 import { badRequest, DomainError, type Services } from "@structsmith/domain";
 import { createChatMcpServer, McpHttpHandler } from "@structsmith/mcp";
 import { z } from "zod";
-import { agentInvocation, parseAgentLine } from "./providers";
+import { CodexSession } from "./codex-session";
+import { AgentOutputParser, agentInvocation, object } from "./providers";
 
 const StoreSchema = z.object({
   settings: AgentSettingsSchema,
@@ -38,6 +40,7 @@ export class AgentChatService {
   private readonly chats: AgentChat[];
   private topicOrder: string[];
   private readonly runs = new Map<string, Run>();
+  private readonly listeners = new Map<string, Set<(event: AgentChatStreamEvent) => void>>();
   private readonly file: string;
   private readonly scratch: string;
 
@@ -123,6 +126,19 @@ export class AgentChatService {
     if (!chat) throw new DomainError("BAD_REQUEST", "Chat not found.", 404);
     return chat;
   }
+  subscribe(id: string, listener: (event: AgentChatStreamEvent) => void): () => void {
+    this.get(id);
+    const listeners = this.listeners.get(id) ?? new Set();
+    listeners.add(listener);
+    this.listeners.set(id, listeners);
+    return () => {
+      listeners.delete(listener);
+      if (!listeners.size) this.listeners.delete(id);
+    };
+  }
+  private publish(id: string, event: AgentChatStreamEvent): void {
+    for (const listener of this.listeners.get(id) ?? []) listener(event);
+  }
   private idle(id: string): AgentChat {
     if (this.runs.has(id))
       throw new DomainError("BAD_REQUEST", "The agent is still running in this chat.", 409);
@@ -164,6 +180,7 @@ export class AgentChatService {
     if (input.directory !== undefined) this.checkDirectory(input.directory);
     Object.assign(chat, input, { updatedAt: new Date().toISOString() });
     this.save();
+    this.publish(id, { type: "snapshot", chat });
     return chat;
   }
   delete(id: string): void {
@@ -208,16 +225,12 @@ export class AgentChatService {
     if (Buffer.byteLength(prompt) > 120000)
       throw badRequest("This topic is too long. Start a new chat with a short summary.");
     const key = randomUUID();
+    const mcpUrl = `${baseUrl}/api/agent-chat/mcp/${key}`;
     const readOnly = this.readOnly || chat.mode === "ask" || !chat.workspaceId;
     const mcp = new McpHttpHandler({ services: this.services, readOnly }, () =>
       createChatMcpServer(this.services, chat.workspaceId, readOnly),
     );
-    const invocation = agentInvocation(
-      chat,
-      this.settings,
-      prompt,
-      `${baseUrl}/api/agent-chat/mcp/${key}`,
-    );
+    const invocation = agentInvocation(chat, this.settings, prompt, mcpUrl);
     const env: NodeJS.ProcessEnv = { ...process.env, NO_COLOR: "1" };
     delete env.APP_TOKEN;
     const child = spawn(invocation.command, invocation.args, {
@@ -253,6 +266,13 @@ export class AgentChatService {
     let bytes = 0;
     let stopped: string | undefined;
     let saveTimer: ReturnType<typeof setTimeout> | undefined;
+    let publishTimer: ReturnType<typeof setTimeout> | undefined;
+    let finishTimer: ReturnType<typeof setTimeout> | undefined;
+    let protocolComplete = false;
+    const parser = new AgentOutputParser(chat.provider);
+    const publishAnswer = () => {
+      this.publish(id, { type: "message", chatId: id, message: answer, updatedAt: chat.updatedAt });
+    };
     const saveSoon = () => {
       if (!saveTimer)
         saveTimer = setTimeout(() => {
@@ -280,12 +300,50 @@ export class AgentChatService {
       void mcp.closeAll();
     };
     const timeout = setTimeout(() => stop("The agent exceeded the 10 minute time limit."), 600000);
+    const session =
+      chat.provider === "codex"
+        ? new CodexSession(
+            (value) => {
+              child.stdin.write(`${JSON.stringify(value)}\n`);
+            },
+            (error) => {
+              if (finishTimer) return;
+              protocolComplete = !error;
+              if (error) answer.error = error;
+              child.stdin.end();
+              finishTimer = setTimeout(() => {
+                kill("SIGTERM");
+                killTimer = setTimeout(() => kill("SIGKILL"), 2000);
+                killTimer.unref();
+              }, 2000);
+              finishTimer.unref();
+            },
+            this.settings.providers.codex,
+            chat.directory || this.scratch,
+            prompt,
+            mcpUrl,
+          )
+        : undefined;
     const line = (value: string) => {
-      const result = parseAgentLine(chat.provider, value);
-      if (result.text !== undefined)
-        answer.text = result.replace ? result.text : answer.text + result.text;
-      if (result.progress) answer.progress = result.progress;
+      let event: Record<string, unknown>;
+      try {
+        event = object(JSON.parse(value));
+      } catch {
+        return;
+      }
+      session?.receive(event);
+      if (session && object(event.params).threadId !== session.threadId) return;
+      const result = parser.parse(event);
+      if (!Object.keys(result).length) return;
+      if (result.text !== undefined) answer.text = result.text;
+      if (result.reasoning !== undefined) answer.reasoning = result.reasoning;
+      if (result.progress !== undefined) answer.progress = result.progress || undefined;
       if (result.error) answer.error = result.error;
+      if (!publishTimer)
+        publishTimer = setTimeout(() => {
+          publishTimer = undefined;
+          publishAnswer();
+        }, 50);
       saveSoon();
     };
     this.runs.set(id, { process: child, mcp, key, stop });
@@ -311,15 +369,23 @@ export class AgentChatService {
     });
     child.on("close", (code) => {
       clearTimeout(timeout);
+      clearTimeout(finishTimer);
+      clearTimeout(publishTimer);
       if (!stopped) clearTimeout(killTimer);
       clearTimeout(saveTimer);
       if (buffer && bytes <= 2000000) line(buffer);
+      clearTimeout(finishTimer);
       clearTimeout(saveTimer);
       answer.text = answer.text.trim();
+      if (answer.reasoning) answer.reasoning = answer.reasoning.trim();
       answer.status =
         stopped === "cancelled"
           ? "cancelled"
-          : stopped || code !== 0 || answer.error || !answer.text
+          : stopped ||
+              (code !== 0 && !protocolComplete) ||
+              (session && !protocolComplete) ||
+              answer.error ||
+              !answer.text
             ? "failed"
             : "complete";
       if (answer.status === "failed")
@@ -331,9 +397,13 @@ export class AgentChatService {
       this.runs.delete(id);
       void mcp.closeAll();
       this.save();
+      clearTimeout(publishTimer);
+      publishAnswer();
     });
     this.save();
-    child.stdin.end(invocation.stdin);
+    this.publish(id, { type: "snapshot", chat });
+    if (session) session.start();
+    else child.stdin.end(invocation.stdin);
     return chat;
   }
   stop(id: string): AgentChat {
@@ -345,5 +415,6 @@ export class AgentChatService {
     const runs = [...this.runs.values()];
     for (const run of runs) run.stop("StructSmith is shutting down.");
     await Promise.all(runs.map((run) => run.mcp.closeAll()));
+    this.listeners.clear();
   }
 }

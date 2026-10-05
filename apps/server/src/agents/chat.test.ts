@@ -1,6 +1,6 @@
 import { expect, test } from "bun:test";
 import { once } from "node:events";
-import { chmodSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { AgentSettingsSchema, defaultAgentSettings } from "@structsmith/contracts";
@@ -12,8 +12,9 @@ import { loadConfig } from "../config";
 import { errorMiddleware } from "../http-errors";
 import { agentChatRoutes, localAgentAccess } from "../routes/agent-chat";
 import { readCodexModels } from "./codex-models";
-import { agentInvocation, parseAgentLine } from "./providers";
+import { AgentOutputParser, agentInvocation } from "./providers";
 import { AgentChatService } from "./service";
+import { fakeCodex } from "./test-cli";
 
 test("a real child CLI uses the temporary scoped HTTP MCP bridge in token mode", async () => {
   const directory = mkdtempSync(join(tmpdir(), "structsmith-chat-bridge-"));
@@ -32,11 +33,22 @@ test("a real child CLI uses the temporary scoped HTTP MCP bridge in token mode",
   const project = createWorkspace(ctx.services);
   const capture = join(directory, "mcp-url.txt");
   const fake = join(directory, "fake-mcp-agent");
-  writeFileSync(
+  fakeCodex(
     fake,
-    `#!${process.execPath}\nimport {Client} from ${JSON.stringify(import.meta.resolve("@modelcontextprotocol/sdk/client/index.js"))};\nimport {StreamableHTTPClientTransport} from ${JSON.stringify(import.meta.resolve("@modelcontextprotocol/sdk/client/streamableHttp.js"))};\nconst input=await Bun.stdin.text();\nconst config=process.argv.find(arg=>arg.startsWith('mcp_servers.structsmith.url='));\nconst url=JSON.parse(config.slice(config.indexOf('=')+1));\nawait Bun.write(${JSON.stringify(capture)},url);\nconst client=new Client({name:'test-cli',version:'1'});\nawait client.connect(new StreamableHTTPClientTransport(new URL(url)));\nconst id=${JSON.stringify(project.id)};\nconst inspection=await client.callTool({name:'workspace_inspect',arguments:{workspaceId:id}});\nconst revision=JSON.parse(inspection.content[0].text).revision;\nconst result=await client.callTool({name:'model_apply_operations',arguments:{workspaceId:id,expectedRevision:revision,operations:[{op:'createElement',data:{kind:'person',name:'Via CLI MCP'}}]}});\nif(result.isError) throw new Error(JSON.stringify(result));\nawait client.close();\nconsole.log(JSON.stringify({type:'item.completed',item:{type:'agent_message',text:'Architecture updated'}}));\n`,
+    `const url=Object.values(threadParams.config.mcp_servers).find(value=>value.enabled)?.url;
+await Bun.write(${JSON.stringify(capture)},url);
+const client=new Client({name:'test-cli',version:'1'});
+await client.connect(new StreamableHTTPClientTransport(new URL(url)));
+const id=${JSON.stringify(project.id)};
+const inspection=await client.callTool({name:'workspace_inspect',arguments:{workspaceId:id}});
+const revision=JSON.parse(inspection.content[0].text).revision;
+const result=await client.callTool({name:'model_apply_operations',arguments:{workspaceId:id,expectedRevision:revision,operations:[{op:'createElement',data:{kind:'person',name:'Via CLI MCP'}}]}});
+if(result.isError) throw new Error(JSON.stringify(result));
+await client.close();
+emit('item/completed',{item:{id:'answer',type:'agentMessage',text:'Architecture updated'}});`,
+    `import {Client} from ${JSON.stringify(import.meta.resolve("@modelcontextprotocol/sdk/client/index.js"))};
+import {StreamableHTTPClientTransport} from ${JSON.stringify(import.meta.resolve("@modelcontextprotocol/sdk/client/streamableHttp.js"))};`,
   );
-  chmodSync(fake, 0o700);
   const settings = structuredClone(defaultAgentSettings);
   settings.providers.codex.executable = fake;
   agents.setSettings(settings);
@@ -89,11 +101,12 @@ test("local CLI conversations persist, retain project/context on provider change
   const fake = join(directory, "fake-agent");
   const capture = join(directory, "prompt.txt");
   const capturedArgs = join(directory, "args.txt");
-  writeFileSync(
+  fakeCodex(
     fake,
-    `#!/bin/sh\nprintf '%s\\n' "$@" > '${capturedArgs}'\ncat > '${capture}'\nprintf '%s\\n' '{"type":"item.completed","item":{"type":"agent_message","text":"Odpowiedź testowa"}}'\n`,
+    `await Bun.write(${JSON.stringify(capture)},params.input[0].text);
+await Bun.write(${JSON.stringify(capturedArgs)},JSON.stringify({thread:threadParams,turn:params,args:process.argv}));
+emit('item/completed',{item:{id:'answer',type:'agentMessage',text:'Odpowiedź testowa'}});`,
   );
-  chmodSync(fake, 0o700);
   const settings = structuredClone(defaultAgentSettings);
   settings.providers.codex.executable = fake;
   settings.providers.codex.model = "gpt-6.1-sol";
@@ -119,8 +132,27 @@ test("local CLI conversations persist, retain project/context on provider change
     });
     expect(readFileSync(capture, "utf8")).toContain(project.id);
     expect(readFileSync(capture, "utf8")).toContain("not-a-shell-command");
-    expect(readFileSync(capturedArgs, "utf8")).toContain("--model\ngpt-6.1-sol\n");
-    expect(readFileSync(capturedArgs, "utf8")).toContain('-c\nmodel_reasoning_effort="high"\n');
+    const captured = JSON.parse(readFileSync(capturedArgs, "utf8"));
+    expect(captured.thread).toMatchObject({
+      model: "gpt-6.1-sol",
+      sandbox: "read-only",
+      approvalPolicy: "never",
+      ephemeral: true,
+    });
+    expect(captured.thread.config).toMatchObject({
+      mcp_servers: { "unrelated.with.dot": { enabled: false } },
+      plugins: { "unrelated.with.dot": { enabled: false } },
+      "apps._default.enabled": false,
+      "features.hooks": false,
+      "features.plugins": false,
+      "features.apps": false,
+      model_reasoning_effort: "high",
+    });
+    expect(captured.turn).toMatchObject({
+      model: "gpt-6.1-sol",
+      effort: "high",
+      sandboxPolicy: { type: "readOnly" },
+    });
     service.update(chat.id, { provider: "claude" });
     expect(service.get(chat.id).workspaceId).toBe(project.id);
     service.update(chat.id, { provider: "codex" });
@@ -283,14 +315,11 @@ test("CLI arguments and provider events preserve text and errors without invokin
     "http://localhost/mcp/key",
   );
   expect(invocation.stdin).toBe(prompt);
-  expect(invocation.args).toContain("read-only");
+  expect(invocation.args).toContain("app-server");
   expect(invocation.args).not.toContain("--dangerously-bypass-approvals-and-sandbox");
   expect(invocation.args.some((arg) => arg.startsWith("model_reasoning_effort="))).toBe(false);
   const settings = structuredClone(defaultAgentSettings);
   settings.providers.codex.reasoningEffort = "ultra";
-  expect(agentInvocation(chat, settings, prompt, "http://localhost/mcp").args).toContain(
-    'model_reasoning_effort="ultra"',
-  );
   for (const provider of ["claude", "copilot"] as const) {
     expect(
       agentInvocation({ ...chat, provider }, settings, prompt, "http://localhost/mcp").args.some(
@@ -299,22 +328,35 @@ test("CLI arguments and provider events preserve text and errors without invokin
     ).toBe(false);
   }
   expect(
-    parseAgentLine("codex", '{"type":"turn.failed","error":{"message":"Login required"}}'),
+    new AgentOutputParser("codex").parse({
+      method: "error",
+      params: { error: { message: "Login required" } },
+    }),
   ).toEqual({ error: "Login required" });
   expect(
-    parseAgentLine(
-      "claude",
-      '{"type":"assistant","message":{"content":[{"type":"text","text":"First"}]}}',
-    ).text,
+    new AgentOutputParser("claude").parse({
+      type: "assistant",
+      message: { content: [{ type: "text", text: "First" }] },
+    }).text,
   ).toContain("First");
-  expect(parseAgentLine("claude", '{"type":"result","result":"Final","is_error":false}')).toEqual({
+  expect(
+    new AgentOutputParser("claude").parse({ type: "result", result: "Final", is_error: false }),
+  ).toEqual({
     text: "Final",
-    replace: true,
   });
   expect(
-    parseAgentLine("claude", '{"type":"result","is_error":true,"errors":["Rate limit"]}').error,
+    new AgentOutputParser("claude").parse({
+      type: "result",
+      is_error: true,
+      errors: ["Rate limit"],
+    }).error,
   ).toBe("Rate limit");
-  expect(parseAgentLine("copilot", "Plain reply").text).toBe("Plain reply\n");
+  expect(
+    new AgentOutputParser("copilot").parse({
+      type: "assistant.message",
+      data: { messageId: "a", content: "Reply" },
+    }).text,
+  ).toBe("Reply");
 });
 
 test("legacy settings keep CLI defaults and invalid reasoning levels are rejected", () => {

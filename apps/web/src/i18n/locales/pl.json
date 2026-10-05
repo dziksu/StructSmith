@@ -538,6 +538,7 @@
     "emptyHint": "Zadaj pytanie lub opisz zmianę architektury. Temat pozostaje przypisany do projektu podczas przechodzenia po aplikacji.",
     "you": "Ty",
     "working": "Agent pracuje…",
+    "reasoning": "Rozumowanie",
     "cancelled": "Zatrzymano. Wprowadzone już zmiany pozostają w projekcie.",
     "context": "Kontekst",
     "removeContext": "Usuń dołączony kontekst",

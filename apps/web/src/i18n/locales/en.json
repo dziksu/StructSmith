@@ -534,6 +534,7 @@
     "emptyHint": "Ask a question or describe an architecture change. This topic keeps its project when you move around the app.",
     "you": "You",
     "working": "Agent is working…",
+    "reasoning": "Reasoning",
     "cancelled": "Stopped. Changes already applied remain in the project.",
     "context": "Context",
     "removeContext": "Remove attached context",

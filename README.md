@@ -412,6 +412,11 @@ with revision checks, activity and snapshots; the diagram updates through the
 existing event stream. General topics cannot edit projects. **Stop** interrupts a
 turn but does not roll back changes already applied.
 
+Replies stream into the conversation as the CLI produces them. Any readable reasoning
+or reasoning summaries exposed by the CLI appear in a collapsed **Reasoning** panel.
+Opening it shows updates live; it is saved with the response. Closing the chat or
+switching topics keeps the agent running; reopening retrieves the current response.
+
 The chat gear configures the executable path, optional model, Codex reasoning
 effort (thinking level), and default agent. Reasoning defaults to the CLI's built-in
 behavior; available levels follow the selected model's local Codex catalog.

@@ -39,9 +39,11 @@ import { useWorkspaces } from "@/hooks/useApi";
 import { cn } from "@/lib/utils";
 import { AgentSettingsDialog, providerNames } from "./AgentSettingsDialog";
 import { chatApi } from "./api";
+import { MessageReasoning } from "./MessageReasoning";
 import { useChatStore } from "./store";
 import { RenameTopicDialog } from "./TopicActions";
 import { TopicList } from "./TopicList";
+import { useChatStream } from "./useChatStream";
 
 const errorMessage = (error: unknown) => (error instanceof Error ? error.message : String(error));
 
@@ -63,6 +65,7 @@ export function AgentChatDock() {
   const [reordering, setReordering] = useState(false);
   const composer = useRef<HTMLTextAreaElement>(null);
   const end = useRef<HTMLDivElement>(null);
+  const followResponse = useRef(true);
   const handledRequest = useRef<number | null>(null);
   const settings = useQuery({
     queryKey: ["agent-settings"],
@@ -76,12 +79,15 @@ export function AgentChatDock() {
     enabled: open,
     refetchInterval: (query) => (query.state.data?.some((chat) => chat.running) ? 1500 : false),
   });
+  const streaming = useChatStream(activeId, open);
   const chat = useQuery({
     queryKey: ["agent-chat", activeId],
-    queryFn: () => chatApi.get(activeId as string),
-    enabled: open && Boolean(activeId),
+    queryFn: ({ signal }) => chatApi.get(activeId as string, signal),
+    enabled: open && Boolean(activeId) && !streaming,
     refetchInterval: (query) =>
-      query.state.data?.messages.some((message) => message.status === "running") ? 700 : false,
+      !streaming && query.state.data?.messages.some((message) => message.status === "running")
+        ? 700
+        : false,
   });
   const workspaces = useWorkspaces();
   const current = chat.data?.id === activeId ? chat.data : undefined;
@@ -91,7 +97,11 @@ export function AgentChatDock() {
     void cache.invalidateQueries({ queryKey: ["agent-chats"] });
   };
   const accept = (next: AgentChat) => {
-    cache.setQueryData(["agent-chat", next.id], next);
+    cache.setQueryData<AgentChat>(["agent-chat", next.id], (cached) => {
+      // The POST acknowledgement can arrive after the stream has already advanced this answer.
+      const last = next.messages.at(-1);
+      return last?.status === "running" && cached?.messages.at(-1)?.id === last.id ? cached : next;
+    });
     setActiveId(next.id);
     refresh();
   };
@@ -195,11 +205,18 @@ export function AgentChatDock() {
   });
   // biome-ignore lint/correctness/useExhaustiveDependencies: message changes are the scroll trigger.
   useEffect(() => {
-    end.current?.scrollIntoView({ block: "end" });
-  }, [current?.messages.length, current?.messages.at(-1)?.text, current?.messages.at(-1)?.status]);
+    if (followResponse.current) end.current?.scrollIntoView({ block: "end" });
+  }, [
+    open,
+    activeId,
+    current?.messages.length,
+    current?.messages.at(-1)?.text,
+    current?.messages.at(-1)?.status,
+  ]);
   const submit = async () => {
     if (!current || current.archived || !draft.trim() || running || busy) return;
     const id = current.id;
+    followResponse.current = true;
     setBusy(true);
     try {
       accept(await chatApi.message(id, { text: draft, context }));
@@ -213,6 +230,7 @@ export function AgentChatDock() {
     }
   };
   const choose = (id: string) => {
+    followResponse.current = true;
     setActiveId(id);
     setContext(undefined);
     setDetailsOpen(false);
@@ -508,6 +526,11 @@ export function AgentChatDock() {
                   </div>
                   <div
                     className="min-h-0 flex-1 space-y-4 overflow-y-auto px-4 py-4"
+                    onScroll={(event) => {
+                      const area = event.currentTarget;
+                      followResponse.current =
+                        area.scrollHeight - area.scrollTop - area.clientHeight < 48;
+                    }}
                     aria-live="polite"
                     aria-relevant="additions text"
                   >
@@ -542,6 +565,9 @@ export function AgentChatDock() {
                               {message.context.label ?? message.context.targetId}
                             </span>
                           </Badge>
+                        )}
+                        {message.role === "assistant" && message.reasoning && (
+                          <MessageReasoning text={message.reasoning} />
                         )}
                         <div className="whitespace-pre-wrap break-words text-[13px] leading-relaxed">
                           {message.text}

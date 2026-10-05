@@ -1,4 +1,5 @@
 import {
+  type AgentChatStreamEvent,
   type AgentSettingsResponse,
   AgentSettingsSchema,
   CreateAgentChatSchema,
@@ -87,6 +88,50 @@ export function agentChatRoutes(service: AgentChatService, config: AppConfig): R
   router.put(
     "/chats/order",
     handler((req, res) => res.json(service.reorder(ReorderAgentChatsSchema.parse(req.body)))),
+  );
+  router.get(
+    "/chats/:id/events",
+    handler((req, res) => {
+      const id = param(req, "id");
+      const chat = service.get(id);
+      res.writeHead(200, {
+        "Content-Type": "text/event-stream",
+        "Cache-Control": "no-cache, no-transform",
+        Connection: "keep-alive",
+        "X-Accel-Buffering": "no",
+      });
+      let blocked = false;
+      let pending = false;
+      const write = (event: AgentChatStreamEvent) => {
+        if (res.destroyed || res.writableEnded) return;
+        if (blocked) {
+          pending = true;
+          return;
+        }
+        blocked = !res.write(`data: ${JSON.stringify(event)}\n\n`);
+      };
+      const unsubscribe = service.subscribe(id, write);
+      res.on("drain", () => {
+        blocked = false;
+        // Coalesce updates for slow clients into one current snapshot without buffering every token.
+        if (pending) {
+          pending = false;
+          try {
+            write({ type: "snapshot", chat: service.get(id) });
+          } catch {
+            res.end();
+          }
+        }
+      });
+      write({ type: "snapshot", chat });
+      const heartbeat = setInterval(() => {
+        if (!blocked) blocked = !res.write(": ping\n\n");
+      }, 25000);
+      res.on("close", () => {
+        clearInterval(heartbeat);
+        unsubscribe();
+      });
+    }),
   );
   router.get(
     "/chats/:id",

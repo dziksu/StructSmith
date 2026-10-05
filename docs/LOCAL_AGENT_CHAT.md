@@ -41,13 +41,13 @@ standalone `copilot` program, rather than the older `gh copilot` extension.
 ## Scope and settings
 
 - **Agent settings**: default provider for new topics, executable and optional
-  model for each provider. A blank model uses the provider's default. Codex runs
-  with `--ignore-user-config` to keep unrelated MCP servers out of this chat;
-  select a model here to override its built-in default.
+  model for each provider. A blank model uses the CLI's configured default. Codex
+  disables unrelated MCP servers, plugins, hooks and connected apps for this
+  ephemeral chat session without changing the user's CLI configuration.
 - **Codex reasoning effort**: choose **Default** or an explicit thinking level in
-  Agent settings. It applies to all Codex topics and is passed as
-  `-c 'model_reasoning_effort="high"'` (with the selected level). **Default** adds
-  no override and keeps the CLI's built-in behavior. The select uses supported
+  Agent settings. It applies to all Codex topics and is passed as the app-server
+  turn's `effort` parameter. **Default** adds no override and keeps the CLI's
+  configured behavior. The select uses supported
   levels from the local `$CODEX_HOME/models_cache.json` catalog, or
   `~/.codex/models_cache.json` when `CODEX_HOME` is unset. If a model is not in the
   catalog, standard levels remain available with a compatibility hint; CLI errors
@@ -90,11 +90,17 @@ the completed conversation history and latest attached context. This does not
 resume unrelated terminal sessions. The initial limits are 20,000 characters per
 user message, 120,000 UTF-8 bytes per composed prompt, 2 MB output, three concurrent
 topics and ten minutes per turn. When history grows past the prompt limit, start
-a new topic with a summary. The UI polls only while responses are running.
+a new topic with a summary. The UI subscribes to authenticated SSE updates while
+the selected chat is open. It reconnects with a current snapshot and falls back
+to polling during connection failures. A browser disconnect never stops a turn.
 
 Replies render as plain text, including code and Markdown, without HTML execution.
-Partial replies and current MCP tool activity are visible as the CLI emits events;
-provider token-by-token output and interactive permission dialogs are future work.
+Response deltas and current MCP tool activity appear as the CLI emits events.
+Readable reasoning exposed by the CLI is saved separately and shown in a
+collapsed **Reasoning** panel (Codex supplies reasoning summaries). Opaque or
+encrypted reasoning and tool input JSON are never shown as assistant text.
+Full-message events reconcile streamed blocks by ID instead of duplicating them.
+Interactive permission dialogs are not supported.
 Stop ends the CLI process group on macOS/Linux, with a kill fallback. Already
 committed architecture changes remain available for review/restoration in snapshots.
 
@@ -104,17 +110,22 @@ leave the CLI bridge disabled and use an external MCP client instead.
 
 ## Provider adapters
 
-- Codex: `codex exec --json`, prompt on stdin, ephemeral session, read-only file
-  sandbox, per-run MCP URL and approved scoped MCP tools. See the official
-  [non-interactive mode](https://developers.openai.com/codex/noninteractive) and
+- Codex: `codex app-server` over stdio JSON-RPC, initialized once per turn,
+  ephemeral thread with read-only file sandbox and no interactive approvals.
+  Model, effort and prompt are sent through `thread/start` / `turn/start`;
+  agent-message deltas and reasoning-summary deltas stream to the UI.
+  The per-run MCP URL exposes only approved scoped tools. See the official
+  [app-server protocol](https://developers.openai.com/codex/app-server/) and
   [MCP configuration](https://developers.openai.com/codex/mcp) documentation.
-- Claude Code: print mode with `stream-json`, `dontAsk`, explicit read tools and
+- Claude Code: print mode with `stream-json`, `--include-partial-messages`,
+  text/thinking content-block deltas, `dontAsk`, explicit read tools and
   approved StructSmith MCP tools, strict per-run MCP configuration, prompt on
   stdin. See [programmatic usage](https://code.claude.com/docs/en/headless) and
   [CLI reference](https://code.claude.com/docs/en/cli-reference).
-- Copilot: `copilot --prompt`, silent text output, session MCP configuration,
+- Copilot: `copilot --prompt --output-format json --stream on`, JSONL events,
+  session MCP configuration,
   permitted StructSmith/read tools and denied shell/write tools. See the
-  [GitHub CLI reference](https://docs.github.com/en/copilot/reference/cli-command-reference).
+    [GitHub CLI reference](https://docs.github.com/en/copilot/reference/copilot-cli-reference/cli-command-reference).
 
 The automated tests use disposable fake executables, real domain services and
 MCP transports. They verify context/history, cancellation, restart recovery,

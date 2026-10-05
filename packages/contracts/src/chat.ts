@@ -84,6 +84,7 @@ export const AgentMessageSchema = z.object({
   id: z.string(),
   role: z.enum(["user", "assistant"]),
   text: z.string(),
+  reasoning: z.string().optional(),
   createdAt: z.string(),
   provider: AgentProviderSchema,
   context: ChatContextSchema.optional(),
@@ -106,6 +107,16 @@ export const AgentChatSchema = z.object({
   messages: z.array(AgentMessageSchema),
 });
 export type AgentChat = z.infer<typeof AgentChatSchema>;
+export const AgentChatStreamEventSchema = z.discriminatedUnion("type", [
+  z.object({ type: z.literal("snapshot"), chat: AgentChatSchema }),
+  z.object({
+    type: z.literal("message"),
+    chatId: z.string(),
+    message: AgentMessageSchema,
+    updatedAt: z.string(),
+  }),
+]);
+export type AgentChatStreamEvent = z.infer<typeof AgentChatStreamEventSchema>;
 export type AgentChatSummary = Omit<AgentChat, "messages"> & { running: boolean };
 export interface AgentAvailability {
   provider: AgentProvider;
