@@ -27,6 +27,8 @@ export interface AppConfig {
   seedExample: boolean;
   version: string;
   productName: string;
+  agentChatEnabled: boolean;
+  agentChatDir: string;
 }
 
 export function loadConfig(env: NodeJS.ProcessEnv = process.env): AppConfig {
@@ -45,5 +47,7 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): AppConfig {
     seedExample: bool(env.SEED_EXAMPLE, true),
     version: env.APP_VERSION ?? PRODUCT.version,
     productName: env.APP_NAME ?? PRODUCT.name,
+    agentChatEnabled: bool(env.AGENT_CHAT_ENABLED, true),
+    agentChatDir: resolvePath(env.AGENT_CHAT_DIR ?? join("data", "agent-chat")),
   };
 }

@@ -393,6 +393,32 @@ Errors always use the same envelope:
 - Snapshots with restore; undo/redo (`⌘Z` / `⌘⇧Z`) rides on them
 - Command palette (`⌘K`), `F` to fit the view, `Delete`, `Escape`
 - Light / dark / system themes, English and Polish UI
+- Built-in chat with local Codex, Claude Code and GitHub Copilot CLIs: project topics,
+  general discussions, contextual node/relationship actions, and scoped architecture edits
+
+### Chat with local agents
+
+Run StructSmith from source on the same machine as your signed-in CLI (`bun run dev`).
+Open **Agent chat** using the bubble in the lower right, select a project or
+**General · no project**, and create a topic. Each topic keeps its project when you
+navigate elsewhere. Right-click a node or relationship and choose **Ask agent about
+this** to attach it; the inspector, view and record reference controls also offer a
+chat button.
+
+Choose **Codex**, **Claude Code** or **GitHub Copilot** inside the topic. **Ask** is
+the default. **Edit architecture** enables MCP changes in that topic's project,
+with revision checks, activity and snapshots; the diagram updates through the
+existing event stream. General topics cannot edit projects. **Stop** interrupts a
+turn but does not roll back changes already applied.
+
+The chat gear configures the executable path, optional model and default agent.
+The topic gear configures its title and optional absolute source directory for
+reading local code. Agent authentication stays with the installed CLI; sign in
+in your terminal first. History and settings are saved under `data/agent-chat`.
+
+This feature requires a localhost connection and a recent CLI version. A Docker
+container sees its own installed programs and paths, not the host's CLI. See the
+[local chat guide](docs/LOCAL_AGENT_CHAT.md) for testing and implementation details.
 
 ### Mermaid import
 
@@ -464,6 +490,8 @@ to `supportedLanguages`. No copy is hard-coded in components.
 | `MCP_READ_ONLY` | `false` | When `true`, MCP exposes no mutating tools |
 | `SEED_EXAMPLE` | `true` | Seed the example workspace on first boot |
 | `APP_NAME` | `StructSmith` | Product name shown in the UI |
+| `AGENT_CHAT_ENABLED` | `true` | Enable the localhost-only CLI chat bridge |
+| `AGENT_CHAT_DIR` | `./data/agent-chat` | Local chat history, settings and empty working directory |
 
 In token mode, `/api` and `/mcp` require `Authorization: Bearer <APP_TOKEN>`; `/health`
 stays public. There is no user system — this is a local/self-hosted tool.

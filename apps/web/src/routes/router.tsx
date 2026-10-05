@@ -8,6 +8,7 @@ import {
   useSearch,
 } from "@tanstack/react-router";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { AgentChatDock } from "@/features/chat/AgentChatDock";
 import { HomePage } from "@/features/home/HomePage";
 import { McpPage } from "@/features/mcp/McpPage";
 import { StudioPage } from "./StudioPage";
@@ -16,6 +17,7 @@ const rootRoute = createRootRoute({
   component: () => (
     <TooltipProvider delayDuration={300}>
       <Outlet />
+      <AgentChatDock />
     </TooltipProvider>
   ),
 });

@@ -270,7 +270,12 @@
     "restored": "Migawka przywrócona",
     "label": "Etykieta",
     "defaultLabel": "Migawka ręczna",
-    "sources": { "ui": "UI", "mcp": "MCP", "system": "System", "import": "Import" }
+    "sources": {
+      "ui": "UI",
+      "mcp": "MCP",
+      "system": "System",
+      "import": "Import"
+    }
   },
   "exportMenu": {
     "title": "Eksport",
@@ -322,7 +327,11 @@
     "language": "Język",
     "theme": "Motyw"
   },
-  "theme": { "light": "Jasny", "dark": "Ciemny", "system": "Systemowy" },
+  "theme": {
+    "light": "Jasny",
+    "dark": "Ciemny",
+    "system": "Systemowy"
+  },
   "command": {
     "placeholder": "Szukaj elementów, relacji, widoków i wpisów…",
     "empty": "Brak wyników.",
@@ -400,7 +409,11 @@
       "complianceScope": "Zakres zgodności",
       "custom": "Własna"
     },
-    "classification": { "public": "Publiczna", "restricted": "Ograniczona", "private": "Prywatna" },
+    "classification": {
+      "public": "Publiczna",
+      "restricted": "Ograniczona",
+      "private": "Prywatna"
+    },
     "layer": {
       "deployment": "Wdrożenie",
       "security": "Bezpieczeństwo",
@@ -480,5 +493,50 @@
     "seedAll": "Wszystkich elementów",
     "deleteTitle": "Usunąć widok?",
     "deleteHint": "To usuwa widok i jego układ. Model pozostaje nietknięty."
+  },
+  "chat": {
+    "title": "Czat z agentem",
+    "localCli": "Lokalne CLI",
+    "settings": "Ustawienia agentów",
+    "settingsHint": "Korzysta z CLI zainstalowanego i zalogowanego na komputerze, na którym działa StructSmith. Podaj pełną ścieżkę, jeśli programu nie ma w PATH. Używane jest istniejące logowanie CLI.",
+    "defaultProvider": "Domyślny agent dla nowych tematów",
+    "executable": "Program CLI lub pełna ścieżka",
+    "model": "Model (opcjonalnie)",
+    "defaultModel": "Domyślny model CLI",
+    "askAbout": "Zapytaj agenta o ten element",
+    "topics": "Tematy rozmów",
+    "newIn": "Nowy temat w",
+    "general": "Ogólna · bez projektu",
+    "newTopic": "Nowy temat",
+    "filter": "Filtruj tematy rozmów",
+    "allTopics": "Wszystkie tematy",
+    "untitled": "Nowy temat",
+    "noTopics": "Brak tematów.",
+    "welcome": "Porozmawiaj o swojej architekturze",
+    "welcomeHint": "Utwórz temat projektu lub rozmowę ogólną. Kliknij nod prawym przyciskiem, aby dołączyć jego kontekst.",
+    "topicSettings": "Ustawienia tematu",
+    "provider": "Agent",
+    "mode": "Tryb agenta",
+    "askMode": "Pytaj",
+    "editMode": "Zmieniaj architekturę",
+    "editHint": "Agent może zmieniać architekturę tego projektu. Zmiany są zapisywane w aktywności i snapshotach.",
+    "missingCli": "Nie znaleziono CLI na serwerze.",
+    "emptyHint": "Zadaj pytanie lub opisz zmianę architektury. Temat pozostaje przypisany do projektu podczas przechodzenia po aplikacji.",
+    "you": "Ty",
+    "working": "Agent pracuje…",
+    "cancelled": "Zatrzymano. Wprowadzone już zmiany pozostają w projekcie.",
+    "context": "Kontekst",
+    "removeContext": "Usuń dołączony kontekst",
+    "message": "Wiadomość do agenta",
+    "contextPlaceholder": "O co chcesz zapytać lub co zmienić w tym elemencie?",
+    "placeholder": "Zapytaj o architekturę…",
+    "sendHint": "Enter wysyła · Shift+Enter dodaje nowy wiersz",
+    "stop": "Zatrzymaj",
+    "send": "Wyślij",
+    "topicTitle": "Nazwa tematu",
+    "directory": "Katalog kodu (opcjonalnie)",
+    "directoryHint": "Pełna ścieżka na serwerze. Służy do czytania lokalnego kodu; pozostaw puste, aby pracować tylko z architekturą. Przypisanie projektu jest stałe.",
+    "confirmDelete": "Potwierdź usunięcie",
+    "retry": "Ponów"
   }
 }

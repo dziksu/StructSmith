@@ -4,7 +4,7 @@ import { loadConfig } from "./config";
 
 const config = loadConfig();
 const ctx = createAppContext(config);
-const { app, mcp } = createApp(ctx);
+const { app, mcp, agents } = createApp(ctx);
 
 const server = app.listen(config.port, config.host, (error) => {
   if (error) {
@@ -29,6 +29,7 @@ const server = app.listen(config.port, config.host, (error) => {
 const shutdown = async (signal: string): Promise<void> => {
   console.log(`\n[server] ${signal} received, shutting down.`);
   await mcp.closeAll().catch(() => undefined);
+  await agents?.close().catch(() => undefined);
   server.close(() => {
     ctx.database.close();
     process.exit(0);

@@ -4,6 +4,7 @@ import { useTranslation } from "react-i18next";
 import { Group, Panel, Separator } from "react-resizable-panels";
 import { toast } from "sonner";
 import { Canvas } from "@/features/canvas/Canvas";
+import { useChatStore } from "@/features/chat/store";
 import { CommandPalette } from "@/features/command/CommandPalette";
 import { ElementPalette } from "@/features/command/ElementPalette";
 import { KeyboardShortcutsDialog } from "@/features/command/KeyboardShortcutsDialog";
@@ -61,6 +62,11 @@ function StudioContent({
   const settings = useSettings();
   const workspaces = useWorkspaces();
   const workspace = useWorkspace(workspaceId);
+  const setChatProject = useChatStore((state) => state.setProject);
+  useEffect(() => {
+    if (workspace.data) setChatProject({ id: workspace.data.id, name: workspace.data.name });
+    return () => setChatProject(null);
+  }, [workspace.data, setChatProject]);
   const model = useModel(workspaceId);
   const views = useViews(workspaceId);
   const records = useRecords(workspaceId);
@@ -175,6 +181,7 @@ function StudioContent({
         setShortcutsOpen(true);
         return;
       }
+      if (typing) return;
       if (primary && event.key.toLowerCase() === "z") {
         event.preventDefault();
         void (event.shiftKey ? history.redo() : history.undo());
@@ -185,7 +192,6 @@ function StudioContent({
         toast.success(t("status.saved"));
         return;
       }
-      if (typing) return;
       if (event.key === "Escape") clearSelection();
       if (event.key.toLowerCase() === "f") fitView();
     };

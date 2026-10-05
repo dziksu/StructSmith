@@ -26,6 +26,7 @@ import {
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
+import { useChatStore } from "@/features/chat/store";
 import { useApiErrorHandler, useApplyOperations } from "@/hooks/useApi";
 import { api } from "@/lib/api";
 import { hasPrimaryModifier, primaryModifierKeyCode } from "@/lib/platform";
@@ -82,6 +83,7 @@ export function Canvas({
   const onError = useApiErrorHandler();
   const applyOperations = useApplyOperations(workspaceId);
   const copyReference = useCopyAgentReference();
+  const askAgent = useChatStore((state) => state.ask);
   const pushHistory = useHistoryStore((state) => state.push);
 
   const select = useEditorStore((state) => state.select);
@@ -590,6 +592,17 @@ export function Canvas({
             onSelect: () => select({ type: "element", id: elementId }),
           },
           {
+            label: t("chat.askAbout"),
+            onSelect: () =>
+              askAgent({
+                type: "element",
+                workspaceId,
+                targetId: elementId,
+                label: elementsById.get(elementId)?.name,
+                viewId: view.id,
+              }),
+          },
+          {
             label: t("contextMenu.copyWithConnections"),
             onSelect: () => copyElementsToClipboard(contextElementIds),
           },
@@ -627,6 +640,7 @@ export function Canvas({
       });
     },
     [
+      askAgent,
       copyReference,
       copyElementsToClipboard,
       deleteFromModel,
@@ -654,6 +668,17 @@ export function Canvas({
         y: event.clientY,
         items: [
           {
+            label: t("chat.askAbout"),
+            onSelect: () =>
+              askAgent({
+                type: "relationship",
+                workspaceId,
+                targetId: relationshipId,
+                label: relationship?.description ?? undefined,
+                viewId: view.id,
+              }),
+          },
+          {
             label: t("reference.copy"),
             onSelect: () =>
               void copyReference({
@@ -676,6 +701,7 @@ export function Canvas({
       });
     },
     [
+      askAgent,
       copyReference,
       deleteRelationships,
       elementsById,

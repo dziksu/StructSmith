@@ -50,7 +50,7 @@ export const setToken = (token: string | null): void => {
   else localStorage.removeItem(TOKEN_KEY);
 };
 
-async function request<T>(path: string, init?: RequestInit): Promise<T> {
+export async function request<T>(path: string, init?: RequestInit): Promise<T> {
   const token = getToken();
   const response = await fetch(`/api${path}`, {
     ...init,
