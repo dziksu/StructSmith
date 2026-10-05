@@ -86,6 +86,12 @@ copy is hard-coded in components, so nothing else needs touching.
 
 ## Code style
 
+For UI work, first inspect `apps/web/src/components/ui` and reuse the existing
+shadcn/Radix library as fully as possible. Use shared controls and their variants
+instead of native selects or separately styled inputs, buttons and labels. Compose
+existing components before implementing anything custom; custom controls are for
+behavior the library cannot provide. This rule is also recorded in `AGENTS.md`.
+
 Biome handles formatting and linting; there is no separate formatter. TypeScript
 runs with `strict` and `noUncheckedIndexedAccess`, and `any` is a lint error. Two
 accessibility rules are switched off in `biome.jsonc` with the reasoning inline —

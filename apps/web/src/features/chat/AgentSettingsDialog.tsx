@@ -12,6 +12,13 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { chatApi } from "./api";
 
 export const providerNames = { codex: "Codex", claude: "Claude Code", copilot: "GitHub Copilot" };
@@ -53,23 +60,26 @@ export function AgentSettingsDialog({
           <DialogDescription>{t("chat.settingsHint")}</DialogDescription>
         </DialogHeader>
         <Label htmlFor="agent-default">{t("chat.defaultProvider")}</Label>
-        <select
-          id="agent-default"
-          className="rounded border bg-background px-2 py-1.5 text-sm"
+        <Select
           value={draft.defaultProvider}
-          onChange={(event) =>
+          onValueChange={(value) =>
             setDraft({
               ...draft,
-              defaultProvider: event.target.value as AgentSettings["defaultProvider"],
+              defaultProvider: value as AgentSettings["defaultProvider"],
             })
           }
         >
-          {Object.entries(providerNames).map(([id, name]) => (
-            <option key={id} value={id}>
-              {name}
-            </option>
-          ))}
-        </select>
+          <SelectTrigger id="agent-default">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            {Object.entries(providerNames).map(([id, name]) => (
+              <SelectItem key={id} value={id}>
+                {name}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
         {(["codex", "claude", "copilot"] as const).map((provider) => (
           <fieldset key={provider} className="space-y-2 rounded-md border p-3">
             <legend className="px-1 text-sm font-semibold">{providerNames[provider]}</legend>
