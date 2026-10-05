@@ -1,5 +1,21 @@
 # Changelog
 
+## [1.12.0](https://github.com/dziksu/structsmith/compare/v1.11.1...v1.12.0) (2026-10-05)
+
+### Features
+
+* add project chat with local agent CLIs ([468df73](https://github.com/dziksu/structsmith/commit/468df7378180ade5c152f8280244e709b047c8a0))
+* configure Codex reasoning effort in agent chat ([a71ab64](https://github.com/dziksu/structsmith/commit/a71ab6416be516dcc5ecb739b1fe1bf2bed54a85))
+* rename and archive agent chat topics ([1d83c70](https://github.com/dziksu/structsmith/commit/1d83c70d0433455df2d14149d00b3f633a444407))
+* reorder chat topics with long-press drag ([586ad0c](https://github.com/dziksu/structsmith/commit/586ad0c5d8ffa963d78a6a0e4f9c60a736059083))
+* stream local agent replies and reasoning ([2bf308d](https://github.com/dziksu/structsmith/commit/2bf308d6c3effbe217af3d9cd2ba29530e8b198c))
+
+### Bug Fixes
+
+* discover Codex models from the configured CLI ([f802ce1](https://github.com/dziksu/structsmith/commit/f802ce12cbeea2aed8a28f077cf5ecc6e3002f30))
+* reuse shadcn controls in agent chat ([f6a00db](https://github.com/dziksu/structsmith/commit/f6a00db2ff34be1ac2ffacf24c087b0390ee6389))
+* simplify agent settings spacing ([99716d9](https://github.com/dziksu/structsmith/commit/99716d95c917c8742a211165dd6f130b27aa4f9a))
+
 ## [1.11.1](https://github.com/dziksu/structsmith/compare/v1.11.0...v1.11.1) (2026-10-05)
 
 ### Build and Dependencies
