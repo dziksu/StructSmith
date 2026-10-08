@@ -150,9 +150,8 @@ export function buildPasteOperations(
     return ref
       ? [
           {
+            ...placement,
             relationshipId: `@${ref}`,
-            hidden: placement.hidden,
-            labelPosition: placement.labelPosition,
             controlPoints: placement.controlPoints.map((point) => ({
               x: point.x + offset,
               y: point.y + offset,

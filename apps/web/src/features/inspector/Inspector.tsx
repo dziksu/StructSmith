@@ -35,6 +35,7 @@ import { iconFor } from "../icons";
 import { DetailViewAction } from "../navigation/DetailNavigation";
 import { CopyReferenceButton } from "../reference/CopyReferenceButton";
 import { PropertyEditor } from "./PropertyEditor";
+import { RelationshipPresentation } from "./RelationshipPresentation";
 import { TagEditor } from "./TagEditor";
 
 interface InspectorProps {
@@ -150,21 +151,32 @@ export function Inspector({
           )}
 
           {relationship && (
-            <RelationshipInspector
-              key={relationship.id}
-              relationship={relationship}
-              elements={elements.filter((element) =>
-                view?.elements.some((entry) => entry.elementId === element.id),
+            <>
+              <RelationshipInspector
+                key={relationship.id}
+                relationship={relationship}
+                elements={elements.filter((element) =>
+                  view?.elements.some((entry) => entry.elementId === element.id),
+                )}
+                workspaceId={workspaceId}
+                viewId={view?.id}
+                onPatch={(data, label) =>
+                  applyOperations.mutate({
+                    label,
+                    operations: [
+                      { op: "updateRelationship", relationshipId: relationship.id, data },
+                    ],
+                  })
+                }
+              />
+              {view && (
+                <RelationshipPresentation
+                  key={`${view.id}:${relationship.id}`}
+                  view={view}
+                  relationshipId={relationship.id}
+                />
               )}
-              workspaceId={workspaceId}
-              viewId={view?.id}
-              onPatch={(data, label) =>
-                applyOperations.mutate({
-                  label,
-                  operations: [{ op: "updateRelationship", relationshipId: relationship.id, data }],
-                })
-              }
-            />
+            </>
           )}
 
           {boundary && (
@@ -810,7 +822,6 @@ function RelationshipInspector({
 
       <Field label={t("common.description")}>
         <Textarea
-          autoFocus
           rows={3}
           value={description}
           onChange={(event) => {

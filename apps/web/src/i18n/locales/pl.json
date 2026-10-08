@@ -603,5 +603,40 @@
     "directoryHint": "Pełna ścieżka na serwerze. Służy do czytania lokalnego kodu; pozostaw puste, aby pracować tylko z architekturą. Przypisanie projektu jest stałe.",
     "confirmDelete": "Potwierdź usunięcie",
     "retry": "Ponów"
+  },
+  "relationshipPresentation": {
+    "title": "Wygląd relacji",
+    "help": "Zapisane tylko w tym widoku. Puste pola i Auto używają ustawień domyślnych.",
+    "sourceSide": "Strona źródła",
+    "targetSide": "Strona celu",
+    "attachmentsHelp": "Zaznacz połączenie, a następnie przeciągnij jego koniec na inną stronę tego samego elementu. Aby zmienić architekturę, użyj powyższych pól źródła i celu.",
+    "color": "Kolor (hex)",
+    "strokeWidth": "Grubość linii",
+    "lineStyle": "Wzór linii",
+    "startArrow": "Strzałka źródła",
+    "endArrow": "Strzałka celu",
+    "legendLabel": "Opis w legendzie",
+    "legend": "Legenda relacji",
+    "labelPosition": "Pozycja etykiety (0–1)",
+    "offsetX": "Przesunięcie X",
+    "offsetY": "Przesunięcie Y",
+    "labelHelp": "Przeciągnij etykietę lub ustaw na niej fokus i użyj strzałek (Shift: 10 jednostek). Automatyczny układ zachowuje pozycję etykiety.",
+    "moveLabel": "Przesuń etykietę relacji: {{label}}",
+    "resetLabel": "Resetuj pozycję etykiety",
+    "resetAll": "Resetuj wygląd",
+    "updated": "Zmieniono wygląd relacji",
+    "options": {
+      "auto": "Auto",
+      "top": "Góra",
+      "right": "Prawo",
+      "bottom": "Dół",
+      "left": "Lewo",
+      "solid": "Ciągła",
+      "dashed": "Przerywana",
+      "dotted": "Kropkowana",
+      "none": "Brak",
+      "open": "Otwarta",
+      "closed": "Wypełniona"
+    }
   }
 }

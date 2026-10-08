@@ -164,6 +164,7 @@ export const viewRelationships = sqliteTable(
     hidden: integer("hidden").notNull().default(0),
     labelPosition: real("label_position"),
     controlPointsJson: text("control_points_json").notNull().default("[]"),
+    presentationJson: text("presentation_json").notNull().default("{}"),
   },
   (table) => [primaryKey({ columns: [table.viewId, table.relationshipId] })],
 );

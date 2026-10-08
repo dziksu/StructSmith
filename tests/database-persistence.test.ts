@@ -14,13 +14,47 @@ test("SQLite data survives reopening and migrations are not reapplied", () => {
   try {
     const first = createDatabase(databasePath);
     let workspaceId: string;
+    let viewId: string;
     let applied: string[];
     try {
       applied = runMigrations(first.sqlite, migrationsDir).applied;
       expect(applied.length).toBeGreaterThan(0);
       const services = createServices(new DrizzleStore(first.db), new InMemoryEventBus());
       workspaceId = services.workspaces.create({ name }).id;
-      services.elements.create(workspaceId, { name: "API", kind: "softwareSystem" });
+      const source = services.elements.create(workspaceId, {
+        name: "API",
+        kind: "softwareSystem",
+      }).result;
+      const target = services.elements.create(workspaceId, {
+        name: "Worker",
+        kind: "softwareSystem",
+      }).result;
+      const relationship = services.relationships.create(workspaceId, {
+        sourceElementId: source.id,
+        targetElementId: target.id,
+      }).result;
+      viewId = services.views.create(workspaceId, {
+        name: "Runtime",
+        kind: "custom",
+        elementIds: [source.id, target.id],
+      }).result.id;
+      services.views.saveLayout(
+        workspaceId,
+        viewId,
+        [],
+        [
+          {
+            relationshipId: relationship.id,
+            color: "#22c55e",
+            sourceSide: "bottom",
+            targetSide: "top",
+            labelPosition: 0.78,
+            labelOffset: { x: 25, y: -30 },
+            endArrow: "open",
+            legendLabel: "Success",
+          },
+        ],
+      );
     } finally {
       first.close();
     }
@@ -32,7 +66,16 @@ test("SQLite data survives reopening and migrations are not reapplied", () => {
       expect(migration.skipped).toEqual(applied);
       const services = createServices(new DrizzleStore(reopened.db), new InMemoryEventBus());
       expect(services.workspaces.get(workspaceId).name).toBe(name);
-      expect(services.model.get(workspaceId).elements).toHaveLength(1);
+      expect(services.model.get(workspaceId).elements).toHaveLength(2);
+      expect(services.views.get(viewId).relationships[0]).toMatchObject({
+        color: "#22c55e",
+        sourceSide: "bottom",
+        targetSide: "top",
+        labelPosition: 0.78,
+        labelOffset: { x: 25, y: -30 },
+        endArrow: "open",
+        legendLabel: "Success",
+      });
       services.workspaces.update(workspaceId, { name: "Updated" });
       expect(services.workspaces.get(workspaceId).name).toBe("Updated");
     } finally {

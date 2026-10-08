@@ -24,7 +24,7 @@ import type {
   Workspace,
   WorkspaceMode,
 } from "@structsmith/contracts";
-import { ERROR_CODES } from "@structsmith/contracts";
+import { ERROR_CODES, ViewRelationshipPatchSchema } from "@structsmith/contracts";
 import { badRequest, DomainError, ruleViolation } from "./errors";
 import { createId, nowIso, uniqueKey } from "./ids";
 import { edgeLabel, resolveRelationshipsForView } from "./implied";
@@ -646,7 +646,16 @@ export function setViewRelationships(
     repos.views.listRelationships(viewId).map((entry) => [entry.relationshipId, entry] as const),
   );
 
-  for (const patch of patches) {
+  for (const input of patches) {
+    const patch = ViewRelationshipPatchSchema.parse(input);
+    const relationship = repos.relationships.findById(patch.relationshipId);
+    if (!relationship || relationship.workspaceId !== workspace.id) {
+      throw new DomainError(
+        ERROR_CODES.RELATIONSHIP_NOT_FOUND,
+        `Relationship "${patch.relationshipId}" does not exist.`,
+        404,
+      );
+    }
     const base: ViewRelationship = current.get(patch.relationshipId) ?? {
       viewId,
       relationshipId: patch.relationshipId,
@@ -654,12 +663,12 @@ export function setViewRelationships(
       labelPosition: null,
       controlPoints: [],
     };
-    repos.views.upsertRelationship({
+    const entry: ViewRelationship = {
       ...base,
-      hidden: patch.hidden ?? base.hidden,
-      labelPosition: patch.labelPosition !== undefined ? patch.labelPosition : base.labelPosition,
-      controlPoints: patch.controlPoints ?? base.controlPoints,
-    });
+      ...Object.fromEntries(Object.entries(patch).filter(([, value]) => value !== undefined)),
+    };
+    repos.views.upsertRelationship(entry);
+    current.set(entry.relationshipId, entry);
   }
 
   return repos.views.listRelationships(viewId);

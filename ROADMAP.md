@@ -3,7 +3,7 @@
 Make software architecture easier to explore, explain, and evolve, while keeping
 StructSmith local, portable, and usable through both the editor and an AI client.
 
-Updated: 1 October 2026. Unchecked items below are planned; milestone numbers indicate
+Updated: 8 October 2026. Unchecked items below are planned; milestone numbers indicate
 delivery order, not release versions or committed dates. Revisit priorities after
 each milestone using feedback from onboarding, design reviews, and presales work.
 
@@ -12,6 +12,18 @@ each milestone using feedback from onboarding, design reviews, and presales work
 StructSmith already has a shared architecture model, multiple views, C4 hierarchy,
 relationship lifting, linked records, snapshots, validation, and REST/MCP access.
 The next improvements should turn those foundations into complete user workflows.
+
+**Relationship editing feedback (#102–104)**
+
+These reports identify editor gaps independently of native workflow support:
+visible direction, per-view path appearance and a labelled legend (#102), moving
+attachment sides without replacing semantic endpoints (#103), and rendering the
+saved label position plus independent label offsets (#104). Keep these changes in
+the existing view-relationship contract, with shared domain mutations, revision
+guards, snapshots, keyboard/inspector controls and native JSON round-trips.
+Automatic layout preserves manual attachment sides and label placement. PNG/SVG
+capture the rendered presentation and legend; Mermaid remains a semantic export
+and cannot preserve exact attachment or label coordinates.
 
 | Horizon | Milestone | User outcome |
 | --- | --- | --- |
@@ -124,6 +136,39 @@ edge IDs. Explain when a step requires a deeper view because its endpoints are
 collapsed into one visible object. Add document compatibility and deletion rules
 alongside persistence. Alternate paths, parallel paths, nested flows, and sequence
 diagram export are subsequent enhancements.
+
+**Workflow extension — issue [#105](https://github.com/dziksu/StructSmith/issues/105)**
+
+The portal/evidence/mail/review example is a valid need beyond linear message
+playback. Add a separate workflow model with stable decision, action and outcome
+steps and labelled transitions for happy, fallback and blocked paths. Steps may
+reference existing C4 elements; they must not change those elements' kinds or
+require fake containers. Keep graph semantics available through REST/MCP and store
+step positions and transition presentation on views. Reuse the canvas and the
+relationship-presentation controls where practical.
+
+Before implementation, define whether workflows can loop, how referenced elements
+are repaired or unlinked on deletion, and how document import/export, operation
+preview and snapshot restoration handle the new entities. Keep this extension
+separate from the first linear-flow delivery and use the issue's four-path example
+as its acceptance fixture. No delivery date is committed.
+
+**Rollout timelines — issue [#106](https://github.com/dziksu/StructSmith/issues/106)**
+
+This is a distinct planning view rather than a C4 layout algorithm or workflow
+playback mode. A first version should store ordered phases and workstream lanes,
+optional planned durations, separately identified target/committed dates, exit
+criteria linked to evidence records, and exception/rollback conditions. Passing
+time alone must never qualify a gate. Link existing architecture elements and
+records instead of copying them into milestone elements.
+
+Define timing units and calendar/time-zone rules, precedence between relative
+durations and dates, gate status/evidence, and lane ordering before adding shared
+contracts and migrations. Validate the readiness → 30-day shadow → 7-day pilot →
+14-day expansion → continuous-operation example, including a parallel milestone
+and rollback lane. Revision guards, preview, undo, snapshots and native export
+compatibility are required from the first version. Keep this as a separate
+follow-up after the view/presentation foundations; no delivery date is committed.
 
 **Milestone 4 — Share presentations**
 

@@ -23,17 +23,18 @@ const slug = (value: string): string =>
 
 /** PNG/SVG come from the live canvas; JSON and Mermaid come from the model. */
 async function captureCanvas(format: "png" | "svg"): Promise<string | null> {
-  const viewport = document.querySelector<HTMLElement>(".react-flow__viewport");
-  if (!viewport) return null;
+  const canvas = document.querySelector<HTMLElement>("[data-diagram-canvas]");
+  if (!canvas) return null;
 
   const options = {
     backgroundColor: getComputedStyle(document.body).backgroundColor,
     pixelRatio: 2,
     filter: (node: HTMLElement) =>
       !node.classList?.contains?.("react-flow__minimap") &&
-      !node.classList?.contains?.("react-flow__controls"),
+      !node.classList?.contains?.("react-flow__controls") &&
+      !node.classList?.contains?.("react-flow__edgeupdater"),
   };
-  return format === "png" ? toPng(viewport, options) : toSvg(viewport, options);
+  return format === "png" ? toPng(canvas, options) : toSvg(canvas, options);
 }
 
 export function ExportMenu({

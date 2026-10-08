@@ -11,6 +11,7 @@ import {
   Background,
   BackgroundVariant,
   type Connection,
+  ConnectionMode,
   Controls,
   type EdgeChange,
   MiniMap,
@@ -51,6 +52,8 @@ import {
 } from "./graph";
 import { type ContextMenuItem, NodeContextMenu } from "./NodeContextMenu";
 import { RelationshipEdge } from "./RelationshipEdge";
+import { RelationshipLegend } from "./RelationshipLegend";
+import { sideForHandle } from "./relationshipGeometry";
 
 /** An implied edge carries a derived id, so always resolve the real one. */
 const relationshipIdOf = (edge: { id: string; data?: Record<string, unknown> }): string =>
@@ -140,15 +143,21 @@ export function Canvas({
   const dragOrigins = useRef(new Map<string, { x: number; y: number }>());
   const layoutSaveQueue = useRef<Promise<void>>(Promise.resolve());
   const ignoreDetailsUntil = useRef(0);
+  const reconnectingEdge = useRef<FlowEdge | null>(null);
 
   // A rebuild happens after every mutation; carry the current selection over so
   // the highlight does not blink off while the inspector still shows the item.
   useEffect(() => {
     setNodes((current) => {
       const selected = new Set(current.filter((node) => node.selected).map((node) => node.id));
-      return selected.size === 0
-        ? graph.nodes
-        : graph.nodes.map((node) => (selected.has(node.id) ? { ...node, selected: true } : node));
+      const previous = new Map(current.map((node) => [node.id, node]));
+      // Keep measurements during presentation saves. Dropping them briefly
+      // removes edges and their focused label buttons while cards are measured.
+      return graph.nodes.map((node) => ({
+        ...node,
+        measured: previous.get(node.id)?.measured,
+        selected: selected.has(node.id),
+      }));
     });
   }, [graph.nodes]);
 
@@ -365,7 +374,7 @@ export function Canvas({
   /* ------------------------------- interactions ----------------------------- */
 
   const createRelationship = useCallback(
-    (sourceElementId: string, targetElementId: string) => {
+    (sourceElementId: string, targetElementId: string, connection?: Connection) => {
       if (sourceElementId === targetElementId) return;
       const source = elementsById.get(sourceElementId)?.name ?? sourceElementId;
       const target = elementsById.get(targetElementId)?.name ?? targetElementId;
@@ -378,6 +387,21 @@ export function Canvas({
               ref: "relationship",
               data: { sourceElementId, targetElementId, interactionStyle: "sync" },
             },
+            ...(connection
+              ? [
+                  {
+                    op: "setViewRelationships" as const,
+                    viewId: view.id,
+                    relationships: [
+                      {
+                        relationshipId: "@relationship",
+                        sourceSide: sideForHandle(connection.sourceHandle),
+                        targetSide: sideForHandle(connection.targetHandle),
+                      },
+                    ],
+                  },
+                ]
+              : []),
           ],
         },
         {
@@ -390,13 +414,13 @@ export function Canvas({
         },
       );
     },
-    [applyOperations, elementsById, select],
+    [applyOperations, elementsById, select, view.id],
   );
 
   const onConnect = useCallback(
     (connection: Connection) => {
-      if (!connection.source || !connection.target) return;
-      createRelationship(connection.source, connection.target);
+      if (!connection.source || !connection.target || reconnectingEdge.current) return;
+      createRelationship(connection.source, connection.target, connection);
     },
     [createRelationship],
   );
@@ -926,6 +950,7 @@ export function Canvas({
 
   return (
     <div
+      data-diagram-canvas
       className="relative h-full w-full"
       onDrop={onDrop}
       onDragOver={(event) => {
@@ -943,6 +968,39 @@ export function Canvas({
         onNodeDragStop={onNodeDragStop}
         onEdgesChange={onEdgesChange}
         onConnect={onConnect}
+        connectionMode={ConnectionMode.Loose}
+        onReconnectStart={(_event, edge) => {
+          reconnectingEdge.current = edge as FlowEdge;
+        }}
+        onReconnectEnd={() => {
+          reconnectingEdge.current = null;
+        }}
+        isValidConnection={(connection) => {
+          const edge = reconnectingEdge.current;
+          return edge
+            ? connection.source === edge.source && connection.target === edge.target
+            : connection.source !== connection.target;
+        }}
+        onReconnect={(edge, connection) => {
+          if (connection.source !== edge.source || connection.target !== edge.target) return;
+          applyOperations.mutate({
+            label: t("relationshipPresentation.updated"),
+            operations: [
+              {
+                op: "setViewRelationships",
+                viewId: view.id,
+                relationships: [
+                  {
+                    relationshipId: relationshipIdOf(edge),
+                    sourceSide: sideForHandle(connection.sourceHandle),
+                    targetSide: sideForHandle(connection.targetHandle),
+                  },
+                ],
+              },
+            ],
+          });
+        }}
+        reconnectRadius={14}
         onSelectionChange={onSelectionChange}
         onNodeClick={onNodeClick}
         onNodeDoubleClick={(event, node) => {
@@ -1035,6 +1093,7 @@ export function Canvas({
       )}
 
       {menu && <NodeContextMenu {...menu} onClose={() => setMenu(null)} />}
+      <RelationshipLegend edges={edges} />
     </div>
   );
 }

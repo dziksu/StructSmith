@@ -22,6 +22,7 @@ import type {
   Workspace,
   WorkspaceMode,
 } from "@structsmith/contracts";
+import { ViewRelationshipPresentationSchema } from "@structsmith/contracts";
 import type {
   activity,
   boundaries,
@@ -258,6 +259,7 @@ export function toViewRelationship(row: Row<typeof viewRelationships>): ViewRela
     hidden: toBool(row.hidden),
     labelPosition: row.labelPosition,
     controlPoints: parseJson<{ x: number; y: number }[]>(row.controlPointsJson, []),
+    ...ViewRelationshipPresentationSchema.parse(parseJson(row.presentationJson, {})),
   };
 }
 
@@ -268,6 +270,7 @@ export function fromViewRelationship(entry: ViewRelationship): Row<typeof viewRe
     hidden: fromBool(entry.hidden),
     labelPosition: entry.labelPosition,
     controlPointsJson: JSON.stringify(entry.controlPoints),
+    presentationJson: JSON.stringify(ViewRelationshipPresentationSchema.parse(entry)),
   };
 }
 
