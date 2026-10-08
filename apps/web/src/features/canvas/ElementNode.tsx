@@ -35,8 +35,9 @@ function ElementNodeComponent({ data, selected }: NodeProps & { data: ElementNod
           element.external ? "bg-ownership-external" : "bg-ownership-internal",
         )}
       />
-      <Handle type="target" position={Position.Left} />
-      <Handle type="target" position={Position.Top} id="t" />
+      {[Position.Top, Position.Right, Position.Bottom, Position.Left].map((position) => (
+        <Handle key={position} type="source" position={position} id={position[0]} />
+      ))}
 
       <div className="flex min-w-0 flex-1 flex-col justify-between px-3 py-2.5">
         <div className="flex items-start gap-2">
@@ -100,9 +101,6 @@ function ElementNodeComponent({ data, selected }: NodeProps & { data: ElementNod
           </span>
         </div>
       </div>
-
-      <Handle type="source" position={Position.Right} />
-      <Handle type="source" position={Position.Bottom} id="b" />
     </div>
   );
 }

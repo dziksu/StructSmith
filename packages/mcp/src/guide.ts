@@ -119,7 +119,7 @@ export function modelingGuide() {
       },
       layouts: {
         persistence:
-          "Manual positions, optional sizes, locks and relationship presentation are saved by view_set_layout or setLayout/setViewRelationships operations. Automatic layout overwrites only unlocked element coordinates.",
+          "Manual positions, optional sizes, locks and relationship presentation are saved by view_set_layout or setLayout/setViewRelationships operations. Relationship presentation includes sourceSide/targetSide (top/right/bottom/left or null for Auto), RGB hex color, strokeWidth (0.5–8), lineStyle, startArrow/endArrow and legendLabel. labelPosition is a fraction of rendered path length from source (0) to target (1); null uses the midpoint. labelOffset is relative to that path position in canvas units; null resets it. Omitted fields preserve stored values. Automatic layout overwrites only unlocked element coordinates and preserves attachment sides, manual bends and label placement. Native JSON and snapshots preserve all fields; PNG/SVG render them. Mermaid does not preserve exact view placement. Workflow/scenario and milestone timeline semantics are not yet native view kinds; do not represent workflow steps as fake C4 containers.",
         dagre:
           "Hierarchical layout and the default choice. It respects LR/TB direction and keeps members of active nested boundaries together.",
         force:

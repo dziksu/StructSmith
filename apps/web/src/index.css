@@ -185,6 +185,17 @@
 .react-flow__edgelabel-renderer {
   z-index: 15;
 }
+
+/* Reattachment controls sit outside cards, distinct from new-connection handles. */
+.react-flow__edge.selected .react-flow__edgeupdater {
+  r: 6;
+  fill: var(--card);
+  stroke: var(--primary);
+  stroke-width: 1.5;
+}
+.react-flow__edge:not(.selected) .react-flow__edgeupdater {
+  pointer-events: none;
+}
 .react-flow__handle {
   background: var(--muted-foreground);
   border: 1px solid var(--background);

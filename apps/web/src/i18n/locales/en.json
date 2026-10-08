@@ -595,5 +595,40 @@
     "directoryHint": "Absolute path on the server. Used for reading local code; leave empty for architecture only. Project assignment stays fixed.",
     "confirmDelete": "Confirm delete",
     "retry": "Retry"
+  },
+  "relationshipPresentation": {
+    "title": "Relationship presentation",
+    "help": "Saved only on this view. Empty fields and Auto use defaults.",
+    "sourceSide": "Source side",
+    "targetSide": "Target side",
+    "attachmentsHelp": "Select the connector, then drag its endpoint to another side of the same node. Use the source/target controls above to change the architecture.",
+    "color": "Color (hex)",
+    "strokeWidth": "Line width",
+    "lineStyle": "Line pattern",
+    "startArrow": "Source arrow",
+    "endArrow": "Target arrow",
+    "legendLabel": "Legend label",
+    "legend": "Relationship legend",
+    "labelPosition": "Label position (0–1)",
+    "offsetX": "Label offset X",
+    "offsetY": "Label offset Y",
+    "labelHelp": "Drag the label or focus it and use arrow keys (Shift: 10 units). Placement is preserved by automatic layout.",
+    "moveLabel": "Move relationship label: {{label}}",
+    "resetLabel": "Reset label placement",
+    "resetAll": "Reset presentation",
+    "updated": "Updated relationship presentation",
+    "options": {
+      "auto": "Auto",
+      "top": "Top",
+      "right": "Right",
+      "bottom": "Bottom",
+      "left": "Left",
+      "solid": "Solid",
+      "dashed": "Dashed",
+      "dotted": "Dotted",
+      "none": "None",
+      "open": "Open",
+      "closed": "Filled"
+    }
   }
 }

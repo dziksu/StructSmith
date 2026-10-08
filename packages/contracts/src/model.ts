@@ -259,12 +259,68 @@ export const ControlPointSchema = z.object({
 });
 export type ControlPoint = z.infer<typeof ControlPointSchema>;
 
+export const AttachmentSideSchema = z.enum(["top", "right", "bottom", "left"]);
+export type AttachmentSide = z.infer<typeof AttachmentSideSchema>;
+
+/** Optional fields keep formatVersion 1 documents and old snapshots readable. */
+export const ViewRelationshipPresentationSchema = z.object({
+  sourceSide: AttachmentSideSchema.nullable()
+    .optional()
+    .describe("Source attachment side; null uses automatic routing."),
+  targetSide: AttachmentSideSchema.nullable()
+    .optional()
+    .describe("Target attachment side; null uses automatic routing."),
+  labelOffset: ControlPointSchema.nullable()
+    .optional()
+    .describe(
+      "Label offset in canvas units from labelPosition on the path; null resets the offset.",
+    ),
+  color: z
+    .string()
+    .regex(/^#[0-9a-fA-F]{6}$/)
+    .nullable()
+    .optional()
+    .describe("Per-view RGB hex line and arrow color; null uses the theme."),
+  strokeWidth: z
+    .number()
+    .min(0.5)
+    .max(8)
+    .nullable()
+    .optional()
+    .describe("Line width in canvas units (0.5–8); null uses the default."),
+  lineStyle: z
+    .enum(["solid", "dashed", "dotted"])
+    .nullable()
+    .optional()
+    .describe("Per-view line pattern; null uses the interaction-style default."),
+  startArrow: z
+    .enum(["none", "open", "closed"])
+    .nullable()
+    .optional()
+    .describe("Source arrowhead; null defaults to none."),
+  endArrow: z
+    .enum(["none", "open", "closed"])
+    .nullable()
+    .optional()
+    .describe("Target arrowhead; null defaults to a visible closed arrow."),
+  legendLabel: z
+    .string()
+    .trim()
+    .min(1)
+    .max(80)
+    .nullable()
+    .optional()
+    .describe("Text explaining this path's visual meaning in the view legend."),
+});
+export type ViewRelationshipPresentation = z.infer<typeof ViewRelationshipPresentationSchema>;
+
 export const ViewRelationshipSchema = z.object({
   viewId: IdSchema,
   relationshipId: IdSchema,
   hidden: z.boolean(),
   labelPosition: z.number().nullable(),
   controlPoints: z.array(ControlPointSchema),
+  ...ViewRelationshipPresentationSchema.shape,
 });
 export type ViewRelationship = z.infer<typeof ViewRelationshipSchema>;
 
@@ -340,13 +396,18 @@ export const ViewRelationshipPatchSchema = z.object({
   hidden: z.boolean().optional().describe("Hide this relationship only on this view."),
   labelPosition: z
     .number()
+    .min(0)
+    .max(1)
     .nullable()
     .optional()
-    .describe("Optional normalized label position along the relationship path."),
+    .describe(
+      "Fraction of rendered path length from source (0) to target (1); null uses the midpoint. Manual position and offset survive auto-layout.",
+    ),
   controlPoints: z
     .array(ControlPointSchema)
     .optional()
     .describe("Saved manual bend points for this relationship on the view."),
+  ...ViewRelationshipPresentationSchema.shape,
 });
 export type ViewRelationshipPatch = z.infer<typeof ViewRelationshipPatchSchema>;
 

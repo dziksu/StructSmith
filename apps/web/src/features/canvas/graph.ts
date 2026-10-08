@@ -4,6 +4,7 @@ import type {
   ArchitectureRecord,
   ArchitectureRelationship,
   ViewDetail,
+  ViewRelationship,
 } from "@structsmith/contracts";
 import {
   DEFAULT_NODE_HEIGHT,
@@ -46,6 +47,10 @@ export interface RelationshipEdgeData extends Record<string, unknown> {
   count: number;
   routing: ViewDetail["settings"]["relationshipRouting"];
   showLabel: boolean;
+  placement?: ViewRelationship;
+  workspaceId: string;
+  viewId: string;
+  editable: boolean;
 }
 
 export type FlowNode = Node<ElementNodeData, "element"> | Node<BoundaryNodeData, "boundary">;
@@ -121,6 +126,9 @@ export function buildGraph({ view, elements, relationships, records }: BuildInpu
   const hiddenRelationships = new Set(
     view.relationships.filter((entry) => entry.hidden).map((entry) => entry.relationshipId),
   );
+  const relationshipPlacements = new Map(
+    view.relationships.map((entry) => [entry.relationshipId, entry]),
+  );
 
   const edges: FlowEdge[] = resolveRelationshipsForView(
     elements,
@@ -133,13 +141,24 @@ export function buildGraph({ view, elements, relationships, records }: BuildInpu
     // unambiguous, so it stays selectable and editable; only a merged edge
     // (several relationships behind one line) is not.
     const unambiguous = edge.relationships.length === 1;
+    const placement = unambiguous ? relationshipPlacements.get(first.id) : undefined;
+    const sideHandle = { top: "t", right: "r", bottom: "b", left: "l" };
     return {
       id: edge.id,
       type: "relationship",
       source: edge.sourceElementId,
       target: edge.targetElementId,
-      sourceHandle: view.settings.autoLayoutDirection === "TB" ? "b" : undefined,
-      targetHandle: view.settings.autoLayoutDirection === "TB" ? "t" : undefined,
+      sourceHandle: placement?.sourceSide
+        ? sideHandle[placement.sourceSide]
+        : view.settings.autoLayoutDirection === "TB"
+          ? "b"
+          : "r",
+      targetHandle: placement?.targetSide
+        ? sideHandle[placement.targetSide]
+        : view.settings.autoLayoutDirection === "TB"
+          ? "t"
+          : "l",
+      reconnectable: unambiguous && !edge.implied,
       selectable: unambiguous,
       deletable: unambiguous,
       zIndex: 10,
@@ -150,6 +169,10 @@ export function buildGraph({ view, elements, relationships, records }: BuildInpu
         count: edge.relationships.length,
         routing: view.settings.relationshipRouting,
         showLabel: view.settings.showRelationshipLabels,
+        placement,
+        workspaceId: view.workspaceId,
+        viewId: view.id,
+        editable: unambiguous,
       },
     };
   });
