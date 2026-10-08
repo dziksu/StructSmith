@@ -143,6 +143,10 @@ do not trigger another workflow. See the [GitHub plugin documentation](https://g
 
 If image publication fails after the release exists, rerun the failed image job,
 or rerun the full workflow for the same commit: its existing release tag is reused.
+Publication also continues when the release tag was created successfully but the
+changelog/package metadata PR failed. That failure remains visible in CI; it must
+not prevent users from downloading the matching image and launcher. Launcher
+assets still require successful image publication and are skipped on cancellation.
 The CI workflow can also be dispatched manually on `main`. Check release, image and local-launcher
 asset jobs before announcing availability; release notes can exist before the image finishes.
 New tag-protection rules must allow the Actions token to create release tags.

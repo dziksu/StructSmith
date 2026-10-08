@@ -3,6 +3,7 @@ import { execFileSync, spawnSync } from "node:child_process";
 import { copyFileSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { runInNewContext } from "node:vm";
 import { analyzeCommits } from "@semantic-release/commit-analyzer";
 import { generateNotes } from "@semantic-release/release-notes-generator";
 import config from "../.releaserc.json" with { type: "json" };
@@ -55,6 +56,44 @@ test("Docker cache export cannot block CI or image publication", () => {
   expect(imageWorkflow).toContain(
     "cache-to: type=gha,mode=max,scope=release-image,ignore-error=true,timeout=2m",
   );
+});
+
+test("a metadata PR failure cannot strand an existing release without its image and installer", () => {
+  const { jobs } = Bun.YAML.parse(
+    readFileSync(new URL("../.github/workflows/ci.yml", import.meta.url), "utf8"),
+  );
+  // GitHub implicitly requires successful dependencies unless an explicit
+  // status function is present. Exercise the actual workflow expressions.
+  const runs = (job, needs, cancelled = false) => {
+    const condition = job.if.replace(/^\$\{\{\s*|\s*\}\}$/g, "");
+    const hasStatusCheck = /\b(?:success|failure|always|cancelled)\(/.test(condition);
+    const dependencies = Array.isArray(job.needs) ? job.needs : [job.needs];
+    const implicitSuccess = dependencies.every((name) => needs[name].result === "success");
+    return (
+      (hasStatusCheck || implicitSuccess) &&
+      runInNewContext(condition, { needs, cancelled: () => cancelled })
+    );
+  };
+  const released = { result: "failure", outputs: { version: "1.14.0" } };
+  expect(runs(jobs.publish, { release: released })).toBe(true);
+  expect(runs(jobs["local-helper"], { release: released, publish: { result: "success" } })).toBe(
+    true,
+  );
+  for (const result of ["failure", "skipped", "cancelled"]) {
+    expect(runs(jobs["local-helper"], { release: released, publish: { result } })).toBe(false);
+  }
+  for (const result of ["success", "failure", "skipped"]) {
+    const noRelease = { result, outputs: { version: "" } };
+    expect(runs(jobs.publish, { release: noRelease })).toBe(false);
+    expect(runs(jobs["local-helper"], { release: noRelease, publish: { result: "success" } })).toBe(
+      false,
+    );
+  }
+  expect(runs(jobs.publish, { release: released }, true)).toBe(false);
+  expect(
+    runs(jobs["local-helper"], { release: released, publish: { result: "success" } }, true),
+  ).toBe(false);
+  expect(jobs.release.needs).toEqual(["verify", "docker"]);
 });
 
 test("source package version matches the newest changelog release", () => {
