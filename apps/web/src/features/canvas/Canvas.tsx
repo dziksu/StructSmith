@@ -137,6 +137,12 @@ export function Canvas({
         initialLocation.selection.id === relationshipIdOf(edge),
     })),
   );
+  // Overlapping paths must not intercept a selected connector's reconnect
+  // handles. Keep it above other edges while staying below the cards (20+).
+  const layeredEdges = useMemo(
+    () => edges.map((edge) => (edge.selected ? { ...edge, zIndex: 11 } : edge)),
+    [edges],
+  );
   const [menu, setMenu] = useState<{ x: number; y: number; items: ContextMenuItem[] } | null>(null);
   const pendingLayout = useRef(new Map<string, { x: number; y: number }>());
   const layoutTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -960,7 +966,7 @@ export function Canvas({
     >
       <ReactFlow
         nodes={allNodes}
-        edges={edges}
+        edges={layeredEdges}
         nodeTypes={nodeTypes}
         edgeTypes={edgeTypes}
         onNodesChange={onNodesChange}
