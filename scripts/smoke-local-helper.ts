@@ -2,20 +2,22 @@ import assert from "node:assert/strict";
 import { mkdtempSync, readFileSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
-import {
-  AgentChatSchema,
-  defaultAgentSettings,
-  PRODUCT,
-  WorkspaceSchema,
-} from "@structsmith/contracts";
+import { AgentChatSchema, defaultAgentSettings, WorkspaceSchema } from "@structsmith/contracts";
 import { fakeCodex } from "../apps/server/src/agents/test-cli";
 
 // A disposable real-Docker test. The executable starts from a directory with no checkout.
 const image = process.argv[2];
-if (!image) throw new Error("Usage: bun scripts/smoke-local-helper.ts IMAGE");
+if (!image) throw new Error("Usage: bun scripts/smoke-local-helper.ts IMAGE [EXECUTABLE]");
 const executable = resolve(
-  `dist/local-helper/structsmith-local-${process.platform}-${process.arch}`,
+  process.argv[3] ?? `dist/local-helper/structsmith-local-${process.platform}-${process.arch}`,
 );
+const versionCommand = Bun.spawn([executable, "--version"], {
+  stdout: "pipe",
+  stderr: "inherit",
+});
+const version = (await new Response(versionCommand.stdout).text()).trim();
+assert.equal(await versionCommand.exited, 0);
+assert.match(version, /^\d+\.\d+\.\d+$/);
 const directory = mkdtempSync(join(tmpdir(), "structsmith-local-smoke-"));
 const profile = join(directory, "profile");
 const name = `structsmith-local-smoke-${process.pid}`;
@@ -69,7 +71,9 @@ async function waitFor(predicate: () => Promise<boolean>, description: string) {
 }
 try {
   await waitFor(async () => (await request("/api/agent-chat/settings")).ok, "startup");
-  assert.equal((await request("/health")).status, 200);
+  const health = await request("/health");
+  assert.equal(health.status, 200);
+  assert.equal((await health.json()).version, version);
   assert.match(await (await request("/")).text(), /<html/);
   assert.equal(
     (await fetch(`${base}/api/workspaces`, { headers: { Origin: "https://foreign.example" } }))
@@ -155,7 +159,7 @@ import {StreamableHTTPClientTransport} from ${JSON.stringify(Bun.resolveSync("@m
   await waitFor(async () => (await readChat()).messages.at(-1)?.status === "cancelled", "Stop");
   assert.equal((await readChat()).messages.at(-1)?.text, "Partial before Stop");
   console.log(
-    `Standalone helper ${PRODUCT.version}: HTML, authenticated Docker REST, host CLI, scoped MCP writes, streaming and Stop passed.`,
+    `Standalone helper ${version}: HTML, authenticated Docker REST, host CLI, scoped MCP writes, streaming and Stop passed.`,
   );
 } finally {
   if (helper.exitCode === null) {

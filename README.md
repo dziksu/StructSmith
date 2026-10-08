@@ -81,8 +81,10 @@ curl -fsSL https://github.com/dziksu/StructSmith/releases/latest/download/struct
 ```
 
 The release installer verifies the binary's SHA-256 checksum. No Git clone,
-Node.js or Bun installation is required. **These assets become available after
-this change ships in a GitHub release; older releases do not contain them.**
+Node.js or Bun installation is required. The installer is attached after the
+matching image is published. If this URL returns 404, check the release's image
+and local launcher publication jobs; release notes alone do not mean the files
+are ready to download.
 
 Open <http://localhost:8090> and choose **Agent settings** to select your installed
 CLI, model and reasoning effort. The launcher uses port 8090 for UI/chat and

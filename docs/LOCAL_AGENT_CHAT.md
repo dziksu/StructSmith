@@ -128,9 +128,10 @@ curl -fsSL https://github.com/dziksu/StructSmith/releases/latest/download/struct
 ```
 
 The binary/checksums/installer are attached by CI after the matching Docker image
-is published. The command is available starting with the release containing this
-change, not in older releases. Bun is compiled into the executable; neither Bun,
-Node.js nor a repository checkout is needed. Linux binaries require glibc.
+is published. If the download returns 404, check those publication jobs: release
+notes alone do not confirm that the installer is available. Bun is compiled into
+the executable; neither Bun, Node.js nor a repository checkout is needed. Linux
+binaries require glibc.
 
 The installer writes a versioned binary and shortcut under
 `~/.local/share/structsmith`. Run that `structsmith-local` shortcut again to start,
@@ -181,6 +182,8 @@ bun run build:local
 bun run build:local --all
 # Test an already built image with a disposable volume and fake native CLI:
 bun scripts/smoke-local-helper.ts IMAGE
+# Test a binary installed outside the checkout:
+bun scripts/smoke-local-helper.ts IMAGE /path/to/structsmith-local
 ```
 
 A plain Docker deployment still cannot start host-installed CLI programs. Its

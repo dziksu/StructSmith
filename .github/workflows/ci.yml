@@ -195,7 +195,9 @@ jobs:
   publish:
     name: Publish release image
     needs: release
-    if: needs.release.outputs.version != ''
+    # A valid release can exist even when its metadata PR fails. Do not leave
+    # that release without an image and installer because changelog sync failed.
+    if: ${{ !cancelled() && needs.release.outputs.version != '' }}
     permissions:
       contents: read
       packages: write
@@ -207,7 +209,7 @@ jobs:
   local-helper:
     name: Publish local launcher assets
     needs: [release, publish]
-    if: needs.release.outputs.version != ''
+    if: ${{ !cancelled() && needs.release.outputs.version != '' && needs.publish.result == 'success' }}
     runs-on: ubuntu-latest
     permissions:
       contents: write
