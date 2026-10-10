@@ -1,5 +1,15 @@
 # Changelog
 
+## [1.14.2](https://github.com/dziksu/structsmith/compare/v1.14.1...v1.14.2) (2026-10-10)
+
+### Build and Dependencies
+
+* **deps-dev:** bump the dev-dependencies group with 3 updates ([#113](https://github.com/dziksu/structsmith/issues/113)) ([c48460d](https://github.com/dziksu/structsmith/commit/c48460d91d10ba5942a701606f280deaae0e6473))
+* **deps:** bump react-i18next from 17.0.15 to 17.0.16 in the i18n group across 1 directory ([#110](https://github.com/dziksu/structsmith/issues/110)) ([6d57999](https://github.com/dziksu/structsmith/commit/6d57999c986517e85740c21f0b081119009fe533))
+* **deps:** bump react-resizable-panels from 4.14.1 to 4.14.2 ([#114](https://github.com/dziksu/structsmith/issues/114)) ([bb5d3dc](https://github.com/dziksu/structsmith/commit/bb5d3dcf96def9f5ffdca8e36aa7125b5fd4e1dd))
+* **deps:** bump the radix group with 13 updates ([#111](https://github.com/dziksu/structsmith/issues/111)) ([2e58777](https://github.com/dziksu/structsmith/commit/2e58777c9e217f07da45df76c6b1265e597bc27f))
+* **deps:** bump the tanstack group with 2 updates ([#112](https://github.com/dziksu/structsmith/issues/112)) ([1d52e9f](https://github.com/dziksu/structsmith/commit/1d52e9fff1c3ab8ff5b923e83dbd095568e06af9))
+
 ## [1.14.1](https://github.com/dziksu/structsmith/compare/v1.14.0...v1.14.1) (2026-10-08)
 
 ### Bug Fixes
