@@ -31,6 +31,8 @@ export interface ElementNodeData extends Record<string, unknown> {
 
 export interface BoundaryNodeData extends Record<string, unknown> {
   name: string;
+  /** Visible members, including those inside nested frames, moved by the header. */
+  memberElementIds: string[];
   layer?: ArchitectureBoundary["layer"];
   kind?: ArchitectureElement["kind"];
   classification: "public" | "restricted" | "private" | null;
@@ -274,13 +276,30 @@ export function computeBoundaries(
       position: { x: minX - BOUNDARY_PADDING, y: minY - BOUNDARY_PADDING - BOUNDARY_HEADER },
       width: maxX - minX + BOUNDARY_PADDING * 2,
       height: maxY - minY + BOUNDARY_PADDING * 2 + BOUNDARY_HEADER,
+      // These frames have known dimensions and no connectors. Keep them
+      // initialized even though their transient measurements are not in state.
+      measured: {
+        width: maxX - minX + BOUNDARY_PADDING * 2,
+        height: maxY - minY + BOUNDARY_PADDING * 2 + BOUNDARY_HEADER,
+      },
+      handles: [],
       data: {
         name: parent.name,
         kind: parent.kind,
         classification: parent.external ? "public" : null,
         elementId: parent.id,
+        memberElementIds: [
+          ...new Set(
+            children.flatMap((child) =>
+              present.has(child.id)
+                ? [child.id]
+                : (nestedBoundaries.find((boundary) => boundary.id === child.id)?.elementIds ?? []),
+            ),
+          ),
+        ],
       },
-      draggable: false,
+      draggable: true,
+      dragHandle: ".boundary-drag-handle",
       // Derived containers are clickable through Canvas.onNodeClick, but must
       // stay out of React Flow's rectangle/multi-selection of real elements.
       selectable: false,
@@ -309,6 +328,7 @@ export function computeSemanticBoundaries(
   const byId = new Map(active.map((boundary) => [boundary.id, boundary] as const));
   const sourceById = new Map(sources.map((source) => [source.id, source] as const));
   const boxes = new Map<string, BoundarySource>();
+  const members = new Map<string, Set<string>>();
 
   const boxFor = (
     boundary: ArchitectureBoundary,
@@ -321,9 +341,13 @@ export function computeSemanticBoundaries(
     const contents: BoundarySource[] = boundary.elementIds
       .map((id) => sourceById.get(id))
       .filter((source): source is BoundarySource => Boolean(source));
+    const memberIds = new Set(contents.map((source) => source.id));
     for (const child of active.filter((item) => item.parentBoundaryId === boundary.id)) {
       const childBox = boxFor(child, visiting);
-      if (childBox) contents.push(childBox);
+      if (childBox) {
+        contents.push(childBox);
+        for (const id of members.get(child.id) ?? []) memberIds.add(id);
+      }
     }
     visiting.delete(boundary.id);
     if (contents.length === 0) return null;
@@ -339,6 +363,7 @@ export function computeSemanticBoundaries(
       height: maxY - minY + BOUNDARY_PADDING * 2 + BOUNDARY_HEADER,
     };
     boxes.set(boundary.id, box);
+    members.set(boundary.id, memberIds);
     return box;
   };
 
@@ -364,13 +389,17 @@ export function computeSemanticBoundaries(
         position: { x: box.x, y: box.y },
         width: box.width,
         height: box.height,
+        measured: { width: box.width, height: box.height },
+        handles: [],
         data: {
           name: boundary.name,
           layer: boundary.layer,
           classification: boundary.classification,
           boundaryId: boundary.id,
+          memberElementIds: [...(members.get(boundary.id) ?? [])],
         },
-        draggable: false,
+        draggable: true,
+        dragHandle: ".boundary-drag-handle",
         // Boundary boxes are view-owned containers, not blocks in a group
         // selection. Canvas.onNodeClick still opens their inspector.
         selectable: false,
@@ -396,32 +425,8 @@ export function computeCanvasBoundaries(
   const semanticBoundaries = computeSemanticBoundaries(sources, boundaries, layer, enabled);
   if (!enabled) return { parentBoundaries: [], semanticBoundaries };
 
-  const active = boundaries.filter((boundary) => boundary.layer === layer);
-  const children = new Map<string, ArchitectureBoundary[]>();
-  for (const boundary of active) {
-    if (!boundary.parentBoundaryId) continue;
-    const bucket = children.get(boundary.parentBoundaryId);
-    if (bucket) bucket.push(boundary);
-    else children.set(boundary.parentBoundaryId, [boundary]);
-  }
-
-  const members = new Map<string, Set<string>>();
-  const memberIds = (boundaryId: string, visiting = new Set<string>()): Set<string> => {
-    const cached = members.get(boundaryId);
-    if (cached) return cached;
-    if (visiting.has(boundaryId)) return new Set();
-    visiting.add(boundaryId);
-    const boundary = active.find((candidate) => candidate.id === boundaryId);
-    const result = new Set(boundary?.elementIds ?? []);
-    for (const child of children.get(boundaryId) ?? []) {
-      for (const elementId of memberIds(child.id, visiting)) result.add(elementId);
-    }
-    visiting.delete(boundaryId);
-    members.set(boundaryId, result);
-    return result;
-  };
-
   const nestedBoundaries = semanticBoundaries.flatMap((node): NestedBoundarySource[] => {
+    if (node.type !== "boundary") return [];
     const boundaryId = node.data.boundaryId;
     if (!boundaryId || node.width === undefined || node.height === undefined) return [];
     return [
@@ -431,7 +436,7 @@ export function computeCanvasBoundaries(
         y: node.position.y,
         width: node.width,
         height: node.height,
-        elementIds: [...memberIds(String(boundaryId))],
+        elementIds: node.data.memberElementIds,
       },
     ];
   });

@@ -36,7 +36,9 @@ describe("semantic boundaries", () => {
         name: "Payments Platform",
         kind: "softwareSystem",
         elementId: system.id,
+        memberElementIds: [api.id],
       });
+      expect(frames[0]).toMatchObject({ draggable: true, dragHandle: ".boundary-drag-handle" });
       expect(frames[0]?.data).not.toHaveProperty("layer");
     } finally {
       close();
@@ -109,6 +111,11 @@ describe("semantic boundaries", () => {
         BOUNDARY_PADDING + BOUNDARY_HEADER,
       );
       expect([parent.zIndex, clientFrame.zIndex, mobileFrame.zIndex]).toEqual([0, 1, 2]);
+      expect(new Set(parent.data.memberElementIds as string[])).toEqual(
+        new Set([mobile.id, api.id]),
+      );
+      expect(clientFrame.data.memberElementIds).toEqual([mobile.id]);
+      expect(mobileFrame.data.memberElementIds).toEqual([mobile.id]);
     } finally {
       close();
     }
@@ -334,6 +341,13 @@ describe("semantic boundaries", () => {
     expect(rendered[0]?.height).toBe(production.height);
     expect(rendered[1]?.width).toBe(privateZone.width);
     expect(rendered[1]?.height).toBe(privateZone.height);
+    expect(rendered[0]?.measured).toEqual({ width: production.width, height: production.height });
+    expect(rendered[1]?.measured).toEqual({ width: privateZone.width, height: privateZone.height });
+    expect(rendered.every((node) => node.handles?.length === 0)).toBe(true);
+    expect(
+      rendered.every((node) => node.draggable && node.dragHandle === ".boundary-drag-handle"),
+    ).toBe(true);
+    expect(rendered[0]?.data.memberElementIds).toEqual(["api", "database"]);
 
     const positions = computeLayout(
       [

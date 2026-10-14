@@ -24,6 +24,7 @@ import {
 import { Tooltip } from "@/components/ui/tooltip";
 import { useApplyOperations } from "@/hooks/useApi";
 import { cn } from "@/lib/utils";
+import { useEditorStore } from "@/store/editor";
 import { CopyReferenceButton } from "../reference/CopyReferenceButton";
 import { initialViewElementIds } from "./viewSeed";
 
@@ -53,7 +54,8 @@ export function ViewsPanel({
 }: ViewsPanelProps) {
   const { t } = useTranslation();
   const applyOperations = useApplyOperations(workspaceId);
-  const [open, setOpen] = useState(false);
+  const open = useEditorStore((state) => state.newViewOpen);
+  const setOpen = useEditorStore((state) => state.setNewViewOpen);
   const [name, setName] = useState("");
   const [kind, setKind] = useState<ViewKind>("container");
   const [scope, setScope] = useState<string>("none");

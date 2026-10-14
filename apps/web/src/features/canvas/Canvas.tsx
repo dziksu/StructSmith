@@ -27,10 +27,12 @@ import {
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { useChatStore } from "@/features/chat/store";
 import { useApiErrorHandler, useApplyOperations } from "@/hooks/useApi";
 import { api } from "@/lib/api";
-import { hasPrimaryModifier, primaryModifierKeyCode } from "@/lib/platform";
+import { hasPrimaryModifier } from "@/lib/platform";
 import { invalidateWorkspace } from "@/lib/query";
 import { useEditorStore } from "@/store/editor";
 import { useHistoryStore } from "@/store/history";
@@ -50,10 +52,12 @@ import {
   NODE_WIDTH,
   type RelationshipEdgeData,
 } from "./graph";
+import { type BoundaryDrag, boundaryDragPositions, startBoundaryDrag } from "./movement";
 import { type ContextMenuItem, NodeContextMenu } from "./NodeContextMenu";
 import { RelationshipEdge } from "./RelationshipEdge";
 import { RelationshipLegend } from "./RelationshipLegend";
 import { sideForHandle } from "./relationshipGeometry";
+import { modelDeletionRoots, selectionFromCanvas } from "./selection";
 
 /** An implied edge carries a derived id, so always resolve the real one. */
 const relationshipIdOf = (edge: { id: string; data?: Record<string, unknown> }): string =>
@@ -62,6 +66,7 @@ const relationshipIdOf = (edge: { id: string; data?: Record<string, unknown> }):
 const nodeTypes = { element: ElementNode, boundary: BoundaryNode };
 const edgeTypes = { relationship: RelationshipEdge };
 const LAYOUT_DEBOUNCE_MS = 500;
+const SELECTION_KEYS = ["Meta", "Control"];
 
 export const DRAG_MIME = "application/x-architecture-element";
 
@@ -147,9 +152,11 @@ export function Canvas({
   const pendingLayout = useRef(new Map<string, { x: number; y: number }>());
   const layoutTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const dragOrigins = useRef(new Map<string, { x: number; y: number }>());
+  const boundaryDrag = useRef<BoundaryDrag | null>(null);
   const layoutSaveQueue = useRef<Promise<void>>(Promise.resolve());
   const ignoreDetailsUntil = useRef(0);
   const reconnectingEdge = useRef<FlowEdge | null>(null);
+  const canvasSelectionKey = useRef("");
 
   // A rebuild happens after every mutation; carry the current selection over so
   // the highlight does not blink off while the inspector still shows the item.
@@ -221,17 +228,42 @@ export function Canvas({
   }, [focusRequest, flow]);
 
   useEffect(() => {
-    if (selection.type !== "relationship") return;
+    // A navigation restore in the fit effect above can replace this render's
+    // selection. Let that next render synchronize the requested highlights.
+    if (selection !== useEditorStore.getState().selection) return;
+    const currentSelection = selection;
+    const requestedElementIds = new Set(
+      currentSelection.type === "element"
+        ? [currentSelection.id]
+        : currentSelection.type === "elements"
+          ? currentSelection.ids
+          : [],
+    );
+    const elementIds = new Set(
+      graph.nodes.filter((node) => requestedElementIds.has(node.id)).map((node) => node.id),
+    );
+    const edgeIds = new Set(
+      graph.edges
+        .filter(
+          (edge) =>
+            currentSelection.type === "relationship" &&
+            relationshipIdOf(edge) === currentSelection.id,
+        )
+        .map((edge) => edge.id),
+    );
     setNodes((current) =>
-      current.map((node) => (node.selected ? { ...node, selected: false } : node)),
+      current.map((node) => {
+        const shouldSelect = elementIds.has(node.id);
+        return !!node.selected === shouldSelect ? node : { ...node, selected: shouldSelect };
+      }),
     );
     setEdges((current) =>
       current.map((edge) => {
-        const shouldSelect = relationshipIdOf(edge) === selection.id;
-        return edge.selected === shouldSelect ? edge : { ...edge, selected: shouldSelect };
+        const shouldSelect = edgeIds.has(edge.id);
+        return !!edge.selected === shouldSelect ? edge : { ...edge, selected: shouldSelect };
       }),
     );
-  }, [selection]);
+  }, [selection, graph.nodes, graph.edges]);
 
   /* --------------------------- layout persistence --------------------------- */
 
@@ -303,7 +335,9 @@ export function Canvas({
   const onNodesChange = useCallback(
     (changes: NodeChange[]) => {
       const relevant = changes.filter(
-        (change) => !("id" in change) || !isBoundaryId(change.id as string),
+        (change) =>
+          (!("id" in change) || !isBoundaryId(change.id)) &&
+          !(change.type === "position" && boundaryDrag.current),
       );
       setNodes((current) => applyNodeChanges(relevant, current) as FlowNode[]);
 
@@ -335,6 +369,13 @@ export function Canvas({
       if (layoutTimer.current) clearTimeout(layoutTimer.current);
       flushLayout();
       dragOrigins.current.clear();
+      boundaryDrag.current = startBoundaryDrag(node, flow.getNodes() as FlowNode[]);
+      if (boundaryDrag.current) {
+        for (const [id, position] of boundaryDrag.current.members) {
+          dragOrigins.current.set(id, position);
+        }
+        return;
+      }
       for (const dragged of draggedNodes.length > 0 ? draggedNodes : [node]) {
         if (isBoundaryId(dragged.id)) continue;
         dragOrigins.current.set(dragged.id, {
@@ -343,25 +384,51 @@ export function Canvas({
         });
       }
     },
-    [flushLayout],
+    [flushLayout, flow],
   );
+
+  const onNodeDrag = useCallback<OnNodeDrag<FlowNode>>((_event, node) => {
+    const drag = boundaryDrag.current;
+    if (!drag || drag.id !== node.id) return;
+    const positions = boundaryDragPositions(drag, node.position);
+    setNodes((current) =>
+      current.map((member) => {
+        const position = positions.get(member.id);
+        return position ? { ...member, position } : member;
+      }),
+    );
+  }, []);
 
   const onNodeDragStop = useCallback<OnNodeDrag<FlowNode>>(
     (_event, node, draggedNodes) => {
-      const moved = (draggedNodes.length > 0 ? draggedNodes : [node]).filter(
-        (dragged) => !isBoundaryId(dragged.id),
-      );
-      const changes = moved.flatMap((dragged) => {
-        const before = dragOrigins.current.get(dragged.id);
+      const drag = boundaryDrag.current;
+      const positions = drag
+        ? boundaryDragPositions(drag, node.position)
+        : new Map(
+            (draggedNodes.length > 0 ? draggedNodes : [node])
+              .filter((dragged) => !isBoundaryId(dragged.id))
+              .map((dragged) => [dragged.id, dragged.position]),
+          );
+      if (drag) {
+        setNodes((current) =>
+          current.map((member) => {
+            const position = positions.get(member.id);
+            return position ? { ...member, position } : member;
+          }),
+        );
+      }
+      const changes = [...positions].flatMap(([elementId, position]) => {
+        const before = dragOrigins.current.get(elementId);
         const after = {
-          x: Math.round(dragged.position.x),
-          y: Math.round(dragged.position.y),
+          x: Math.round(position.x),
+          y: Math.round(position.y),
         };
         if (!before || (Math.round(before.x) === after.x && Math.round(before.y) === after.y)) {
           return [];
         }
-        return [{ elementId: dragged.id, before, after }];
+        return [{ elementId, before, after }];
       });
+      boundaryDrag.current = null;
       dragOrigins.current.clear();
       persistLayout(
         changes.map(({ elementId, after }) => ({ elementId, ...after })),
@@ -434,27 +501,24 @@ export function Canvas({
   const onSelectionChange = useCallback(
     ({ nodes: selectedNodes, edges: selectedEdges }: OnSelectionChangeParams) => {
       if (fittedViewId.current !== view.id) return;
-      const elementNodes = selectedNodes.filter((node) => node.type === "element");
-      if (elementNodes.length > 1) {
-        select({ type: "elements", ids: elementNodes.map((node) => node.id).sort() });
-        return;
-      }
-      const node = elementNodes[0] ?? selectedNodes[0];
-      const edge = selectedEdges[0];
-      if (node) {
-        if (node.type === "boundary" && node.data?.boundaryId) {
-          select({ type: "boundary", id: String(node.data.boundaryId) });
-        } else {
-          select({
-            type: "element",
-            id: isBoundaryId(node.id) ? boundaryElementId(node.id) : node.id,
-          });
-        }
-      } else if (edge) {
-        select({ type: "relationship", id: relationshipIdOf(edge) });
-      } else {
-        clearSelection();
-      }
+      const elementIds = selectedNodes
+        .filter((node) => node.type === "element")
+        .map((node) => node.id)
+        .sort();
+      const relationshipIds = selectedEdges.map(relationshipIdOf);
+      const key = JSON.stringify([elementIds, [...relationshipIds].sort()]);
+      // Selecting a derived frame changes React Flow's selected-node list
+      // before the old card highlights are cleared. Ignore that frame-only
+      // notification so it cannot replace the requested boundary inspector.
+      if (key === canvasSelectionKey.current) return;
+      canvasSelectionKey.current = key;
+      const next = selectionFromCanvas(
+        elementIds,
+        relationshipIds,
+        useEditorStore.getState().selection,
+      );
+      if (next.type === "none") clearSelection();
+      else select(next);
     },
     [clearSelection, select, view.id],
   );
@@ -478,21 +542,25 @@ export function Canvas({
   );
 
   const removeFromView = useCallback(
-    (elementId: string) =>
+    (elementIds: string[]) =>
       applyOperations.mutate({
         label: t("contextMenu.removeFromView"),
-        operations: [
-          { op: "setViewElements", viewId: view.id, elementIds: [elementId], mode: "remove" },
-        ],
+        operations: [{ op: "setViewElements", viewId: view.id, elementIds, mode: "remove" }],
       }),
     [applyOperations, t, view.id],
   );
 
   const hideInView = useCallback(
-    (elementId: string) =>
+    (elementIds: string[]) =>
       applyOperations.mutate({
         label: t("contextMenu.hideFromView"),
-        operations: [{ op: "setLayout", viewId: view.id, entries: [{ elementId, hidden: true }] }],
+        operations: [
+          {
+            op: "setLayout",
+            viewId: view.id,
+            entries: elementIds.map((elementId) => ({ elementId, hidden: true })),
+          },
+        ],
       }),
     [applyOperations, t, view.id],
   );
@@ -554,14 +622,15 @@ export function Canvas({
   );
 
   const deleteFromModel = useCallback(
-    (elementId: string) => {
-      const name = elementsById.get(elementId)?.name ?? elementId;
+    (elementIds: string[]) => {
+      const roots = modelDeletionRoots(elementIds, elementsById);
+      if (roots.length === 0) return;
       applyOperations.mutate({
-        label: `Deleted ${name}`,
-        operations: [{ op: "deleteElement", elementId, cascade: true }],
+        label: t("contextMenu.deleteFromModel"),
+        operations: roots.map((elementId) => ({ op: "deleteElement", elementId, cascade: true })),
       });
     },
-    [applyOperations, elementsById],
+    [applyOperations, elementsById, t],
   );
 
   const duplicateElement = useCallback(
@@ -647,6 +716,7 @@ export function Canvas({
         .map((candidate) => candidate.id);
       const contextElementIds =
         node.selected && selectedElementIds.length > 1 ? selectedElementIds : [elementId];
+      const multiple = contextElementIds.length > 1;
       if (!node.selected) {
         setNodes((current) =>
           current.map((candidate) => ({ ...candidate, selected: candidate.id === elementId })),
@@ -701,14 +771,21 @@ export function Canvas({
           { label: t("contextMenu.duplicate"), onSelect: () => duplicateElement(elementId) },
           { label: t("contextMenu.connect"), onSelect: () => setConnectFrom(elementId) },
           {
-            label: t("contextMenu.hideFromView"),
-            onSelect: () => hideInView(elementId),
+            label: t(multiple ? "contextMenu.hideSelectionFromView" : "contextMenu.hideFromView"),
+            onSelect: () => hideInView(contextElementIds),
             separatorBefore: true,
           },
-          { label: t("contextMenu.removeFromView"), onSelect: () => removeFromView(elementId) },
           {
-            label: t("contextMenu.deleteFromModel"),
-            onSelect: () => deleteFromModel(elementId),
+            label: t(
+              multiple ? "contextMenu.removeSelectionFromView" : "contextMenu.removeFromView",
+            ),
+            onSelect: () => removeFromView(contextElementIds),
+          },
+          {
+            label: t(
+              multiple ? "contextMenu.deleteSelectionFromModel" : "contextMenu.deleteFromModel",
+            ),
+            onSelect: () => deleteFromModel(contextElementIds),
             destructive: true,
             separatorBefore: true,
           },
@@ -971,6 +1048,7 @@ export function Canvas({
         edgeTypes={edgeTypes}
         onNodesChange={onNodesChange}
         onNodeDragStart={onNodeDragStart}
+        onNodeDrag={onNodeDrag}
         onNodeDragStop={onNodeDragStop}
         onEdgesChange={onEdgesChange}
         onConnect={onConnect}
@@ -1039,8 +1117,8 @@ export function Canvas({
         onDelete={deleteSelection}
         selectionMode={SelectionMode.Partial}
         panOnDrag
-        selectionKeyCode={primaryModifierKeyCode()}
-        multiSelectionKeyCode={primaryModifierKeyCode()}
+        selectionKeyCode={SELECTION_KEYS}
+        multiSelectionKeyCode={SELECTION_KEYS}
         // A selected boundary covers a large area. Keep the explicit graph
         // layering (boundaries < edges < elements) so cards remain clickable.
         elevateNodesOnSelect={false}
@@ -1064,6 +1142,21 @@ export function Canvas({
           maskColor="transparent"
         />
       </ReactFlow>
+
+      {selection.type === "elements" && selection.ids.length > 1 && (
+        <div className="absolute left-1/2 top-14 flex w-max max-w-[calc(100%_-_1.5rem)] -translate-x-1/2 flex-wrap items-center justify-center gap-2 rounded-md border border-border bg-card/95 p-2 shadow-lg backdrop-blur-sm">
+          <Badge>{t("canvas.selectionCount", { count: selection.ids.length })}</Badge>
+          <Button
+            variant="outline"
+            size="sm"
+            className="h-auto min-h-7 max-w-full whitespace-normal text-center"
+            disabled={applyOperations.isPending}
+            onClick={() => removeFromView(selection.ids)}
+          >
+            {t("contextMenu.removeSelectionFromView")}
+          </Button>
+        </div>
+      )}
 
       {graph.nodes.length === 0 && (
         <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center gap-1 text-center">

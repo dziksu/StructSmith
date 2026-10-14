@@ -219,7 +219,9 @@
     "hiddenElements": "{{count}} hidden",
     "copiedElements": "Copied {{count}} element(s)",
     "pastedElements": "Pasted {{count}} element(s)",
-    "deletedSelection": "Removed selected items"
+    "deletedSelection": "Removed selected items",
+    "selectionCount": "{{count}} selected",
+    "dragGroup": "Drag to move the group's elements"
   },
   "contextMenu": {
     "edit": "Edit",
@@ -230,7 +232,10 @@
     "hideFromView": "Hide from this view",
     "removeFromView": "Remove from this view",
     "deleteFromModel": "Delete from model",
-    "deleteRelationship": "Delete relationship"
+    "deleteRelationship": "Delete relationship",
+    "hideSelectionFromView": "Hide selected elements",
+    "removeSelectionFromView": "Remove selected elements from view",
+    "deleteSelectionFromModel": "Delete selected elements from model"
   },
   "presales": {
     "title": "Presales",

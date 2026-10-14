@@ -59,10 +59,12 @@ function WorkspaceStudio(props: StudioPageProps) {
   const [navigationReset, setNavigationReset] = useState(0);
   const resetHistory = useHistoryStore((state) => state.reset);
   const clearSelection = useEditorStore((state) => state.clearSelection);
+  const setNewViewOpen = useEditorStore((state) => state.setNewViewOpen);
   useEffect(() => {
     resetHistory();
     clearSelection();
-  }, [resetHistory, clearSelection]);
+    setNewViewOpen(false);
+  }, [resetHistory, clearSelection, setNewViewOpen]);
   return (
     <ReactFlowProvider key={`${props.viewId ?? "initial"}:${navigationReset}`}>
       <StudioContent
