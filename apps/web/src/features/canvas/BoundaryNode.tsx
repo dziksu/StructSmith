@@ -27,7 +27,8 @@ function BoundaryNodeComponent({ data, selected }: NodeProps & { data: BoundaryN
       }}
     >
       <div
-        className="flex h-9 items-center gap-2 border-b px-3 py-2 text-xs font-bold uppercase tracking-wider backdrop-blur-sm"
+        className="boundary-drag-handle flex h-9 cursor-grab items-center gap-2 border-b px-3 py-2 text-xs font-bold uppercase tracking-wider backdrop-blur-sm active:cursor-grabbing"
+        title={t("canvas.dragGroup")}
         style={{
           borderColor: `color-mix(in oklch, ${accent} 45%, var(--canvas))`,
           backgroundColor: `color-mix(in oklch, ${accent} 34%, var(--canvas))`,

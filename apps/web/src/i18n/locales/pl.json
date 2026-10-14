@@ -227,7 +227,9 @@
     "hiddenElements": "ukryte: {{count}}",
     "copiedElements": "Skopiowano elementy: {{count}}",
     "pastedElements": "Wklejono elementy: {{count}}",
-    "deletedSelection": "Usunięto wybrane elementy"
+    "deletedSelection": "Usunięto wybrane elementy",
+    "selectionCount": "Zaznaczono: {{count}}",
+    "dragGroup": "Przeciągnij, aby przesunąć elementy grupy"
   },
   "contextMenu": {
     "edit": "Edytuj",
@@ -238,7 +240,10 @@
     "hideFromView": "Ukryj w tym widoku",
     "removeFromView": "Usuń z tego widoku",
     "deleteFromModel": "Usuń z modelu",
-    "deleteRelationship": "Usuń relację"
+    "deleteRelationship": "Usuń relację",
+    "hideSelectionFromView": "Ukryj zaznaczone elementy",
+    "removeSelectionFromView": "Usuń zaznaczone elementy z widoku",
+    "deleteSelectionFromModel": "Usuń zaznaczone elementy z modelu"
   },
   "presales": {
     "title": "Presales",
