@@ -62,7 +62,7 @@ export function TopBar(props: TopBarProps) {
   const setCommandOpen = useEditorStore((state) => state.setCommandOpen);
   const setShortcutsOpen = useEditorStore((state) => state.setShortcutsOpen);
   const openElementPalette = useEditorStore((state) => state.openElementPalette);
-  const setExplorerTab = useEditorStore((state) => state.setExplorerTab);
+  const openNewView = useEditorStore((state) => state.openNewView);
 
   const ThemeIcon = theme === "dark" ? Moon : theme === "light" ? Sun : Monitor;
   const primary = primaryModifierLabel();
@@ -145,9 +145,7 @@ export function TopBar(props: TopBarProps) {
               {t("reference.copyView")}
             </DropdownMenuItem>
           )}
-          <DropdownMenuItem onSelect={() => setExplorerTab("views")}>
-            {t("topbar.newView")}
-          </DropdownMenuItem>
+          <DropdownMenuItem onSelect={openNewView}>{t("topbar.newView")}</DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
 
