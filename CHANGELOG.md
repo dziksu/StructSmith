@@ -1,5 +1,16 @@
 # Changelog
 
+## [1.15.0](https://github.com/dziksu/structsmith/compare/v1.14.2...v1.15.0) (2026-10-14)
+
+### Features
+
+* **canvas:** support bulk actions and group header dragging ([675252e](https://github.com/dziksu/structsmith/commit/675252e571d431ed3fc77f5f1a724df807de7c70))
+
+### Bug Fixes
+
+* **canvas:** synchronize inspector and diagram selection ([ee5b9f7](https://github.com/dziksu/structsmith/commit/ee5b9f70af30f3e5554189f92ff61f36c6a64387))
+* **views:** open creation dialog from the new view menu ([06c8e7e](https://github.com/dziksu/structsmith/commit/06c8e7ed6c02dd822dbf63c346899a5292da72cb))
+
 ## [1.14.2](https://github.com/dziksu/structsmith/compare/v1.14.1...v1.14.2) (2026-10-10)
 
 ### Build and Dependencies
