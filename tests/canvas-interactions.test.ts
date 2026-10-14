@@ -1,10 +1,43 @@
 import { describe, expect, test } from "bun:test";
 import { buildGraph, computeCanvasBoundaries } from "../apps/web/src/features/canvas/graph";
 import { boundaryDragPositions, startBoundaryDrag } from "../apps/web/src/features/canvas/movement";
-import { modelDeletionRoots } from "../apps/web/src/features/canvas/selection";
+import { modelDeletionRoots, selectionFromCanvas } from "../apps/web/src/features/canvas/selection";
 import { createTestContext, createWorkspace } from "./helpers";
 
 describe("canvas group interactions", () => {
+  test("clearing real card selection preserves external inspectors but clears stale canvas selections", () => {
+    expect(selectionFromCanvas([], [], { type: "boundary", id: "team" })).toEqual({
+      type: "boundary",
+      id: "team",
+    });
+    expect(selectionFromCanvas([], [], { type: "view", id: "view" })).toEqual({
+      type: "view",
+      id: "view",
+    });
+    expect(selectionFromCanvas([], [], { type: "record", id: "note" })).toEqual({
+      type: "record",
+      id: "note",
+    });
+    expect(selectionFromCanvas([], [], { type: "elements", ids: ["one", "two"] })).toEqual({
+      type: "none",
+    });
+    expect(selectionFromCanvas([], [], { type: "relationship", id: "rel" })).toEqual({
+      type: "none",
+    });
+    expect(selectionFromCanvas(["two", "one"], [], { type: "boundary", id: "team" })).toEqual({
+      type: "elements",
+      ids: ["one", "two"],
+    });
+    expect(selectionFromCanvas(["one"], [], { type: "boundary", id: "team" })).toEqual({
+      type: "element",
+      id: "one",
+    });
+    expect(selectionFromCanvas([], ["rel"], { type: "view", id: "view" })).toEqual({
+      type: "relationship",
+      id: "rel",
+    });
+  });
+
   test("moves nested visible members by one delta, preserving spacing and position locks", () => {
     const { services, close } = createTestContext();
     try {

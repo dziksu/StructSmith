@@ -57,7 +57,7 @@ import { type ContextMenuItem, NodeContextMenu } from "./NodeContextMenu";
 import { RelationshipEdge } from "./RelationshipEdge";
 import { RelationshipLegend } from "./RelationshipLegend";
 import { sideForHandle } from "./relationshipGeometry";
-import { modelDeletionRoots } from "./selection";
+import { modelDeletionRoots, selectionFromCanvas } from "./selection";
 
 /** An implied edge carries a derived id, so always resolve the real one. */
 const relationshipIdOf = (edge: { id: string; data?: Record<string, unknown> }): string =>
@@ -156,6 +156,7 @@ export function Canvas({
   const layoutSaveQueue = useRef<Promise<void>>(Promise.resolve());
   const ignoreDetailsUntil = useRef(0);
   const reconnectingEdge = useRef<FlowEdge | null>(null);
+  const canvasSelectionKey = useRef("");
 
   // A rebuild happens after every mutation; carry the current selection over so
   // the highlight does not blink off while the inspector still shows the item.
@@ -227,17 +228,42 @@ export function Canvas({
   }, [focusRequest, flow]);
 
   useEffect(() => {
-    if (selection.type !== "relationship") return;
+    // A navigation restore in the fit effect above can replace this render's
+    // selection. Let that next render synchronize the requested highlights.
+    if (selection !== useEditorStore.getState().selection) return;
+    const currentSelection = selection;
+    const requestedElementIds = new Set(
+      currentSelection.type === "element"
+        ? [currentSelection.id]
+        : currentSelection.type === "elements"
+          ? currentSelection.ids
+          : [],
+    );
+    const elementIds = new Set(
+      graph.nodes.filter((node) => requestedElementIds.has(node.id)).map((node) => node.id),
+    );
+    const edgeIds = new Set(
+      graph.edges
+        .filter(
+          (edge) =>
+            currentSelection.type === "relationship" &&
+            relationshipIdOf(edge) === currentSelection.id,
+        )
+        .map((edge) => edge.id),
+    );
     setNodes((current) =>
-      current.map((node) => (node.selected ? { ...node, selected: false } : node)),
+      current.map((node) => {
+        const shouldSelect = elementIds.has(node.id);
+        return !!node.selected === shouldSelect ? node : { ...node, selected: shouldSelect };
+      }),
     );
     setEdges((current) =>
       current.map((edge) => {
-        const shouldSelect = relationshipIdOf(edge) === selection.id;
-        return edge.selected === shouldSelect ? edge : { ...edge, selected: shouldSelect };
+        const shouldSelect = edgeIds.has(edge.id);
+        return !!edge.selected === shouldSelect ? edge : { ...edge, selected: shouldSelect };
       }),
     );
-  }, [selection]);
+  }, [selection, graph.nodes, graph.edges]);
 
   /* --------------------------- layout persistence --------------------------- */
 
@@ -475,27 +501,24 @@ export function Canvas({
   const onSelectionChange = useCallback(
     ({ nodes: selectedNodes, edges: selectedEdges }: OnSelectionChangeParams) => {
       if (fittedViewId.current !== view.id) return;
-      const elementNodes = selectedNodes.filter((node) => node.type === "element");
-      if (elementNodes.length > 1) {
-        select({ type: "elements", ids: elementNodes.map((node) => node.id).sort() });
-        return;
-      }
-      const node = elementNodes[0] ?? selectedNodes[0];
-      const edge = selectedEdges[0];
-      if (node) {
-        if (node.type === "boundary" && node.data?.boundaryId) {
-          select({ type: "boundary", id: String(node.data.boundaryId) });
-        } else {
-          select({
-            type: "element",
-            id: isBoundaryId(node.id) ? boundaryElementId(node.id) : node.id,
-          });
-        }
-      } else if (edge) {
-        select({ type: "relationship", id: relationshipIdOf(edge) });
-      } else {
-        clearSelection();
-      }
+      const elementIds = selectedNodes
+        .filter((node) => node.type === "element")
+        .map((node) => node.id)
+        .sort();
+      const relationshipIds = selectedEdges.map(relationshipIdOf);
+      const key = JSON.stringify([elementIds, [...relationshipIds].sort()]);
+      // Selecting a derived frame changes React Flow's selected-node list
+      // before the old card highlights are cleared. Ignore that frame-only
+      // notification so it cannot replace the requested boundary inspector.
+      if (key === canvasSelectionKey.current) return;
+      canvasSelectionKey.current = key;
+      const next = selectionFromCanvas(
+        elementIds,
+        relationshipIds,
+        useEditorStore.getState().selection,
+      );
+      if (next.type === "none") clearSelection();
+      else select(next);
     },
     [clearSelection, select, view.id],
   );
