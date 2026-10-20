@@ -1,5 +1,21 @@
 # Changelog
 
+## [1.15.1](https://github.com/dziksu/structsmith/compare/v1.15.0...v1.15.1) (2026-10-20)
+
+### Build and Dependencies
+
+* **deps-dev:** bump the dev-dependencies group with 2 updates ([bd59022](https://github.com/dziksu/structsmith/commit/bd59022294f68cb7788ceea633edf4562fa8ff57))
+* **deps-dev:** integrate tooling updates from PR [#122](https://github.com/dziksu/structsmith/issues/122) ([142735a](https://github.com/dziksu/structsmith/commit/142735abcbc5d61270f8eff5758ae306ef62bb03))
+* **deps:** bump express from 5.2.1 to 5.3.0 in the express group ([5cadda6](https://github.com/dziksu/structsmith/commit/5cadda66831c85b6982a6729153f6397855770c5))
+* **deps:** bump i18next from 26.4.2 to 26.4.4 in the i18n group ([6b5954f](https://github.com/dziksu/structsmith/commit/6b5954ff3a2ca74c4f3585a63138f3d82ed94838))
+* **deps:** bump the radix group with 13 updates ([f0552e3](https://github.com/dziksu/structsmith/commit/f0552e3234e961d4f539f33d38fc4f9d45c220ae))
+* **deps:** bump the tanstack group with 2 updates ([af6e026](https://github.com/dziksu/structsmith/commit/af6e0263e04c79141d90bd3ffc418f085c488874))
+* **deps:** consolidate open dependency updates ([#123](https://github.com/dziksu/structsmith/issues/123)) ([b683694](https://github.com/dziksu/structsmith/commit/b6836942b2577c0671f1763e96b354692ed151e1)), closes [#118](https://github.com/dziksu/structsmith/issues/118) [#119](https://github.com/dziksu/structsmith/issues/119) [#120](https://github.com/dziksu/structsmith/issues/120) [#121](https://github.com/dziksu/structsmith/issues/121) [#122](https://github.com/dziksu/structsmith/issues/122)
+* **deps:** integrate express update from PR [#119](https://github.com/dziksu/structsmith/issues/119) ([d9bd809](https://github.com/dziksu/structsmith/commit/d9bd809efcf1e5bac912adb8bdf1be1f58a55589))
+* **deps:** integrate i18n update from PR [#118](https://github.com/dziksu/structsmith/issues/118) ([55e146b](https://github.com/dziksu/structsmith/commit/55e146b02b4e39540ab33b36c5459db02073e74e))
+* **deps:** integrate radix updates from PR [#120](https://github.com/dziksu/structsmith/issues/120) ([f4627a3](https://github.com/dziksu/structsmith/commit/f4627a3ede98790168ec687bbd7707df8b70786a))
+* **deps:** integrate tanstack updates from PR [#121](https://github.com/dziksu/structsmith/issues/121) ([53908b0](https://github.com/dziksu/structsmith/commit/53908b0a80dd2fdc611d0afcd7d98b635cfa5511))
+
 ## [1.15.0](https://github.com/dziksu/structsmith/compare/v1.14.2...v1.15.0) (2026-10-14)
 
 ### Features
