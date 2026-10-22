@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.15.2](https://github.com/dziksu/structsmith/compare/v1.15.1...v1.15.2) (2026-10-22)
+
+### Bug Fixes
+
+* **ci:** pin Node to patched 24.22.1 release ([#125](https://github.com/dziksu/structsmith/issues/125)) ([4367ca0](https://github.com/dziksu/structsmith/commit/4367ca03bbc9e5f34aba45c613065ad796085c6a))
+
 ## [1.15.1](https://github.com/dziksu/structsmith/compare/v1.15.0...v1.15.1) (2026-10-20)
 
 ### Build and Dependencies
