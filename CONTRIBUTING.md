@@ -151,8 +151,10 @@ The CI workflow can also be dispatched manually on `main`. Check release, image 
 asset jobs before announcing availability; release notes can exist before the image finishes.
 New tag-protection rules must allow the Actions token to create release tags.
 
-Node 24.10+ is required only for the release command; normal development still
-uses Bun. `bun run release` deliberately refuses to publish from a local shell.
+Node is required only for the release command; normal development still uses
+Bun. Release CI uses Node 24.22.1 LTS, which includes the
+[October 21, 2026 security fixes](https://nodejs.org/en/blog/vulnerability/october-2026-security-releases).
+`bun run release` deliberately refuses to publish from a local shell.
 Keep the Conventional Commits preset on 9.x until the release-notes generator
 supports changelog-writer 9; preset 10 requires that newer writer. The release
 tests cover both version selection and generated notes to catch this mismatch.
