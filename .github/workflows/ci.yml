@@ -112,7 +112,8 @@ jobs:
           persist-credentials: false
       - uses: actions/setup-node@v7
         with:
-          node-version: '24'
+          # Includes the October 21, 2026 Node.js security fixes.
+          node-version: '24.22.1'
       - uses: oven-sh/setup-bun@v2
         with:
           bun-version: latest
