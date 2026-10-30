@@ -1,5 +1,21 @@
 # Changelog
 
+## [1.15.3](https://github.com/dziksu/structsmith/compare/v1.15.2...v1.15.3) (2026-10-30)
+
+### Build and Dependencies
+
+* **deps:** bump lucide-react from 1.48.0 to 1.60.0 ([74d8086](https://github.com/dziksu/structsmith/commit/74d80864ec3ea916a604358fd69d39c72993368b))
+* **deps:** bump react-resizable-panels from 4.14.2 to 4.14.7 ([11b7356](https://github.com/dziksu/structsmith/commit/11b7356532289e2149c01e7d3b99cadf8a7ea1b9))
+* **deps:** bump the i18n group with 2 updates ([951bde3](https://github.com/dziksu/structsmith/commit/951bde39821e04e09f73e7afc57763e92cdefbaa))
+* **deps:** bump the react group with 2 updates ([d603ec3](https://github.com/dziksu/structsmith/commit/d603ec3ec8283270c1aa49317421547ef0ec98d9))
+* **deps:** bump the tanstack group with 2 updates ([208e2b5](https://github.com/dziksu/structsmith/commit/208e2b55876b4dd985cbab66a92bded61e58ddd9))
+* **deps:** consolidate October dependency updates ([#132](https://github.com/dziksu/structsmith/issues/132)) ([f051560](https://github.com/dziksu/structsmith/commit/f051560daf1299f485d15867328e985999c3d57b)), closes [#127](https://github.com/dziksu/structsmith/issues/127) [#128](https://github.com/dziksu/structsmith/issues/128) [#129](https://github.com/dziksu/structsmith/issues/129) [#130](https://github.com/dziksu/structsmith/issues/130) [#131](https://github.com/dziksu/structsmith/issues/131)
+* **deps:** integrate i18n update from PR [#127](https://github.com/dziksu/structsmith/issues/127) ([8c93a4b](https://github.com/dziksu/structsmith/commit/8c93a4b2e1a3ef5024c76ff5e7ef92287b051946))
+* **deps:** integrate lucide update from PR [#131](https://github.com/dziksu/structsmith/issues/131) ([d5c0cb6](https://github.com/dziksu/structsmith/commit/d5c0cb626fe424a0ca9edc52fef6837524afbf54))
+* **deps:** integrate react update from PR [#128](https://github.com/dziksu/structsmith/issues/128) ([50804e6](https://github.com/dziksu/structsmith/commit/50804e6f5002f3bce8273b512b32e0e5b68ffeb8))
+* **deps:** integrate resizable panels update from PR [#130](https://github.com/dziksu/structsmith/issues/130) ([f2e5a7f](https://github.com/dziksu/structsmith/commit/f2e5a7feaa04066665cba97f91069015681e5cb2))
+* **deps:** integrate tanstack update from PR [#129](https://github.com/dziksu/structsmith/issues/129) ([a59f16b](https://github.com/dziksu/structsmith/commit/a59f16b3ff4a2e5ba6aaee8afa87a43bd1fb6dab))
+
 ## [1.15.2](https://github.com/dziksu/structsmith/compare/v1.15.1...v1.15.2) (2026-10-22)
 
 ### Bug Fixes
