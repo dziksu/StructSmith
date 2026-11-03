@@ -14,6 +14,28 @@ interface StatusBarProps {
   mcpReadOnly: boolean;
 }
 
+const Item = ({
+  active,
+  onClick,
+  children,
+}: {
+  active?: boolean;
+  onClick?: () => void;
+  children: React.ReactNode;
+}) => (
+  <button
+    type="button"
+    onClick={onClick}
+    className={cn(
+      "flex items-center gap-1 rounded px-1.5 py-0.5 transition-colors",
+      onClick && "hover:bg-accent",
+      active && "bg-accent",
+    )}
+  >
+    {children}
+  </button>
+);
+
 export function StatusBar({
   revision,
   elementCount,
@@ -30,28 +52,6 @@ export function StatusBar({
 
   const errors = validation?.issues.filter((issue) => issue.level === "error").length ?? 0;
   const warnings = validation?.issues.filter((issue) => issue.level === "warning").length ?? 0;
-
-  const Item = ({
-    active,
-    onClick,
-    children,
-  }: {
-    active?: boolean;
-    onClick?: () => void;
-    children: React.ReactNode;
-  }) => (
-    <button
-      type="button"
-      onClick={onClick}
-      className={cn(
-        "flex items-center gap-1 rounded px-1.5 py-0.5 transition-colors",
-        onClick && "hover:bg-accent",
-        active && "bg-accent",
-      )}
-    >
-      {children}
-    </button>
-  );
 
   return (
     <div className="flex h-6 items-center gap-1 border-t border-border bg-card px-2 text-[11px] text-muted-foreground">

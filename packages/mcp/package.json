@@ -11,7 +11,7 @@
   "dependencies": {
     "@structsmith/contracts": "workspace:*",
     "@structsmith/domain": "workspace:*",
-    "@modelcontextprotocol/sdk": "^1.30.0",
+    "@modelcontextprotocol/sdk": "^1.32.2",
     "zod": "^4.6.5"
   }
 }

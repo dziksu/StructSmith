@@ -6,6 +6,11 @@ import { KIND_ICONS, ROLE_ICONS } from "../features/icons";
 import i18n from "../i18n";
 import { cn } from "./utils";
 
+const Label = () => {
+  const { t } = useTranslation();
+  return createElement("span", null, t("common.save"));
+};
+
 test("all architecture icons render as SVG with the requested size and class", () => {
   const icons = new Set([...Object.values(KIND_ICONS), ...Object.values(ROLE_ICONS)]);
   for (const icon of icons) {
@@ -18,10 +23,6 @@ test("all architecture icons render as SVG with the requested size and class", (
 
 test("React translations render in English and Polish", async () => {
   const originalLanguage = i18n.language;
-  const Label = () => {
-    const { t } = useTranslation();
-    return createElement("span", null, t("common.save"));
-  };
   try {
     await i18n.changeLanguage("en");
     expect(renderToStaticMarkup(createElement(Label))).toBe("<span>Save</span>");
