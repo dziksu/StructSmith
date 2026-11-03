@@ -10,7 +10,7 @@
   },
   "dependencies": {
     "@structsmith/contracts": "workspace:*",
-    "@dagrejs/dagre": "^3.1.1",
+    "@dagrejs/dagre": "^3.1.3",
     "zod": "^4.6.5"
   }
 }
