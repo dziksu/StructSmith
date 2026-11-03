@@ -1,5 +1,21 @@
 # Changelog
 
+## [1.15.4](https://github.com/dziksu/structsmith/compare/v1.15.3...v1.15.4) (2026-11-03)
+
+### Build and Dependencies
+
+* **deps-dev:** bump the dev-dependencies group with 3 updates ([ccb5ae7](https://github.com/dziksu/structsmith/commit/ccb5ae793125b7c634a46c6c08ff7e1ed335cae6))
+* **deps-dev:** integrate tooling updates from PR [#136](https://github.com/dziksu/structsmith/issues/136) ([1fbd8f4](https://github.com/dziksu/structsmith/commit/1fbd8f4810bdd14281d1f48e28f7143a9c41f831))
+* **deps:** bump @dagrejs/dagre from 3.1.1 to 3.1.3 ([e9ae00d](https://github.com/dziksu/structsmith/commit/e9ae00dcecca366d0613721c620460fd8c4aa513))
+* **deps:** bump @modelcontextprotocol/sdk from 1.30.0 to 1.32.2 ([4fa0542](https://github.com/dziksu/structsmith/commit/4fa0542c18c419c5923e8b42b3f13900c0cbe851))
+* **deps:** bump the i18n group with 3 updates ([485e604](https://github.com/dziksu/structsmith/commit/485e6047b344adf2044b0f811dbbf0d6f7dd7fff))
+* **deps:** bump the tanstack group with 2 updates ([a696004](https://github.com/dziksu/structsmith/commit/a696004e44ecebe86947a83edd68ea8bc16ec928))
+* **deps:** consolidate updates and migrate Biome 2.6 ([#139](https://github.com/dziksu/structsmith/issues/139)) ([09f84b3](https://github.com/dziksu/structsmith/commit/09f84b3bcee9f22f4982b000643ce3ad77c043f5)), closes [#134](https://github.com/dziksu/structsmith/issues/134) [#135](https://github.com/dziksu/structsmith/issues/135) [#136](https://github.com/dziksu/structsmith/issues/136) [#137](https://github.com/dziksu/structsmith/issues/137)
+* **deps:** integrate dagre updates from PR [#137](https://github.com/dziksu/structsmith/issues/137) ([87c95ab](https://github.com/dziksu/structsmith/commit/87c95aba53177992b32b2daea902755edf694be0))
+* **deps:** integrate i18n updates from PR [#134](https://github.com/dziksu/structsmith/issues/134) ([0c7a680](https://github.com/dziksu/structsmith/commit/0c7a680d1ba422cf02f50074a9bf75cbf9c8bd59))
+* **deps:** integrate MCP SDK updates from PR [#138](https://github.com/dziksu/structsmith/issues/138) ([551f3e3](https://github.com/dziksu/structsmith/commit/551f3e305b417162220aaa56baab4379e8f84fee))
+* **deps:** integrate tanstack updates from PR [#135](https://github.com/dziksu/structsmith/issues/135) ([654284d](https://github.com/dziksu/structsmith/commit/654284d64b59bc1c3fd56eb92e6f4632bddad8ea))
+
 ## [1.15.3](https://github.com/dziksu/structsmith/compare/v1.15.2...v1.15.3) (2026-10-30)
 
 ### Build and Dependencies
