@@ -1,5 +1,22 @@
 # Changelog
 
+## [1.15.5](https://github.com/dziksu/structsmith/compare/v1.15.4...v1.15.5) (2026-11-12)
+
+### Build and Dependencies
+
+* **deps-dev:** bump the dev-dependencies group with 4 updates ([0f75aef](https://github.com/dziksu/structsmith/commit/0f75aefa80b5d8827c9250a25f6efd3a792f16ef))
+* **deps-dev:** integrate tooling updates from PR [#143](https://github.com/dziksu/structsmith/issues/143) ([40ac591](https://github.com/dziksu/structsmith/commit/40ac591417ecca7e786e65c3bf1206dcefe2ac92))
+* **deps:** align Zod override and Biome schema ([6d71c47](https://github.com/dziksu/structsmith/commit/6d71c475a2d8efa1f75f00977dfb9c149ff57793))
+* **deps:** bump @tanstack/react-query ([24c3a2a](https://github.com/dziksu/structsmith/commit/24c3a2a5047aecdadc1b203173700243e5b550e5))
+* **deps:** bump react-dropzone from 20.1.2 to 20.1.4 ([586e2dc](https://github.com/dziksu/structsmith/commit/586e2dcd5348eb7eb6efdde6c0eed905d36096a8))
+* **deps:** bump the i18n group with 3 updates ([66c8fe3](https://github.com/dziksu/structsmith/commit/66c8fe361d736000a2d131a55c39d280f1960fa1))
+* **deps:** bump zod from 4.5.4 to 4.6.7 ([09f675e](https://github.com/dziksu/structsmith/commit/09f675e7f7a81750883eeb7c4ae27448b58904c9))
+* **deps:** consolidate updates and disable Dependabot schedules ([#146](https://github.com/dziksu/structsmith/issues/146)) ([e86da69](https://github.com/dziksu/structsmith/commit/e86da693966515244f4613bc4d73bd6e52a6a7eb))
+* **deps:** integrate i18n updates from PR [#141](https://github.com/dziksu/structsmith/issues/141) ([f5ee9b6](https://github.com/dziksu/structsmith/commit/f5ee9b62ae40a07a1dd47788000082f1fba87cb5))
+* **deps:** integrate react-dropzone update from PR [#144](https://github.com/dziksu/structsmith/issues/144) ([905686b](https://github.com/dziksu/structsmith/commit/905686baf5b083c7b6352a9cfadc266d3ea60bbc))
+* **deps:** integrate TanStack Query updates from PR [#142](https://github.com/dziksu/structsmith/issues/142) ([b25ddf6](https://github.com/dziksu/structsmith/commit/b25ddf67056c9cc791c248c510423f6dcc806a25))
+* **deps:** integrate Zod update from PR [#145](https://github.com/dziksu/structsmith/issues/145) ([6ba0319](https://github.com/dziksu/structsmith/commit/6ba03198110828d0d256c700170e1a53705ea6eb))
+
 ## [1.15.4](https://github.com/dziksu/structsmith/compare/v1.15.3...v1.15.4) (2026-11-03)
 
 ### Build and Dependencies
